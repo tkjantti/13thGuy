@@ -1,6 +1,11 @@
-# Js13kGames 2024
+# 13th Guy
 
-An entry to the [js13kGames 2024 competition](https://2024.js13kgames.com/).
+A running game, similar to Fall Guys, where you run against computer
+opponents.
+
+The game was originally an entry in [js13kGames 2024
+competition](https://2024.js13kgames.com/). This repository is for
+additional development.
 
 ## Running and building
 
