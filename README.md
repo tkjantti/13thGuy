@@ -1,6 +1,6 @@
 # 13th Guy
 
-A running game, similar to Fall Guys, where you run against computer
+Solo play platform battle royale game (similar to Fall Guys wihout multiplayer), where you race against computer
 opponents.
 
 The game was originally an entry in [js13kGames 2024
