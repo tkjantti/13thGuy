@@ -205,7 +205,7 @@ const draw = (t: number, dt: number): void => {
                 }
 
                 if (radius > 0) {
-                    radius -= dt / 2;
+                    radius -= dt / (window.devicePixelRatio * 2);
                 }
             }
             applyGradient();
@@ -259,7 +259,7 @@ const draw = (t: number, dt: number): void => {
                 cx.restore();
             }
             if (radius < maxRadius) {
-                radius += dt;
+                radius += dt / window.devicePixelRatio;
             }
 
             applyGradient();
@@ -320,7 +320,7 @@ const draw = (t: number, dt: number): void => {
             }
 
             if (radius < maxRadius) {
-                radius += dt;
+                radius += dt / window.devicePixelRatio;
             }
             applyGradient();
 
