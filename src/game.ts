@@ -43,7 +43,7 @@ let z = 1;
 
 let level: Level;
 
-const maxRadius = Math.max(screen.width, screen.height) / 1.5;
+let maxRadius = 0;
 
 enum GameState {
     Init,
@@ -62,6 +62,8 @@ let radius = 0;
 
 const setState = (state: GameState): void => {
     gameState = state;
+
+    maxRadius = Math.max(canvas.width, canvas.height) * 2.15; // larger than the diagonal of canvas size
 
     switch (state) {
         case GameState.Start:
@@ -205,7 +207,7 @@ const draw = (t: number, dt: number): void => {
                 }
 
                 if (radius > 0) {
-                    radius -= dt / (window.devicePixelRatio * 2);
+                    radius -= dt / 2;
                 }
             }
             applyGradient();
@@ -259,7 +261,7 @@ const draw = (t: number, dt: number): void => {
                 cx.restore();
             }
             if (radius < maxRadius) {
-                radius += dt / window.devicePixelRatio;
+                radius += dt;
             }
 
             applyGradient();
@@ -320,7 +322,7 @@ const draw = (t: number, dt: number): void => {
             }
 
             if (radius < maxRadius) {
-                radius += dt / window.devicePixelRatio;
+                radius += dt;
             }
             applyGradient();
 
