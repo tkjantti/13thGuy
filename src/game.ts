@@ -63,7 +63,7 @@ let radius = 0;
 const setState = (state: GameState): void => {
     gameState = state;
 
-    maxRadius = Math.max(canvas.width, canvas.height) * 2.15; // larger than the diagonal of canvas size
+    maxRadius = Math.max(canvas.width, canvas.height) * 2; // larger than the diagonal of canvas size
 
     switch (state) {
         case GameState.Start:
