@@ -43,7 +43,7 @@ let z = 1;
 
 let level: Level;
 
-const maxRadius = Math.max(screen.width, screen.height) / 1.5;
+let maxRadius = 0;
 
 enum GameState {
     Init,
@@ -62,6 +62,8 @@ let radius = 0;
 
 const setState = (state: GameState): void => {
     gameState = state;
+
+    maxRadius = Math.max(canvas.width, canvas.height) * 2; // larger than the diagonal of canvas size
 
     switch (state) {
         case GameState.Start:
