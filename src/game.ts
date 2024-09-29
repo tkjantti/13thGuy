@@ -448,7 +448,7 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
         renderText("Press ENTER to start the race!", 24, "Sans-serif", 1, 80);
     }
 
-    renderText("CONTROL KEYS", 20, "Sans-serif", 0.8, 140);
+    renderText("MOVE WITH", 20, "Sans-serif", 0.8, 140);
     renderText("▲ / W - ▼ / S - ◄ / A - ► / D", 20, "Sans-serif", 0.8, 170);
 
     cx.restore();
