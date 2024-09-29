@@ -365,7 +365,7 @@ export class Level implements Area {
             cx.fillStyle = element.color;
             cx.shadowColor = element.color
                 .replace("rgb(", "rgba(")
-                .replace(")", ",0.5)");
+                .replace(")", ",0.3)");
             cx.shadowOffsetY =
                 element.height *
                 (element.type === TrackElementType.Raft ? 2 : 8);

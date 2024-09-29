@@ -24,6 +24,60 @@
 
 export const canvas = document.querySelector("canvas") as HTMLCanvasElement;
 
+const noise = (Math.random() - 0.5) * 20;
+
+export const applyCRTEffect = (track = false): void => {
+    const imageData = cx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    const width = canvas.width;
+    const height = canvas.height;
+
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            const index = (y * width + x) * 4;
+
+            const opacity = track ? 0.9 : 0.7;
+
+            // Apply scanlines
+            if (y % 2 === 0) {
+                data[index] *= opacity; // Red
+                data[index + 1] *= opacity; // Green
+                data[index + 2] *= opacity; // Blue
+            }
+
+            // Apply noise
+            data[index] += noise; // Red
+            data[index + 1] += noise; // Green
+            data[index + 2] += noise; // Blue
+        }
+    }
+
+    cx.putImageData(imageData, 0, 0);
+};
+
+export const applyGradient = (track = false) => {
+    const width = canvas.width;
+    const height = canvas.height;
+    const gradient = cx.createRadialGradient(
+        width / 2,
+        height / 2,
+        0, // Inner circle
+        width / 2,
+        height / 2,
+        width / 2, // Outer circle
+    );
+    if (track) {
+        gradient.addColorStop(0, "rgba(255, 255, 255, 0.1)");
+        gradient.addColorStop(1, "rgba(0, 0, 0, 0.2)");
+    } else {
+        gradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
+        gradient.addColorStop(1, "rgba(0, 0, 0, 0.5)");
+    }
+
+    cx.fillStyle = gradient;
+    cx.fillRect(0, 0, width, height);
+};
+
 export const cx: CanvasRenderingContext2D = canvas.getContext("2d", {
     willReadFrequently: true,
 })!;

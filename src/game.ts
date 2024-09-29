@@ -1,4 +1,4 @@
-import { canvas, cx } from "./graphics";
+import { applyCRTEffect, applyGradient, canvas, cx } from "./graphics";
 import {
     initializeKeyboard,
     sleep,
@@ -46,6 +46,7 @@ let level: Level;
 let maxRadius = 0;
 
 enum GameState {
+    Load,
     Init,
     Start,
     Wait,
@@ -55,7 +56,7 @@ enum GameState {
     GameFinished,
 }
 
-let gameState: GameState = GameState.Init;
+let gameState: GameState = GameState.Load;
 
 // For drawing start- and game over screens.
 let radius = 0;
@@ -136,8 +137,9 @@ const update = (t: number, dt: number): void => {
             }
             break;
         }
-        default:
+        default: {
             break;
+        }
     }
 };
 
@@ -170,6 +172,17 @@ const draw = (t: number, dt: number): void => {
 
     cx.save();
     switch (gameState) {
+        case GameState.Load: {
+            drawInitialScreen();
+
+            break;
+        }
+        case GameState.Init: {
+            drawInitialScreen();
+            centerText("Press any key", 24, "Sans-serif", 1, 80);
+
+            break;
+        }
         case GameState.Start: {
             drawStartScreen(t++, false, 0);
 
@@ -199,11 +212,18 @@ const draw = (t: number, dt: number): void => {
                     cx.fill();
                 }
                 if (radius < maxRadius / 4) {
-                    centerText("▲ GO! ▲", 64, "Impact", 1);
+                    centerText(
+                        "▲ GO! ▲",
+                        64,
+                        "Impact",
+                        (radius / maxRadius) * 4,
+                    );
                 } else if (radius < maxRadius / 2) {
                     centerText("Set...", 64, "Impact", 1);
+                    centerText("⌨ W A S D ▲ ▼ ◄ ►", 24, "Sans-serif", 1, 80);
                 } else {
                     centerText("Ready...", 64, "Impact", 1);
+                    centerText("⌨ W A S D ▲ ▼ ◄ ►", 24, "Sans-serif", 1, 80);
                 }
 
                 if (radius > 0) {
@@ -211,6 +231,7 @@ const draw = (t: number, dt: number): void => {
                 }
             }
             applyGradient();
+            applyCRTEffect();
 
             break;
         }
@@ -265,6 +286,7 @@ const draw = (t: number, dt: number): void => {
             }
 
             applyGradient();
+            applyCRTEffect();
 
             break;
         }
@@ -325,68 +347,19 @@ const draw = (t: number, dt: number): void => {
                 radius += dt;
             }
             applyGradient();
+            applyCRTEffect();
 
             break;
         }
         default: {
             applyGradient(true);
+            applyCRTEffect(true);
 
             break;
         }
     }
 
     cx.restore();
-};
-
-const applyCRTEffect = (): void => {
-    const imageData = cx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-    const width = canvas.width;
-    const height = canvas.height;
-
-    for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-            const index = (y * width + x) * 4;
-
-            // Apply scanlines
-            if (y % 2 === 0) {
-                data[index] *= 0.5; // Red
-                data[index + 1] *= 0.5; // Green
-                data[index + 2] *= 0.5; // Blue
-            }
-
-            // Apply noise
-            const noise = (Math.random() - 0.5) * 20;
-            data[index] += noise; // Red
-            data[index + 1] += noise; // Green
-            data[index + 2] += noise; // Blue
-        }
-    }
-
-    cx.putImageData(imageData, 0, 0);
-};
-
-const applyGradient = (track = false) => {
-    const width = canvas.width;
-    const height = canvas.height;
-    const gradient = cx.createRadialGradient(
-        width / 2,
-        height / 2,
-        0, // Inner circle
-        width / 2,
-        height / 2,
-        width / 2, // Outer circle
-    );
-    if (track) {
-        gradient.addColorStop(0, "rgba(255, 255, 255, 0.1)");
-        gradient.addColorStop(1, "rgba(0, 0, 0, 0.2)");
-    } else {
-        gradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
-        gradient.addColorStop(1, "rgba(0, 0, 0, 0.5)");
-    }
-
-    cx.fillStyle = gradient;
-    cx.fillRect(0, 0, width, height);
 };
 
 const Logo = () => {
@@ -439,11 +412,34 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
     cx.restore();
 
     applyGradient();
+    applyCRTEffect();
 };
+
+// Faster than using .filter
+function applyGrayscale() {
+    // Get the image data
+    const imageData = cx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+
+    // Loop through each pixel
+    for (let i = 0; i < data.length; i += 4) {
+        const red = data[i];
+        const green = data[i + 1];
+        const blue = data[i + 2];
+
+        // Calculate the grayscale value
+        const grayscale = red * 0.3 + green * 0.59 + blue * 0.11;
+
+        // Set the pixel values to the grayscale value
+        data[i] = data[i + 1] = data[i + 2] = grayscale * 0.7;
+    }
+
+    // Put the modified image data back onto the canvas
+    cx.putImageData(imageData, 0, 0);
+}
 
 const drawInitialScreen = (): void => {
     cx.save();
-    cx.filter = "grayscale(1) brightness(0.6)";
     cx.fillStyle = "rgb(20, 20, 50)";
     cx.rect(0, 0, canvas.width, canvas.height);
     cx.fill();
@@ -460,6 +456,8 @@ const drawInitialScreen = (): void => {
     );
     cx.restore();
     Logo();
+    cx.filter = "";
+    applyGrayscale();
     applyGradient();
     applyCRTEffect();
 };
@@ -478,16 +476,15 @@ export const startRace = async (): Promise<void> => {
 
 export const init = async (): Promise<void> => {
     initializeKeyboard();
-    drawInitialScreen();
-
-    await initialize().then(() =>
-        centerText("Press any key", 24, "Sans-serif", 1, 80),
-    );
-    cx.restore();
-    await waitForAnyKey();
-    playTune(SFX_START);
     window.requestAnimationFrame(gameLoop);
 
-    setState(GameState.Start);
-    startRace();
+    await initialize().then(async () => {
+        setState(GameState.Init);
+
+        await waitForAnyKey();
+
+        playTune(SFX_START);
+        setState(GameState.Start);
+        startRace();
+    });
 };
