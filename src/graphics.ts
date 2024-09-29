@@ -24,9 +24,7 @@
 
 export const canvas = document.querySelector("canvas") as HTMLCanvasElement;
 
-const oneTimeNoise = (Math.random() - 0.5) * 10;
-
-export const applyCRTEffect = (noisy = true, oneTimeNoisy = false): void => {
+export const applyCRTEffect = (noisy = true): void => {
     const imageData = cx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
     const width = canvas.width;
@@ -44,11 +42,8 @@ export const applyCRTEffect = (noisy = true, oneTimeNoisy = false): void => {
                 data[index + 1] *= opacity; // Green
                 data[index + 2] *= opacity; // Blue
             }
-
             if (noisy) {
-                const noise = oneTimeNoisy
-                    ? oneTimeNoise
-                    : (Math.random() - 0.5) * 10;
+                const noise = (Math.random() - 0.5) * 10;
 
                 // Apply noise
                 data[index] += noise; // Red

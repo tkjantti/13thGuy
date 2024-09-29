@@ -149,12 +149,14 @@ const update = (t: number, dt: number): void => {
     }
 };
 
-const centerText = (
+const renderText = (
     text: string,
     fontSize: number,
     fontName: string,
     alpha = 1,
     yAdjust = 0,
+    center = true,
+    xAdjust = 0,
 ) => {
     cx.save();
     cx.globalAlpha = alpha > 0 ? alpha : 0;
@@ -163,14 +165,14 @@ const centerText = (
     const textWidth = cx.measureText(text).width;
     cx.fillText(
         text,
-        (canvas.width - textWidth) / 2,
-        canvas.height / 2 + yAdjust,
+        center ? (canvas.width - textWidth) / 2 + xAdjust : xAdjust,
+        center ? canvas.height / 2 + yAdjust : fontSize + yAdjust,
     );
     cx.restore();
 };
 
 let loadingCharIndex = 0;
-const loadingText = "Loading..........";
+const loadingText = "LOAD";
 
 const draw = (t: number, dt: number): void => {
     cx.save();
@@ -183,21 +185,42 @@ const draw = (t: number, dt: number): void => {
 
     switch (gameState) {
         case GameState.Load: {
-            centerText(
-                loadingText.substring(0, loadingCharIndex++),
+            renderText(
+                loadingText.substring(0, loadingCharIndex++) +
+                    (loadingCharIndex < 4
+                        ? loadingCharIndex % 2 || loadingCharIndex % 4
+                            ? "▮"
+                            : "ㅤ"
+                        : ""),
                 24,
-                "Sans-serif",
+                "Courier New",
                 1,
+                40,
+                false,
+                60,
             );
+            if (loadingCharIndex > 4) {
+                renderText(
+                    "LOADING..." +
+                        (loadingCharIndex % 2 || loadingCharIndex % 4
+                            ? "▮"
+                            : "ㅤ"),
+                    24,
+                    "Courier New",
+                    1,
+                    80,
+                    false,
+                    60,
+                );
+            }
             applyGrayscale();
-            applyGradient(false);
-            applyCRTEffect(false, false);
+            applyCRTEffect(false);
 
             break;
         }
         case GameState.Init: {
             drawInitialScreen(true);
-            centerText("Press any key", 24, "Sans-serif", 1, 80);
+            renderText("Press any key", 24, "Sans-serif", 1, 80);
 
             break;
         }
@@ -230,18 +253,16 @@ const draw = (t: number, dt: number): void => {
                     cx.fill();
                 }
                 if (radius < maxRadius / 4) {
-                    centerText(
+                    renderText(
                         "▲ GO! ▲",
                         64,
                         "Impact",
                         (radius / maxRadius) * 4,
                     );
                 } else if (radius < maxRadius / 2) {
-                    centerText("Set...", 64, "Impact", 1);
-                    centerText("⌨ W A S D ▲ ▼ ◄ ►", 24, "Sans-serif", 1, 80);
+                    renderText("Set...", 64, "Impact", 1);
                 } else {
-                    centerText("Ready...", 64, "Impact", 1);
-                    centerText("⌨ W A S D ▲ ▼ ◄ ►", 24, "Sans-serif", 1, 80);
+                    renderText("Ready...", 64, "Impact", 1);
                 }
 
                 if (radius > 0) {
@@ -249,7 +270,7 @@ const draw = (t: number, dt: number): void => {
                 }
             }
             applyGradient(false);
-            applyCRTEffect(true, false);
+            applyCRTEffect(true);
 
             break;
         }
@@ -260,18 +281,18 @@ const draw = (t: number, dt: number): void => {
             cx.arc(centerX, centerY, radius, 0, Math.PI * 2);
             cx.fillStyle = "#802010";
             cx.fill();
-            centerText("❌ ELIMINATED!", 48, "Impact", 1, -70);
+            renderText("❌ ELIMINATED!", 48, "Impact", 1, -70);
             if (level.player.rank === 13) {
-                centerText("Don't be the 13TH GUY", 24, "Sans-serif", 1, 0);
+                renderText("Don't be the 13TH GUY", 24, "Sans-serif", 1, 0);
             } else {
-                centerText(
+                renderText(
                     "Don't be one of the last 13TH GUYs",
                     24,
                     "Sans-serif",
                     1,
                     0,
                 );
-                centerText(
+                renderText(
                     "The final rank is " + level.player.rank + ".",
                     32,
                     "Impact",
@@ -280,7 +301,7 @@ const draw = (t: number, dt: number): void => {
                 );
             }
             if (radius >= maxRadius) {
-                centerText("Press ENTER", 24, "Sans-serif", 1, 100);
+                renderText("Press ENTER", 24, "Sans-serif", 1, 100);
             }
 
             if (radius < maxRadius) {
@@ -304,7 +325,7 @@ const draw = (t: number, dt: number): void => {
             }
 
             applyGradient(false);
-            applyCRTEffect(true, false);
+            applyCRTEffect(true);
 
             break;
         }
@@ -319,9 +340,9 @@ const draw = (t: number, dt: number): void => {
                 cx.fill();
 
                 if (level.characters.length > 14) {
-                    centerText("✪ QUALIFIED!", 48, "Impact", 1, -80);
-                    centerText("☻", 80, "Impact", 1, 0);
-                    centerText(
+                    renderText("✪ QUALIFIED!", 48, "Impact", 1, -80);
+                    renderText("☻", 80, "Impact", 1, 0);
+                    renderText(
                         "Ready for next round " + raceNumber + " / 3",
                         32,
                         "Sans-serif",
@@ -329,16 +350,16 @@ const draw = (t: number, dt: number): void => {
                         60,
                     );
                 } else {
-                    centerText("GAME FINISHED!", 48, "Impact", 1, -80);
-                    centerText("☻", 80, "Impact", 1, 0);
-                    centerText(
+                    renderText("GAME FINISHED!", 48, "Impact", 1, -80);
+                    renderText("☻", 80, "Impact", 1, 0);
+                    renderText(
                         "Congratulations to the winner!",
                         32,
                         "Impact",
                         1,
                         60,
                     );
-                    centerText("Press ENTER", 32, "Sans-serif", 1, 120);
+                    renderText("Press ENTER", 32, "Sans-serif", 1, 120);
                 }
                 cx.save();
                 cx.translate(
@@ -365,13 +386,13 @@ const draw = (t: number, dt: number): void => {
                 radius += dt;
             }
             applyGradient(false);
-            applyCRTEffect(true, false);
+            applyCRTEffect(true);
 
             break;
         }
         default: {
             applyGradient(true);
-            applyCRTEffect(false, false);
+            applyCRTEffect(false);
 
             break;
         }
@@ -381,8 +402,8 @@ const draw = (t: number, dt: number): void => {
 };
 
 const Logo = () => {
-    centerText("Don't be the", 24, "Impact", 1, -30);
-    centerText("❌ 13TH GUY", 64, "Impact", 1, 30);
+    renderText("Don't be the", 24, "Impact", 1, -30);
+    renderText("❌ 13TH GUY", 64, "Impact", 1, 30);
 };
 
 const drawStartScreen = (t: number, wait: boolean, z: number): void => {
@@ -408,29 +429,32 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
     cx.restore();
 
     if (wait) {
-        centerText(
+        renderText(
             "Avoid being the 13th or among the last 13",
             24,
             "Sans-serif",
             1,
             -20,
         );
-        centerText(
+        renderText(
             "or you will be eventually ❌ eliminated!",
             24,
             "Sans-serif",
             1,
             20,
         );
-        centerText("⌨ W A S D ▲ ▼ ◄ ►", 24, "Sans-serif", 1, 80);
     } else {
         Logo();
-        centerText("Press ENTER to start the race!", 24, "Sans-serif", 1, 80);
+        renderText("Press ENTER to start the race!", 24, "Sans-serif", 1, 80);
     }
+
+    renderText("CONTROL KEYS", 20, "Sans-serif", 0.8, 140);
+    renderText("▲ / W - ▼ / S - ◄ / A - ► / D", 20, "Sans-serif", 0.8, 170);
+
     cx.restore();
 
     applyGradient(false);
-    applyCRTEffect(true, false);
+    applyCRTEffect(true);
 };
 
 const drawInitialScreen = (noisy: boolean): void => {
@@ -454,7 +478,7 @@ const drawInitialScreen = (noisy: boolean): void => {
     cx.filter = "";
     applyGrayscale();
     applyGradient(false);
-    applyCRTEffect(noisy, !noisy);
+    applyCRTEffect(noisy);
 };
 
 export const startRace = async (): Promise<void> => {
