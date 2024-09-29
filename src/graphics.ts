@@ -24,9 +24,9 @@
 
 export const canvas = document.querySelector("canvas") as HTMLCanvasElement;
 
-const noise = (Math.random() - 0.5) * 20;
+const oneTimeNoise = (Math.random() - 0.5) * 10;
 
-export const applyCRTEffect = (track = false): void => {
+export const applyCRTEffect = (noisy = true, oneTimeNoisy = false): void => {
     const imageData = cx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
     const width = canvas.width;
@@ -36,7 +36,7 @@ export const applyCRTEffect = (track = false): void => {
         for (let x = 0; x < width; x++) {
             const index = (y * width + x) * 4;
 
-            const opacity = track ? 0.9 : 0.7;
+            const opacity = !noisy ? 0.9 : 0.7;
 
             // Apply scanlines
             if (y % 2 === 0) {
@@ -45,10 +45,16 @@ export const applyCRTEffect = (track = false): void => {
                 data[index + 2] *= opacity; // Blue
             }
 
-            // Apply noise
-            data[index] += noise; // Red
-            data[index + 1] += noise; // Green
-            data[index + 2] += noise; // Blue
+            if (noisy) {
+                const noise = oneTimeNoisy
+                    ? oneTimeNoise
+                    : (Math.random() - 0.5) * 10;
+
+                // Apply noise
+                data[index] += noise; // Red
+                data[index + 1] += noise; // Green
+                data[index + 2] += noise; // Blue
+            }
         }
     }
 
@@ -81,3 +87,26 @@ export const applyGradient = (track = false) => {
 export const cx: CanvasRenderingContext2D = canvas.getContext("2d", {
     willReadFrequently: true,
 })!;
+
+// Faster than using .filter
+export const applyGrayscale = () => {
+    // Get the image data
+    const imageData = cx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+
+    // Loop through each pixel
+    for (let i = 0; i < data.length; i += 4) {
+        const red = data[i];
+        const green = data[i + 1];
+        const blue = data[i + 2];
+
+        // Calculate the grayscale value
+        const grayscale = red * 0.3 + green * 0.59 + blue * 0.11;
+
+        // Set the pixel values to the grayscale value
+        data[i] = data[i + 1] = data[i + 2] = grayscale * 0.7;
+    }
+
+    // Put the modified image data back onto the canvas
+    cx.putImageData(imageData, 0, 0);
+};

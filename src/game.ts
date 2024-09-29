@@ -1,4 +1,10 @@
-import { applyCRTEffect, applyGradient, canvas, cx } from "./graphics";
+import {
+    applyCRTEffect,
+    applyGradient,
+    applyGrayscale,
+    canvas,
+    cx,
+} from "./graphics";
 import {
     initializeKeyboard,
     sleep,
@@ -163,6 +169,9 @@ const centerText = (
     cx.restore();
 };
 
+let loadingCharIndex = 0;
+const loadingText = "Loading..........";
+
 const draw = (t: number, dt: number): void => {
     cx.save();
     cx.fillStyle = "rgb(0, 0, 10)";
@@ -171,14 +180,23 @@ const draw = (t: number, dt: number): void => {
     cx.restore();
 
     cx.save();
+
     switch (gameState) {
         case GameState.Load: {
-            drawInitialScreen();
+            centerText(
+                loadingText.substring(0, loadingCharIndex++),
+                24,
+                "Sans-serif",
+                1,
+            );
+            applyGrayscale();
+            applyGradient(false);
+            applyCRTEffect(false, false);
 
             break;
         }
         case GameState.Init: {
-            drawInitialScreen();
+            drawInitialScreen(true);
             centerText("Press any key", 24, "Sans-serif", 1, 80);
 
             break;
@@ -230,8 +248,8 @@ const draw = (t: number, dt: number): void => {
                     radius -= dt / 2;
                 }
             }
-            applyGradient();
-            applyCRTEffect();
+            applyGradient(false);
+            applyCRTEffect(true, false);
 
             break;
         }
@@ -285,8 +303,8 @@ const draw = (t: number, dt: number): void => {
                 radius += dt;
             }
 
-            applyGradient();
-            applyCRTEffect();
+            applyGradient(false);
+            applyCRTEffect(true, false);
 
             break;
         }
@@ -346,14 +364,14 @@ const draw = (t: number, dt: number): void => {
             if (radius < maxRadius) {
                 radius += dt;
             }
-            applyGradient();
-            applyCRTEffect();
+            applyGradient(false);
+            applyCRTEffect(true, false);
 
             break;
         }
         default: {
             applyGradient(true);
-            applyCRTEffect(true);
+            applyCRTEffect(false, false);
 
             break;
         }
@@ -411,34 +429,11 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
     }
     cx.restore();
 
-    applyGradient();
-    applyCRTEffect();
+    applyGradient(false);
+    applyCRTEffect(true, false);
 };
 
-// Faster than using .filter
-const applyGrayscale = () => {
-    // Get the image data
-    const imageData = cx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-
-    // Loop through each pixel
-    for (let i = 0; i < data.length; i += 4) {
-        const red = data[i];
-        const green = data[i + 1];
-        const blue = data[i + 2];
-
-        // Calculate the grayscale value
-        const grayscale = red * 0.3 + green * 0.59 + blue * 0.11;
-
-        // Set the pixel values to the grayscale value
-        data[i] = data[i + 1] = data[i + 2] = grayscale * 0.7;
-    }
-
-    // Put the modified image data back onto the canvas
-    cx.putImageData(imageData, 0, 0);
-};
-
-const drawInitialScreen = (): void => {
+const drawInitialScreen = (noisy: boolean): void => {
     cx.save();
     cx.fillStyle = "rgb(20, 20, 50)";
     cx.rect(0, 0, canvas.width, canvas.height);
@@ -458,8 +453,8 @@ const drawInitialScreen = (): void => {
     Logo();
     cx.filter = "";
     applyGrayscale();
-    applyGradient();
-    applyCRTEffect();
+    applyGradient(false);
+    applyCRTEffect(noisy, !noisy);
 };
 
 export const startRace = async (): Promise<void> => {
