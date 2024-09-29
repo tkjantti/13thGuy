@@ -416,7 +416,7 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
 };
 
 // Faster than using .filter
-function applyGrayscale() {
+const applyGrayscale = () => {
     // Get the image data
     const imageData = cx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
@@ -436,7 +436,7 @@ function applyGrayscale() {
 
     // Put the modified image data back onto the canvas
     cx.putImageData(imageData, 0, 0);
-}
+};
 
 const drawInitialScreen = (): void => {
     cx.save();
