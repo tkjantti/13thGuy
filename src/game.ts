@@ -186,33 +186,18 @@ const draw = (t: number, dt: number): void => {
     switch (gameState) {
         case GameState.Load: {
             renderText(
-                loadingText.substring(0, loadingCharIndex++) +
-                    (loadingCharIndex < 4
-                        ? loadingCharIndex % 2 || loadingCharIndex % 4
-                            ? "▮"
-                            : "ㅤ"
-                        : ""),
+                (loadingCharIndex < 4
+                    ? loadingText.substring(0, loadingCharIndex)
+                    : "LOADING...") +
+                    (loadingCharIndex % 2 || loadingCharIndex % 4 ? "▮" : "ㅤ"),
                 24,
                 "Courier New",
                 1,
                 40,
-                false,
+                true,
                 60,
             );
-            if (loadingCharIndex > 4) {
-                renderText(
-                    "LOADING..." +
-                        (loadingCharIndex % 2 || loadingCharIndex % 4
-                            ? "▮"
-                            : "ㅤ"),
-                    24,
-                    "Courier New",
-                    1,
-                    80,
-                    false,
-                    60,
-                );
-            }
+            loadingCharIndex++;
             applyGrayscale();
             applyCRTEffect(false);
 
