@@ -34,7 +34,7 @@ export const applyCRTEffect = (noisy = true): void => {
         for (let x = 0; x < width; x++) {
             const index = (y * width + x) * 4;
 
-            const opacity = !noisy ? 0.9 : 0.7;
+            const opacity = !noisy ? 0.8 : 0.7;
 
             // Apply scanlines
             if (y % 2 === 0) {
@@ -68,7 +68,7 @@ export const applyGradient = (track = false) => {
         width / 2, // Outer circle
     );
     if (track) {
-        gradient.addColorStop(0, "rgba(255, 255, 255, 0.1)");
+        gradient.addColorStop(0, "rgba(255, 255, 255, 0.1");
         gradient.addColorStop(1, "rgba(0, 0, 0, 0.2)");
     } else {
         gradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
@@ -104,4 +104,26 @@ export const applyGrayscale = () => {
 
     // Put the modified image data back onto the canvas
     cx.putImageData(imageData, 0, 0);
+};
+
+export const renderText = (
+    text: string,
+    fontSize: number,
+    fontName: string,
+    alpha = 1,
+    yAdjust = 0,
+    center = true,
+    xAdjust = 0,
+) => {
+    cx.save();
+    cx.globalAlpha = alpha > 0 ? alpha : 0;
+    cx.fillStyle = "white";
+    cx.font = fontSize + "px " + fontName;
+    const textWidth = cx.measureText(text).width;
+    cx.fillText(
+        text,
+        center ? (canvas.width - textWidth) / 2 + xAdjust : xAdjust,
+        center ? canvas.height / 2 + yAdjust : fontSize + yAdjust,
+    );
+    cx.restore();
 };

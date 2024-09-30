@@ -2,6 +2,7 @@ import {
     applyCRTEffect,
     applyGradient,
     applyGrayscale,
+    renderText,
     canvas,
     cx,
 } from "./graphics";
@@ -149,34 +150,12 @@ const update = (t: number, dt: number): void => {
     }
 };
 
-const renderText = (
-    text: string,
-    fontSize: number,
-    fontName: string,
-    alpha = 1,
-    yAdjust = 0,
-    center = true,
-    xAdjust = 0,
-) => {
-    cx.save();
-    cx.globalAlpha = alpha > 0 ? alpha : 0;
-    cx.fillStyle = "white";
-    cx.font = fontSize + "px " + fontName;
-    const textWidth = cx.measureText(text).width;
-    cx.fillText(
-        text,
-        center ? (canvas.width - textWidth) / 2 + xAdjust : xAdjust,
-        center ? canvas.height / 2 + yAdjust : fontSize + yAdjust,
-    );
-    cx.restore();
-};
-
 let textAnimationCounter = 0;
 const loadingText = "LOAD";
 
 const draw = (t: number, dt: number): void => {
     cx.save();
-    cx.fillStyle = "rgb(0, 0, 10)";
+    cx.fillStyle = "rgb(0, 0, 20)";
     cx.fillRect(0, 0, canvas.width, canvas.height);
     level?.draw(t, dt);
     cx.restore();

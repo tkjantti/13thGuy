@@ -368,7 +368,7 @@ export class Level implements Area {
                 .replace(")", ",0.3)");
             cx.shadowOffsetY =
                 element.height *
-                (element.type === TrackElementType.Raft ? 2 : 8);
+                (element.type === TrackElementType.Raft ? 2 : 6);
 
             if (element.type === TrackElementType.Raft) cx.globalAlpha = 0.5;
             for (let i = 0; i < surfaces.length; i++) {
