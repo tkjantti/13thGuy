@@ -171,7 +171,7 @@ const renderText = (
     cx.restore();
 };
 
-let loadingCharIndex = 0;
+let textAnimationCounter = 0;
 const loadingText = "LOAD";
 
 const draw = (t: number, dt: number): void => {
@@ -183,13 +183,17 @@ const draw = (t: number, dt: number): void => {
 
     cx.save();
 
+    console.info(textAnimationCounter);
+
     switch (gameState) {
         case GameState.Load: {
             renderText(
-                (loadingCharIndex < 4
-                    ? loadingText.substring(0, loadingCharIndex)
+                (textAnimationCounter < 4
+                    ? loadingText.substring(0, textAnimationCounter)
                     : "LOADING...") +
-                    (loadingCharIndex % 2 || loadingCharIndex % 4 ? "▮" : "ㅤ"),
+                    (textAnimationCounter % 2 || textAnimationCounter % 4
+                        ? "▮"
+                        : "ㅤ"),
                 24,
                 "Courier New",
                 1,
@@ -197,7 +201,7 @@ const draw = (t: number, dt: number): void => {
                 true,
                 60,
             );
-            loadingCharIndex++;
+            textAnimationCounter++;
             applyGrayscale();
             applyCRTEffect(false);
 
@@ -205,7 +209,14 @@ const draw = (t: number, dt: number): void => {
         }
         case GameState.Init: {
             drawInitialScreen(true);
-            renderText("Press any key", 24, "Sans-serif", 1, 80);
+            renderText(
+                "Press any key" +
+                    (textAnimationCounter++ % 60 === 0 ? "ㅤ" : "▮"),
+                24,
+                "Sans-serif",
+                1,
+                100,
+            );
 
             break;
         }
@@ -286,7 +297,14 @@ const draw = (t: number, dt: number): void => {
                 );
             }
             if (radius >= maxRadius) {
-                renderText("Press ENTER", 24, "Sans-serif", 1, 100);
+                renderText(
+                    "Press ENTER" +
+                        (textAnimationCounter++ % 60 === 0 ? "ㅤ" : "▮"),
+                    24,
+                    "Sans-serif",
+                    1,
+                    120,
+                );
             }
 
             if (radius < maxRadius) {
@@ -344,7 +362,14 @@ const draw = (t: number, dt: number): void => {
                         1,
                         60,
                     );
-                    renderText("Press ENTER", 32, "Sans-serif", 1, 120);
+                    renderText(
+                        "Press ENTER" +
+                            (textAnimationCounter++ % 60 === 0 ? "ㅤ" : "▮"),
+                        24,
+                        "Sans-serif",
+                        1,
+                        100,
+                    );
                 }
                 cx.save();
                 cx.translate(
@@ -422,7 +447,8 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
             -20,
         );
         renderText(
-            "or you will be eventually ❌ eliminated!",
+            "or you will be eventually ❌ eliminated!" +
+                (textAnimationCounter++ % 60 === 0 ? "ㅤ" : "▮"),
             24,
             "Sans-serif",
             1,
@@ -430,11 +456,18 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
         );
     } else {
         Logo();
-        renderText("Press ENTER to start the race!", 24, "Sans-serif", 1, 80);
+        renderText(
+            "Press ENTER to start the race!" +
+                (textAnimationCounter++ % 60 === 0 ? "ㅤ" : "▮"),
+            24,
+            "Sans-serif",
+            1,
+            100,
+        );
     }
 
-    renderText("MOVE WITH", 20, "Sans-serif", 0.8, 140);
-    renderText("▲ / W - ▼ / S - ◄ / A - ► / D", 20, "Sans-serif", 0.8, 170);
+    renderText("MOVE WITH", 20, "Sans-serif", 0.8, 160);
+    renderText("▲ / W - ▼ / S - ◄ / A - ► / D", 20, "Sans-serif", 0.8, 190);
 
     cx.restore();
 
