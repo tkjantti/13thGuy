@@ -183,8 +183,6 @@ const draw = (t: number, dt: number): void => {
 
     cx.save();
 
-    console.info(textAnimationCounter);
-
     switch (gameState) {
         case GameState.Load: {
             renderText(
