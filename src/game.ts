@@ -153,6 +153,16 @@ const update = (t: number, dt: number): void => {
 let textAnimationCounter = 0;
 const loadingText = "LOAD";
 
+const RenderWaitForKey = (text = "Press any key", y = 100) => {
+    renderText(
+        text + (textAnimationCounter++ % 60 === 0 ? "ㅤ" : "▮"),
+        24,
+        "Sans-serif",
+        1,
+        y,
+    );
+};
+
 const draw = (t: number, dt: number): void => {
     cx.save();
     cx.fillStyle = "rgb(0, 0, 20)";
@@ -186,15 +196,7 @@ const draw = (t: number, dt: number): void => {
         }
         case GameState.Init: {
             drawInitialScreen(true);
-            renderText(
-                "Press any key" +
-                    (textAnimationCounter++ % 60 === 0 ? "ㅤ" : "▮"),
-                24,
-                "Sans-serif",
-                1,
-                100,
-            );
-
+            RenderWaitForKey();
             break;
         }
         case GameState.Start: {
@@ -274,14 +276,7 @@ const draw = (t: number, dt: number): void => {
                 );
             }
             if (radius >= maxRadius) {
-                renderText(
-                    "Press ENTER" +
-                        (textAnimationCounter++ % 60 === 0 ? "ㅤ" : "▮"),
-                    24,
-                    "Sans-serif",
-                    1,
-                    120,
-                );
+                RenderWaitForKey("Press ENTER", 120);
             }
 
             if (radius < maxRadius) {
@@ -339,14 +334,7 @@ const draw = (t: number, dt: number): void => {
                         1,
                         60,
                     );
-                    renderText(
-                        "Press ENTER" +
-                            (textAnimationCounter++ % 60 === 0 ? "ㅤ" : "▮"),
-                        24,
-                        "Sans-serif",
-                        1,
-                        100,
-                    );
+                    RenderWaitForKey();
                 }
                 cx.save();
                 cx.translate(
@@ -423,24 +411,10 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
             1,
             -20,
         );
-        renderText(
-            "or you will be eventually ❌ eliminated!" +
-                (textAnimationCounter++ % 60 === 0 ? "ㅤ" : "▮"),
-            24,
-            "Sans-serif",
-            1,
-            20,
-        );
+        RenderWaitForKey("or you will be eventually ❌ eliminated!", 20);
     } else {
         Logo();
-        renderText(
-            "Press ENTER to start the race!" +
-                (textAnimationCounter++ % 60 === 0 ? "ㅤ" : "▮"),
-            24,
-            "Sans-serif",
-            1,
-            100,
-        );
+        RenderWaitForKey("Press ENTER to start the race!");
     }
 
     renderText("MOVE WITH", 20, "Sans-serif", 0.8, 160);
@@ -492,13 +466,11 @@ export const init = async (): Promise<void> => {
     initializeKeyboard();
     window.requestAnimationFrame(gameLoop);
 
-    await initialize().then(async () => {
-        setState(GameState.Init);
+    await initialize();
+    setState(GameState.Init);
 
-        await waitForAnyKey();
-
-        playTune(SFX_START);
-        setState(GameState.Start);
-        startRace();
-    });
+    await waitForAnyKey();
+    playTune(SFX_START);
+    setState(GameState.Start);
+    startRace();
 };
