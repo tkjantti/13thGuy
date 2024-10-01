@@ -1,4 +1,11 @@
-import { canvas, cx } from "./graphics";
+import {
+    applyCRTEffect,
+    applyGradient,
+    applyGrayscale,
+    renderText,
+    canvas,
+    cx,
+} from "./graphics";
 import {
     initializeKeyboard,
     sleep,
@@ -46,6 +53,7 @@ let level: Level;
 let maxRadius = 0;
 
 enum GameState {
+    Load,
     Init,
     Start,
     Wait,
@@ -55,7 +63,7 @@ enum GameState {
     GameFinished,
 }
 
-let gameState: GameState = GameState.Init;
+let gameState: GameState = GameState.Load;
 
 // For drawing start- and game over screens.
 let radius = 0;
@@ -136,40 +144,61 @@ const update = (t: number, dt: number): void => {
             }
             break;
         }
-        default:
+        default: {
             break;
+        }
     }
 };
 
-const centerText = (
-    text: string,
-    fontSize: number,
-    fontName: string,
-    alpha = 1,
-    yAdjust = 0,
-) => {
-    cx.save();
-    cx.globalAlpha = alpha > 0 ? alpha : 0;
-    cx.fillStyle = "white";
-    cx.font = fontSize + "px " + fontName;
-    const textWidth = cx.measureText(text).width;
-    cx.fillText(
-        text,
-        (canvas.width - textWidth) / 2,
-        canvas.height / 2 + yAdjust,
+let textAnimationCounter = 0;
+const loadingText = "LOAD";
+
+const RenderWaitForKey = (text = "Press any key", y = 100) => {
+    renderText(
+        text + (textAnimationCounter++ % 60 === 0 ? "ㅤ" : "▮"),
+        24,
+        "Sans-serif",
+        1,
+        y,
     );
-    cx.restore();
 };
 
 const draw = (t: number, dt: number): void => {
     cx.save();
-    cx.fillStyle = "rgb(0, 0, 10)";
+    cx.fillStyle = "rgb(0, 0, 20)";
     cx.fillRect(0, 0, canvas.width, canvas.height);
     level?.draw(t, dt);
     cx.restore();
 
     cx.save();
+
     switch (gameState) {
+        case GameState.Load: {
+            renderText(
+                (textAnimationCounter < 4
+                    ? loadingText.substring(0, textAnimationCounter)
+                    : "LOADING...") +
+                    (textAnimationCounter % 2 || textAnimationCounter % 4
+                        ? "▮"
+                        : "ㅤ"),
+                24,
+                "Courier New",
+                1,
+                40,
+                true,
+                60,
+            );
+            textAnimationCounter++;
+            applyGrayscale();
+            applyCRTEffect(false);
+
+            break;
+        }
+        case GameState.Init: {
+            drawInitialScreen(true);
+            RenderWaitForKey();
+            break;
+        }
         case GameState.Start: {
             drawStartScreen(t++, false, 0);
 
@@ -199,18 +228,24 @@ const draw = (t: number, dt: number): void => {
                     cx.fill();
                 }
                 if (radius < maxRadius / 4) {
-                    centerText("▲ GO! ▲", 64, "Impact", 1);
+                    renderText(
+                        "▲ GO! ▲",
+                        64,
+                        "Impact",
+                        (radius / maxRadius) * 4,
+                    );
                 } else if (radius < maxRadius / 2) {
-                    centerText("Set...", 64, "Impact", 1);
+                    renderText("Set...", 64, "Impact", 1);
                 } else {
-                    centerText("Ready...", 64, "Impact", 1);
+                    renderText("Ready...", 64, "Impact", 1);
                 }
 
                 if (radius > 0) {
                     radius -= dt / 2;
                 }
             }
-            applyGradient();
+            applyGradient(false);
+            applyCRTEffect(true);
 
             break;
         }
@@ -221,18 +256,18 @@ const draw = (t: number, dt: number): void => {
             cx.arc(centerX, centerY, radius, 0, Math.PI * 2);
             cx.fillStyle = "#802010";
             cx.fill();
-            centerText("❌ ELIMINATED!", 48, "Impact", 1, -70);
+            renderText("❌ ELIMINATED!", 48, "Impact", 1, -70);
             if (level.player.rank === 13) {
-                centerText("Don't be the 13TH GUY", 24, "Sans-serif", 1, 0);
+                renderText("Don't be the 13TH GUY", 24, "Sans-serif", 1, 0);
             } else {
-                centerText(
+                renderText(
                     "Don't be one of the last 13TH GUYs",
                     24,
                     "Sans-serif",
                     1,
                     0,
                 );
-                centerText(
+                renderText(
                     "The final rank is " + level.player.rank + ".",
                     32,
                     "Impact",
@@ -241,7 +276,7 @@ const draw = (t: number, dt: number): void => {
                 );
             }
             if (radius >= maxRadius) {
-                centerText("Press ENTER", 24, "Sans-serif", 1, 100);
+                RenderWaitForKey("Press ENTER", 120);
             }
 
             if (radius < maxRadius) {
@@ -264,7 +299,8 @@ const draw = (t: number, dt: number): void => {
                 radius += dt;
             }
 
-            applyGradient();
+            applyGradient(false);
+            applyCRTEffect(true);
 
             break;
         }
@@ -279,9 +315,9 @@ const draw = (t: number, dt: number): void => {
                 cx.fill();
 
                 if (level.characters.length > 14) {
-                    centerText("✪ QUALIFIED!", 48, "Impact", 1, -80);
-                    centerText("☻", 80, "Impact", 1, 0);
-                    centerText(
+                    renderText("✪ QUALIFIED!", 48, "Impact", 1, -80);
+                    renderText("☻", 80, "Impact", 1, 0);
+                    renderText(
                         "Ready for next round " + raceNumber + " / 3",
                         32,
                         "Sans-serif",
@@ -289,16 +325,16 @@ const draw = (t: number, dt: number): void => {
                         60,
                     );
                 } else {
-                    centerText("GAME FINISHED!", 48, "Impact", 1, -80);
-                    centerText("☻", 80, "Impact", 1, 0);
-                    centerText(
+                    renderText("GAME FINISHED!", 48, "Impact", 1, -80);
+                    renderText("☻", 80, "Impact", 1, 0);
+                    renderText(
                         "Congratulations to the winner!",
                         32,
                         "Impact",
                         1,
                         60,
                     );
-                    centerText("Press ENTER", 32, "Sans-serif", 1, 120);
+                    RenderWaitForKey();
                 }
                 cx.save();
                 cx.translate(
@@ -324,12 +360,14 @@ const draw = (t: number, dt: number): void => {
             if (radius < maxRadius) {
                 radius += dt;
             }
-            applyGradient();
+            applyGradient(false);
+            applyCRTEffect(true);
 
             break;
         }
         default: {
             applyGradient(true);
+            applyCRTEffect(false);
 
             break;
         }
@@ -338,60 +376,9 @@ const draw = (t: number, dt: number): void => {
     cx.restore();
 };
 
-const applyCRTEffect = (): void => {
-    const imageData = cx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-    const width = canvas.width;
-    const height = canvas.height;
-
-    for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-            const index = (y * width + x) * 4;
-
-            // Apply scanlines
-            if (y % 2 === 0) {
-                data[index] *= 0.5; // Red
-                data[index + 1] *= 0.5; // Green
-                data[index + 2] *= 0.5; // Blue
-            }
-
-            // Apply noise
-            const noise = (Math.random() - 0.5) * 20;
-            data[index] += noise; // Red
-            data[index + 1] += noise; // Green
-            data[index + 2] += noise; // Blue
-        }
-    }
-
-    cx.putImageData(imageData, 0, 0);
-};
-
-const applyGradient = (track = false) => {
-    const width = canvas.width;
-    const height = canvas.height;
-    const gradient = cx.createRadialGradient(
-        width / 2,
-        height / 2,
-        0, // Inner circle
-        width / 2,
-        height / 2,
-        width / 2, // Outer circle
-    );
-    if (track) {
-        gradient.addColorStop(0, "rgba(255, 255, 255, 0.1)");
-        gradient.addColorStop(1, "rgba(0, 0, 0, 0.2)");
-    } else {
-        gradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
-        gradient.addColorStop(1, "rgba(0, 0, 0, 0.5)");
-    }
-
-    cx.fillStyle = gradient;
-    cx.fillRect(0, 0, width, height);
-};
-
 const Logo = () => {
-    centerText("Don't be the", 24, "Impact", 1, -30);
-    centerText("❌ 13TH GUY", 64, "Impact", 1, 30);
+    renderText("Don't be the", 24, "Impact", 1, -30);
+    renderText("❌ 13TH GUY", 64, "Impact", 1, 30);
 };
 
 const drawStartScreen = (t: number, wait: boolean, z: number): void => {
@@ -417,33 +404,30 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
     cx.restore();
 
     if (wait) {
-        centerText(
+        renderText(
             "Avoid being the 13th or among the last 13",
             24,
             "Sans-serif",
             1,
             -20,
         );
-        centerText(
-            "or you will be eventually ❌ eliminated!",
-            24,
-            "Sans-serif",
-            1,
-            20,
-        );
-        centerText("⌨ W A S D ▲ ▼ ◄ ►", 24, "Sans-serif", 1, 80);
+        RenderWaitForKey("or you will be eventually ❌ eliminated!", 20);
     } else {
         Logo();
-        centerText("Press ENTER to start the race!", 24, "Sans-serif", 1, 80);
+        RenderWaitForKey("Press ENTER to start the race!");
     }
+
+    renderText("MOVE WITH", 20, "Sans-serif", 0.8, 160);
+    renderText("▲ / W - ▼ / S - ◄ / A - ► / D", 20, "Sans-serif", 0.8, 190);
+
     cx.restore();
 
-    applyGradient();
+    applyGradient(false);
+    applyCRTEffect(true);
 };
 
-const drawInitialScreen = (): void => {
+const drawInitialScreen = (noisy: boolean): void => {
     cx.save();
-    cx.filter = "grayscale(1) brightness(0.6)";
     cx.fillStyle = "rgb(20, 20, 50)";
     cx.rect(0, 0, canvas.width, canvas.height);
     cx.fill();
@@ -460,8 +444,10 @@ const drawInitialScreen = (): void => {
     );
     cx.restore();
     Logo();
-    applyGradient();
-    applyCRTEffect();
+    cx.filter = "";
+    applyGrayscale();
+    applyGradient(false);
+    applyCRTEffect(noisy);
 };
 
 export const startRace = async (): Promise<void> => {
@@ -478,16 +464,13 @@ export const startRace = async (): Promise<void> => {
 
 export const init = async (): Promise<void> => {
     initializeKeyboard();
-    drawInitialScreen();
-
-    await initialize().then(() =>
-        centerText("Press any key", 24, "Sans-serif", 1, 80),
-    );
-    cx.restore();
-    await waitForAnyKey();
-    playTune(SFX_START);
     window.requestAnimationFrame(gameLoop);
 
+    await initialize();
+    setState(GameState.Init);
+
+    await waitForAnyKey();
+    playTune(SFX_START);
     setState(GameState.Start);
     startRace();
 };

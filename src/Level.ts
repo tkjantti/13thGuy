@@ -245,7 +245,7 @@ export class Level implements Area {
         }
     }
 
-    private centerText(text: string, x: number, y: number, width: number) {
+    private renderText(text: string, x: number, y: number, width: number) {
         const textMetrics = cx.measureText(text);
         const textX = x + (width - textMetrics.width) / 2;
         cx.fillText(text, textX, y);
@@ -365,10 +365,10 @@ export class Level implements Area {
             cx.fillStyle = element.color;
             cx.shadowColor = element.color
                 .replace("rgb(", "rgba(")
-                .replace(")", ",0.5)");
+                .replace(")", ",0.3)");
             cx.shadowOffsetY =
                 element.height *
-                (element.type === TrackElementType.Raft ? 2 : 8);
+                (element.type === TrackElementType.Raft ? 2 : 6);
 
             if (element.type === TrackElementType.Raft) cx.globalAlpha = 0.5;
             for (let i = 0; i < surfaces.length; i++) {
@@ -559,7 +559,7 @@ export class Level implements Area {
                 if (!char.ai) {
                     cx.save();
                     cx.font = "4.0px Sans-serif";
-                    this.centerText(
+                    this.renderText(
                         "▲",
                         char.x,
                         char.y - char.height * 3.25,
@@ -569,7 +569,7 @@ export class Level implements Area {
                     cx.restore();
                 }
 
-                this.centerText(
+                this.renderText(
                     char.eliminated ? "❌ 13" : text,
                     char.x,
                     char.y - char.height * 2.5,

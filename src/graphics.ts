@@ -24,6 +24,106 @@
 
 export const canvas = document.querySelector("canvas") as HTMLCanvasElement;
 
+export const applyCRTEffect = (noisy = true): void => {
+    const imageData = cx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    const width = canvas.width;
+    const height = canvas.height;
+
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            const index = (y * width + x) * 4;
+
+            const opacity = !noisy ? 0.8 : 0.7;
+
+            // Apply scanlines
+            if (y % 2 === 0) {
+                data[index] *= opacity; // Red
+                data[index + 1] *= opacity; // Green
+                data[index + 2] *= opacity; // Blue
+            }
+            if (noisy) {
+                const noise = (Math.random() - 0.5) * 10;
+
+                // Apply noise
+                data[index] += noise; // Red
+                data[index + 1] += noise; // Green
+                data[index + 2] += noise; // Blue
+            }
+        }
+    }
+
+    cx.putImageData(imageData, 0, 0);
+};
+
+export const applyGradient = (track = false) => {
+    const width = canvas.width;
+    const height = canvas.height;
+    const gradient = cx.createRadialGradient(
+        width / 2,
+        height / 2,
+        0, // Inner circle
+        width / 2,
+        height / 2,
+        width / 2, // Outer circle
+    );
+    if (track) {
+        gradient.addColorStop(0, "rgba(255, 255, 255, 0.1");
+        gradient.addColorStop(1, "rgba(0, 0, 0, 0.2)");
+    } else {
+        gradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
+        gradient.addColorStop(1, "rgba(0, 0, 0, 0.5)");
+    }
+
+    cx.fillStyle = gradient;
+    cx.fillRect(0, 0, width, height);
+};
+
 export const cx: CanvasRenderingContext2D = canvas.getContext("2d", {
     willReadFrequently: true,
 })!;
+
+// Faster than using .filter
+export const applyGrayscale = () => {
+    // Get the image data
+    const imageData = cx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+
+    // Loop through each pixel
+    for (let i = 0; i < data.length; i += 4) {
+        const red = data[i];
+        const green = data[i + 1];
+        const blue = data[i + 2];
+
+        // Calculate the grayscale value
+        const grayscale = red * 0.3 + green * 0.59 + blue * 0.11;
+
+        // Set the pixel values to the grayscale value
+        data[i] = data[i + 1] = data[i + 2] = grayscale * 0.7;
+    }
+
+    // Put the modified image data back onto the canvas
+    cx.putImageData(imageData, 0, 0);
+};
+
+export const renderText = (
+    text: string,
+    fontSize: number,
+    fontName: string,
+    alpha = 1,
+    yAdjust = 0,
+    center = true,
+    xAdjust = 0,
+) => {
+    cx.save();
+    cx.globalAlpha = alpha > 0 ? alpha : 0;
+    cx.fillStyle = "white";
+    cx.font = fontSize + "px " + fontName;
+    const textWidth = cx.measureText(text).width;
+    cx.fillText(
+        text,
+        center ? (canvas.width - textWidth) / 2 + xAdjust : xAdjust,
+        center ? canvas.height / 2 + yAdjust : fontSize + yAdjust,
+    );
+    cx.restore();
+};
