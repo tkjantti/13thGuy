@@ -57,6 +57,7 @@ enum GameState {
     Init,
     Start,
     Wait,
+    RaceStarting,
     Ready,
     Running,
     GameOver,
@@ -97,8 +98,7 @@ const setState = (state: GameState): void => {
             radius = maxRadius;
             playTune(SFX_RACE);
             break;
-        case GameState.Running:
-            break;
+
         case GameState.GameOver:
             radius = 1;
             playTune(SFX_GAMEOVER);
@@ -153,7 +153,7 @@ const update = (t: number, dt: number): void => {
 let textAnimationCounter = 0;
 const loadingText = "LOAD";
 
-const RenderWaitForKey = (text = "Press any key", y = 100) => {
+const RenderWaitForKey = (text = "Press ENTER to continue", y = 100) => {
     renderText(
         text + (textAnimationCounter++ % 60 === 0 ? "ㅤ" : "▮"),
         24,
@@ -196,7 +196,7 @@ const draw = (t: number, dt: number): void => {
         }
         case GameState.Init: {
             drawInitialScreen(true);
-            RenderWaitForKey();
+            RenderWaitForKey("Press any key");
             break;
         }
         case GameState.Start: {
@@ -206,6 +206,24 @@ const draw = (t: number, dt: number): void => {
         }
         case GameState.Wait: {
             drawStartScreen(t++, true, (z = z + 0.01));
+            break;
+        }
+        case GameState.RaceStarting: {
+            drawStartScreen(t++, true, (z = z + 0.01));
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            cx.beginPath();
+            cx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            cx.fillStyle = "#802010";
+            cx.fill();
+
+            if (radius < maxRadius) {
+                radius += dt / 2;
+            }
+            applyGradient(false);
+            applyCRTEffect(true);
 
             break;
         }
@@ -276,7 +294,7 @@ const draw = (t: number, dt: number): void => {
                 );
             }
             if (radius >= maxRadius) {
-                RenderWaitForKey("Press ENTER", 120);
+                RenderWaitForKey("Press ENTER to continue", 120);
             }
 
             if (radius < maxRadius) {
@@ -411,14 +429,23 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
             1,
             -20,
         );
-        RenderWaitForKey("or you will be eventually ❌ eliminated!", 20);
+        renderText(
+            "or you will be eventually ❌ eliminated!",
+            24,
+            "Sans-serif",
+            1,
+            20,
+        );
+        renderText("MOVE WITH", 20, "Sans-serif", 0.8, -120);
+        renderText("▲ / W - ▼ / S - ◄ / A - ► / D", 20, "Sans-serif", 0.8, -90);
+
+        if (gameState === GameState.Wait) {
+            RenderWaitForKey("Press ENTER to start the race!");
+        }
     } else {
         Logo();
-        RenderWaitForKey("Press ENTER to start the race!");
+        RenderWaitForKey();
     }
-
-    renderText("MOVE WITH", 20, "Sans-serif", 0.8, 160);
-    renderText("▲ / W - ▼ / S - ◄ / A - ► / D", 20, "Sans-serif", 0.8, 190);
 
     cx.restore();
 
@@ -457,9 +484,12 @@ export const startRace = async (): Promise<void> => {
     await waitForEnter();
     setState(GameState.Wait);
 
-    setTimeout(() => {
-        setState(GameState.Ready);
-    }, 2400);
+    waitForEnter().then(() => {
+        setState(GameState.RaceStarting);
+        setTimeout(() => {
+            setState(GameState.Ready);
+        }, 2400);
+    });
 };
 
 export const init = async (): Promise<void> => {
