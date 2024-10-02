@@ -25,31 +25,37 @@
 export const canvas = document.querySelector("canvas") as HTMLCanvasElement;
 
 export const applyCRTEffect = (noisy = true): void => {
-    const imageData = cx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
     const width = canvas.width;
     const height = canvas.height;
+    const imageData = cx.getImageData(0, 0, width, height);
+    const data = imageData.data;
+    const opacity = noisy ? 0.7 : 0.8;
+    const noiseFactor = noisy ? 10 : 0;
 
-    for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-            const index = (y * width + x) * 4;
+    // Precompute noise values if noisy is true
+    const noiseValues = noisy ? new Float32Array(data.length / 4) : null;
+    if (noisy && noiseValues) {
+        for (let i = 0; i < noiseValues.length; i++) {
+            noiseValues[i] = (Math.random() - 0.5) * noiseFactor;
+        }
+    }
 
-            const opacity = !noisy ? 0.8 : 0.7;
+    for (let i = 0; i < data.length; i += 4) {
+        const y = (i / 4 / width) | 0; // Bitwise OR for faster Math.floor
 
-            // Apply scanlines
-            if (y % 2 === 0) {
-                data[index] *= opacity; // Red
-                data[index + 1] *= opacity; // Green
-                data[index + 2] *= opacity; // Blue
-            }
-            if (noisy) {
-                const noise = (Math.random() - 0.5) * 10;
+        // Apply scanlines
+        if ((y & 1) === 0) {
+            data[i] *= opacity; // Red
+            data[i + 1] *= opacity; // Green
+            data[i + 2] *= opacity; // Blue
+        }
 
-                // Apply noise
-                data[index] += noise; // Red
-                data[index + 1] += noise; // Green
-                data[index + 2] += noise; // Blue
-            }
+        // Apply noise
+        if (noisy && noiseValues) {
+            const noise = noiseValues[i / 4];
+            data[i] += noise; // Red
+            data[i + 1] += noise; // Green
+            data[i + 2] += noise; // Blue
         }
     }
 
