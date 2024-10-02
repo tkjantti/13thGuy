@@ -157,13 +157,13 @@ const loadingText = "LOADING...";
 
 const RenderWaitForKey = (text = "Press ENTER to continue", y = 100) => {
     renderText(
-        text + (textAnimationCounter++ % 60 === 0 ? " ㅤ" : " ▌"),
+        text + (textAnimationCounter++ % 60 === 0 ? "" : "█"),
         24,
-        "Sans-serif",
+        "Courier New",
         1,
         canvas.height / 2 + y,
         false,
-        canvas.width / 2 - cx.measureText(text).width - 24,
+        canvas.width / 2 - cx.measureText(text).width * 2 + 48,
     );
 };
 
