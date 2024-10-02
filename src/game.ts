@@ -153,11 +153,11 @@ const update = (t: number, dt: number): void => {
 };
 
 let textAnimationCounter = 0;
-const loadingText = "LOAD";
+const loadingText = "LOADING...";
 
 const RenderWaitForKey = (text = "Press ENTER to continue", y = 100) => {
     renderText(
-        text + (textAnimationCounter++ % 60 === 0 ? "ㅤ" : "▮"),
+        text + (textAnimationCounter++ % 60 === 0 ? " ㅤ" : " ▌"),
         24,
         "Sans-serif",
         1,
@@ -178,19 +178,10 @@ const draw = (t: number, dt: number): void => {
 
     switch (gameState) {
         case GameState.Load: {
-            renderText(
-                (textAnimationCounter < 4
+            RenderWaitForKey(
+                textAnimationCounter < 10
                     ? loadingText.substring(0, textAnimationCounter)
-                    : "LOADING...") +
-                    (textAnimationCounter % 2 || textAnimationCounter % 4
-                        ? "▮"
-                        : "ㅤ"),
-                24,
-                "Courier New",
-                1,
-                40,
-                true,
-                60,
+                    : "LOADING...",
             );
             textAnimationCounter++;
             applyGrayscale();
