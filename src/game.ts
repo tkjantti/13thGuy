@@ -72,7 +72,7 @@ let radius = 0;
 const setState = async (state: GameState) => {
     gameState = state;
 
-    maxRadius = Math.max(canvas.width, canvas.height) * 2; // larger than the diagonal of canvas size
+    maxRadius = 1280 * 2; // Always same size to make animations last the same time (max canvas * 2)
 
     switch (state) {
         case GameState.Start:
