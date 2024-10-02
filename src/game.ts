@@ -161,7 +161,9 @@ const RenderWaitForKey = (text = "Press ENTER to continue", y = 100) => {
         24,
         "Sans-serif",
         1,
-        y,
+        canvas.height / 2 + y,
+        false,
+        canvas.width / 2 - cx.measureText(text).width - 24,
     );
 };
 
