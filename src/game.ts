@@ -69,7 +69,7 @@ let gameState: GameState = GameState.Load;
 // For drawing start- and game over screens.
 let radius = 0;
 
-const setState = (state: GameState): void => {
+const setState = async (state: GameState) => {
     gameState = state;
 
     maxRadius = Math.max(canvas.width, canvas.height) * 2; // larger than the diagonal of canvas size
@@ -104,18 +104,20 @@ const setState = (state: GameState): void => {
             playTune(SFX_GAMEOVER);
             randomWidhOffset = 1 + Math.random() * 0.6;
             randomHeighOffset = 1 + Math.random() * 0.3;
-            waitForEnter().then(() => {
-                playTune(SFX_RESTART);
-                startRace();
-            });
+
+            await waitForEnter();
+            playTune(SFX_RESTART);
+            startRace();
             break;
         case GameState.GameFinished:
             playTune(SFX_FINISHED);
             // Players left for next round?
             if (level.characters.length > 14) {
-                sleep(8000).then(() => setState(GameState.Ready));
+                await sleep(8000);
+                setState(GameState.Ready);
             } else {
-                waitForEnter().then(() => startRace());
+                await waitForEnter();
+                startRace();
             }
             break;
         default:
@@ -220,7 +222,7 @@ const draw = (t: number, dt: number): void => {
             cx.fill();
 
             if (radius < maxRadius) {
-                radius += dt / 2;
+                radius += dt;
             }
             applyGradient(false);
             applyCRTEffect(true);
@@ -484,12 +486,10 @@ export const startRace = async (): Promise<void> => {
     await waitForEnter();
     setState(GameState.Wait);
 
-    waitForEnter().then(() => {
-        setState(GameState.RaceStarting);
-        setTimeout(() => {
-            setState(GameState.Ready);
-        }, 2400);
-    });
+    await waitForEnter();
+    setState(GameState.RaceStarting);
+    await sleep(1000);
+    setState(GameState.Ready);
 };
 
 export const init = async (): Promise<void> => {
