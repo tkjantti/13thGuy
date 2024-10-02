@@ -33,29 +33,39 @@ export const applyCRTEffect = (noisy = true): void => {
     const noiseFactor = noisy ? 10 : 0;
 
     // Precompute noise values if noisy is true
-    const noiseValues = noisy ? new Float32Array(data.length / 4) : null;
+    const noiseValues = noisy ? new Float32Array(width * height) : null;
     if (noisy && noiseValues) {
         for (let i = 0; i < noiseValues.length; i++) {
             noiseValues[i] = (Math.random() - 0.5) * noiseFactor;
         }
     }
 
-    for (let i = 0; i < data.length; i += 4) {
-        const y = (i / 4 / width) | 0; // Bitwise OR for faster Math.floor
+    for (let y = 0; y < height; y++) {
+        const isScanline = (y & 1) === 0;
+        for (let x = 0; x < width; x++) {
+            const index = (y * width + x) * 4;
+            let r = data[index];
+            let g = data[index + 1];
+            let b = data[index + 2];
 
-        // Apply scanlines
-        if ((y & 1) === 0) {
-            data[i] *= opacity; // Red
-            data[i + 1] *= opacity; // Green
-            data[i + 2] *= opacity; // Blue
-        }
+            // Apply scanlines
+            if (isScanline) {
+                r *= opacity;
+                g *= opacity;
+                b *= opacity;
+            }
 
-        // Apply noise
-        if (noisy && noiseValues) {
-            const noise = noiseValues[i / 4];
-            data[i] += noise; // Red
-            data[i + 1] += noise; // Green
-            data[i + 2] += noise; // Blue
+            // Apply noise
+            if (noisy && noiseValues) {
+                const noise = noiseValues[y * width + x];
+                r += noise;
+                g += noise;
+                b += noise;
+            }
+
+            data[index] = r;
+            data[index + 1] = g;
+            data[index + 2] = b;
         }
     }
 
