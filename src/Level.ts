@@ -504,13 +504,25 @@ export class Level implements Area {
 
         // Gradient shadow overlay
         cx.restore();
-
         const gradient = cx.createLinearGradient(0, 0, 0, canvas.height);
         gradient.addColorStop(0, "rgba(0, 0, 0, 1)");
         gradient.addColorStop(0.1, "rgba(0, 0, 0, 0.6)");
         gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
-
         cx.fillStyle = gradient;
+
+        const gradient2 = cx.createRadialGradient(
+            canvas.width / 2,
+            canvas.height / 2,
+            0, // Inner circle
+            canvas.width / 2,
+            canvas.height / 2,
+            canvas.width / 1.5, // Outer circle
+        );
+        gradient2.addColorStop(0, "rgba(0, 0, 0, 0)");
+        gradient2.addColorStop(0.8, "rgba(0, 0, 0, 1)");
+        gradient2.addColorStop(1, "rgba(0, 0, 0, 1)");
+        cx.fillStyle = gradient2;
+
         cx.fillRect(0, 0, canvas.width, canvas.height);
 
         // Extract characters from objectsToDraw
