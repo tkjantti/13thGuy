@@ -110,10 +110,12 @@ const setState = async (state: GameState) => {
             startRace();
             break;
         case GameState.GameFinished:
+            radius = 1;
             playTune(SFX_FINISHED);
             // Players left for next round?
             if (level.characters.length > 14) {
-                await sleep(8000);
+                await sleep(2500);
+                await waitForEnter();
                 setState(GameState.Ready);
             } else {
                 await waitForEnter();
@@ -326,12 +328,12 @@ const draw = (t: number, dt: number): void => {
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
 
-            if (radius >= 50) {
-                cx.beginPath();
-                cx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-                cx.fillStyle = "#105000";
-                cx.fill();
+            cx.beginPath();
+            cx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            cx.fillStyle = "#105000";
+            cx.fill();
 
+            if (radius >= maxRadius / 4) {
                 if (level.characters.length > 14) {
                     renderText("✪ QUALIFIED!", 48, "Impact", 1, -80);
                     renderText("☻", 80, "Impact", 1, 0);
@@ -352,8 +354,12 @@ const draw = (t: number, dt: number): void => {
                         1,
                         60,
                     );
+                }
+
+                if (radius >= maxRadius) {
                     RenderWaitForKey();
                 }
+
                 cx.save();
                 cx.translate(
                     radius < canvas.width / 6 ? radius : canvas.width / 6,
@@ -469,7 +475,7 @@ const drawInitialScreen = (noisy: boolean): void => {
     Logo();
     cx.filter = "";
     applyGrayscale();
-    applyGradient(false);
+    applyGradient();
     applyCRTEffect(noisy);
 };
 
