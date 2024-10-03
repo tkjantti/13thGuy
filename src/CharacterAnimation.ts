@@ -476,7 +476,6 @@ export function renderCharacter(
         cx.save();
 
         cx.shadowColor = "rgba(0, 0, 0, 0.5)";
-        cx.shadowBlur = 0;
 
         // Face
         cx.fillStyle = faceColor;
