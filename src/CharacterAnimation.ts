@@ -131,13 +131,13 @@ export function renderCharacter(
     cx.lineJoin = "round";
     cx.lineCap = "round";
 
-    cx.shadowOffsetY = 10;
-    cx.shadowBlur = 10;
     cx.shadowColor = "rgba(0, 0, 0, 0.5)";
 
     switch (direction) {
         case CharacterFacingDirection.Right:
             {
+                cx.shadowOffsetY = 10;
+                cx.shadowBlur = 10;
                 // Arm (back)
                 cx.save();
                 cx.strokeStyle = ArmColorDarker;
@@ -230,6 +230,8 @@ export function renderCharacter(
             break;
         case CharacterFacingDirection.Forward:
         case CharacterFacingDirection.Backward: {
+            cx.shadowOffsetY = 10;
+            cx.shadowBlur = 10;
             // Leg (left)
             cx.save();
             cx.strokeStyle = LegColor;
@@ -253,6 +255,8 @@ export function renderCharacter(
             cx.quadraticCurveTo(legLength / 8, legLength / 2, 0, legLength);
             cx.stroke();
             cx.restore();
+            cx.shadowOffsetY = 0;
+            cx.shadowBlur = 0;
 
             // Arm (left)
             cx.save();
@@ -303,6 +307,8 @@ export function renderCharacter(
             break;
         }
         case CharacterFacingDirection.ForwardRight: {
+            cx.shadowOffsetY = 10;
+            cx.shadowBlur = 10;
             // Leg (left)
             cx.save();
             cx.strokeStyle = LegColorDarker;
@@ -328,6 +334,8 @@ export function renderCharacter(
             cx.quadraticCurveTo(legLength / 8, legLength / 2, 0, legLength);
             cx.stroke();
             cx.restore();
+            cx.shadowOffsetY = 0;
+            cx.shadowBlur = 0;
 
             // Arm (left)
             cx.save();
@@ -378,6 +386,8 @@ export function renderCharacter(
             break;
         }
         case CharacterFacingDirection.BackwardRight: {
+            cx.shadowOffsetY = 10;
+            cx.shadowBlur = 10;
             // Leg (right)
             cx.save();
             cx.strokeStyle = LegColor;
@@ -403,6 +413,8 @@ export function renderCharacter(
             cx.quadraticCurveTo(-legLength / 8, legLength / 2, 0, legLength);
             cx.stroke();
             cx.restore();
+            cx.shadowOffsetY = 0;
+            cx.shadowBlur = 0;
 
             // Arm (right)
             cx.save();
