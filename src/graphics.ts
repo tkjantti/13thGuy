@@ -25,38 +25,55 @@
 export const canvas = document.querySelector("canvas") as HTMLCanvasElement;
 
 export const applyCRTEffect = (noisy = true): void => {
-    const imageData = cx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
     const width = canvas.width;
     const height = canvas.height;
+    const imageData = cx.getImageData(0, 0, width, height);
+    const data = new Uint8ClampedArray(imageData.data.buffer);
+    const opacity = noisy ? 0.7 : 0.8;
+    const noiseFactor = noisy ? 10 : 0;
 
-    for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-            const index = (y * width + x) * 4;
-
-            const opacity = !noisy ? 0.8 : 0.7;
-
-            // Apply scanlines
-            if (y % 2 === 0) {
-                data[index] *= opacity; // Red
-                data[index + 1] *= opacity; // Green
-                data[index + 2] *= opacity; // Blue
-            }
-            if (noisy) {
-                const noise = (Math.random() - 0.5) * 10;
-
-                // Apply noise
-                data[index] += noise; // Red
-                data[index + 1] += noise; // Green
-                data[index + 2] += noise; // Blue
-            }
+    // Precompute noise values if noisy is true
+    const noiseValues = noisy ? new Float32Array(width * height) : null;
+    if (noisy && noiseValues) {
+        for (let i = 0; i < noiseValues.length; i++) {
+            noiseValues[i] = (Math.random() - 0.5) * noiseFactor;
         }
     }
 
-    cx.putImageData(imageData, 0, 0);
+    for (let y = 0; y < height; y++) {
+        const isScanline = (y & 1) === 0;
+        const yOffset = y * width;
+        for (let x = 0; x < width; x++) {
+            const index = (yOffset + x) * 4;
+            let r = data[index];
+            let g = data[index + 1];
+            let b = data[index + 2];
+
+            // Apply scanlines
+            if (isScanline) {
+                r *= opacity;
+                g *= opacity;
+                b *= opacity;
+            }
+
+            // Apply noise
+            if (noisy && noiseValues) {
+                const noise = noiseValues[yOffset + x];
+                r += noise;
+                g += noise;
+                b += noise;
+            }
+
+            data[index] = r;
+            data[index + 1] = g;
+            data[index + 2] = b;
+        }
+    }
+
+    cx.putImageData(new ImageData(data, width, height), 0, 0);
 };
 
-export const applyGradient = (track = false) => {
+export const applyGradient = () => {
     const width = canvas.width;
     const height = canvas.height;
     const gradient = cx.createRadialGradient(
@@ -67,13 +84,8 @@ export const applyGradient = (track = false) => {
         height / 2,
         width / 2, // Outer circle
     );
-    if (track) {
-        gradient.addColorStop(0, "rgba(255, 255, 255, 0.1");
-        gradient.addColorStop(1, "rgba(0, 0, 0, 0.2)");
-    } else {
-        gradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
-        gradient.addColorStop(1, "rgba(0, 0, 0, 0.5)");
-    }
+    gradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
+    gradient.addColorStop(1, "rgba(0, 0, 0, 0.5)");
 
     cx.fillStyle = gradient;
     cx.fillRect(0, 0, width, height);

@@ -72,7 +72,7 @@ let radius = 0;
 const setState = async (state: GameState) => {
     gameState = state;
 
-    maxRadius = Math.max(canvas.width, canvas.height) * 2; // larger than the diagonal of canvas size
+    maxRadius = 1280 * 2; // Always same size to make animations last the same time (max canvas * 2)
 
     switch (state) {
         case GameState.Start:
@@ -110,10 +110,12 @@ const setState = async (state: GameState) => {
             startRace();
             break;
         case GameState.GameFinished:
+            radius = 1;
             playTune(SFX_FINISHED);
             // Players left for next round?
             if (level.characters.length > 14) {
-                await sleep(8000);
+                await sleep(2500);
+                await waitForEnter();
                 setState(GameState.Ready);
             } else {
                 await waitForEnter();
@@ -163,7 +165,7 @@ const RenderWaitForKey = (text = "Press ENTER to continue", y = 100) => {
         1,
         canvas.height / 2 + y,
         false,
-        canvas.width / 2 - cx.measureText(text).width * 2 + 48,
+        canvas.width / 2 - cx.measureText(text).width * 2 + 64,
     );
 };
 
@@ -196,11 +198,16 @@ const draw = (t: number, dt: number): void => {
         }
         case GameState.Start: {
             drawStartScreen(t++, false, 0);
+            applyGradient();
+            applyCRTEffect(true);
 
             break;
         }
         case GameState.Wait: {
             drawStartScreen(t++, true, (z = z + 0.01));
+            applyGradient();
+            applyCRTEffect(true);
+
             break;
         }
         case GameState.RaceStarting: {
@@ -217,7 +224,7 @@ const draw = (t: number, dt: number): void => {
             if (radius < maxRadius) {
                 radius += dt;
             }
-            applyGradient(false);
+            applyGradient();
             applyCRTEffect(true);
 
             break;
@@ -257,7 +264,7 @@ const draw = (t: number, dt: number): void => {
                     radius -= dt / 2;
                 }
             }
-            applyGradient(false);
+            applyGradient();
             applyCRTEffect(true);
 
             break;
@@ -312,7 +319,7 @@ const draw = (t: number, dt: number): void => {
                 radius += dt;
             }
 
-            applyGradient(false);
+            applyGradient();
             applyCRTEffect(true);
 
             break;
@@ -321,12 +328,12 @@ const draw = (t: number, dt: number): void => {
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
 
-            if (radius >= 50) {
-                cx.beginPath();
-                cx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-                cx.fillStyle = "#105000";
-                cx.fill();
+            cx.beginPath();
+            cx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            cx.fillStyle = "#105000";
+            cx.fill();
 
+            if (radius >= maxRadius / 4) {
                 if (level.characters.length > 14) {
                     renderText("✪ QUALIFIED!", 48, "Impact", 1, -80);
                     renderText("☻", 80, "Impact", 1, 0);
@@ -347,8 +354,12 @@ const draw = (t: number, dt: number): void => {
                         1,
                         60,
                     );
+                }
+
+                if (radius >= maxRadius) {
                     RenderWaitForKey();
                 }
+
                 cx.save();
                 cx.translate(
                     radius < canvas.width / 6 ? radius : canvas.width / 6,
@@ -373,13 +384,12 @@ const draw = (t: number, dt: number): void => {
             if (radius < maxRadius) {
                 radius += dt;
             }
-            applyGradient(false);
+            applyGradient();
             applyCRTEffect(true);
 
             break;
         }
         default: {
-            applyGradient(true);
             applyCRTEffect(false);
 
             break;
@@ -443,9 +453,6 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
     }
 
     cx.restore();
-
-    applyGradient(false);
-    applyCRTEffect(true);
 };
 
 const drawInitialScreen = (noisy: boolean): void => {
@@ -468,7 +475,7 @@ const drawInitialScreen = (noisy: boolean): void => {
     Logo();
     cx.filter = "";
     applyGrayscale();
-    applyGradient(false);
+    applyGradient();
     applyCRTEffect(noisy);
 };
 

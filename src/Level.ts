@@ -341,6 +341,23 @@ export class Level implements Area {
         c.drop(dropPosition);
     }
 
+    // Function to draw a cross (❌) for better browser compatibility
+    private drawCross(
+        x: number,
+        y: number,
+        size: number,
+        color: string = "red",
+    ): void {
+        cx.strokeStyle = color;
+        cx.lineWidth = size / 4;
+        cx.beginPath();
+        cx.moveTo(x - size / 2, y - size / 2);
+        cx.lineTo(x + size / 2, y + size / 2);
+        cx.moveTo(x + size / 2, y - size / 2);
+        cx.lineTo(x - size / 2, y + size / 2);
+        cx.stroke();
+    }
+
     draw(t: number, dt: number): void {
         cx.save();
         // Apply camera - drawing in level coordinates after these lines:
@@ -569,8 +586,15 @@ export class Level implements Area {
                     cx.restore();
                 }
 
+                if (char.eliminated) {
+                    this.drawCross(
+                        char.x - 0.25,
+                        char.y - char.height * 2.7,
+                        1,
+                    );
+                }
                 this.renderText(
-                    char.eliminated ? "❌ 13" : text,
+                    char.eliminated ? "13" : text,
                     char.x,
                     char.y - char.height * 2.5,
                     char.width,
@@ -605,10 +629,11 @@ export class Level implements Area {
                 -15,
                 this.camera.y - 30,
             );
-            cx.fillStyle = "white";
+            cx.fillStyle = "red";
+            this.drawCross(28, this.camera.y - 31.5, 3);
             cx.fillText(
-                "❌ " + eliminatedCharactersCount + " / 13",
-                27,
+                eliminatedCharactersCount + " / 13",
+                32,
                 this.camera.y - 30,
             );
         }
