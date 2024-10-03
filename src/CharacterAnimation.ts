@@ -189,6 +189,8 @@ export function renderCharacter(
                 );
                 cx.stroke();
                 cx.restore();
+                cx.shadowOffsetY = 0;
+                cx.shadowBlur = 0;
 
                 // Head
                 cx.beginPath();
