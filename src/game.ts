@@ -165,7 +165,7 @@ const RenderWaitForKey = (text = "Press ENTER to continue", y = 100) => {
         1,
         canvas.height / 2 + y,
         false,
-        canvas.width / 2 - cx.measureText(text).width * 2 + 48,
+        canvas.width / 2 - cx.measureText(text).width * 2 + 64,
     );
 };
 
