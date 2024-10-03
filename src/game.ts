@@ -196,11 +196,16 @@ const draw = (t: number, dt: number): void => {
         }
         case GameState.Start: {
             drawStartScreen(t++, false, 0);
+            applyGradient();
+            applyCRTEffect(true);
 
             break;
         }
         case GameState.Wait: {
             drawStartScreen(t++, true, (z = z + 0.01));
+            applyGradient();
+            applyCRTEffect(true);
+
             break;
         }
         case GameState.RaceStarting: {
@@ -217,7 +222,7 @@ const draw = (t: number, dt: number): void => {
             if (radius < maxRadius) {
                 radius += dt;
             }
-            applyGradient(false);
+            applyGradient();
             applyCRTEffect(true);
 
             break;
@@ -257,7 +262,7 @@ const draw = (t: number, dt: number): void => {
                     radius -= dt / 2;
                 }
             }
-            applyGradient(false);
+            applyGradient();
             applyCRTEffect(true);
 
             break;
@@ -312,7 +317,7 @@ const draw = (t: number, dt: number): void => {
                 radius += dt;
             }
 
-            applyGradient(false);
+            applyGradient();
             applyCRTEffect(true);
 
             break;
@@ -373,13 +378,12 @@ const draw = (t: number, dt: number): void => {
             if (radius < maxRadius) {
                 radius += dt;
             }
-            applyGradient(false);
+            applyGradient();
             applyCRTEffect(true);
 
             break;
         }
         default: {
-            applyGradient(true);
             applyCRTEffect(false);
 
             break;
@@ -443,9 +447,6 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
     }
 
     cx.restore();
-
-    applyGradient(false);
-    applyCRTEffect(true);
 };
 
 const drawInitialScreen = (noisy: boolean): void => {

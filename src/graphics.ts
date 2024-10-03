@@ -72,7 +72,7 @@ export const applyCRTEffect = (noisy = true): void => {
     cx.putImageData(imageData, 0, 0);
 };
 
-export const applyGradient = (track = false) => {
+export const applyGradient = () => {
     const width = canvas.width;
     const height = canvas.height;
     const gradient = cx.createRadialGradient(
@@ -83,13 +83,8 @@ export const applyGradient = (track = false) => {
         height / 2,
         width / 2, // Outer circle
     );
-    if (track) {
-        gradient.addColorStop(0, "rgba(255, 255, 255, 0.1");
-        gradient.addColorStop(1, "rgba(0, 0, 0, 0.2)");
-    } else {
-        gradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
-        gradient.addColorStop(1, "rgba(0, 0, 0, 0.5)");
-    }
+    gradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
+    gradient.addColorStop(1, "rgba(0, 0, 0, 0.5)");
 
     cx.fillStyle = gradient;
     cx.fillRect(0, 0, width, height);
