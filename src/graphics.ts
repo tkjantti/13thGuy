@@ -28,7 +28,7 @@ export const applyCRTEffect = (noisy = true): void => {
     const width = canvas.width;
     const height = canvas.height;
     const imageData = cx.getImageData(0, 0, width, height);
-    const data = imageData.data;
+    const data = new Uint8ClampedArray(imageData.data.buffer);
     const opacity = noisy ? 0.7 : 0.8;
     const noiseFactor = noisy ? 10 : 0;
 
@@ -42,8 +42,9 @@ export const applyCRTEffect = (noisy = true): void => {
 
     for (let y = 0; y < height; y++) {
         const isScanline = (y & 1) === 0;
+        const yOffset = y * width;
         for (let x = 0; x < width; x++) {
-            const index = (y * width + x) * 4;
+            const index = (yOffset + x) * 4;
             let r = data[index];
             let g = data[index + 1];
             let b = data[index + 2];
@@ -57,7 +58,7 @@ export const applyCRTEffect = (noisy = true): void => {
 
             // Apply noise
             if (noisy && noiseValues) {
-                const noise = noiseValues[y * width + x];
+                const noise = noiseValues[yOffset + x];
                 r += noise;
                 g += noise;
                 b += noise;
@@ -69,7 +70,7 @@ export const applyCRTEffect = (noisy = true): void => {
         }
     }
 
-    cx.putImageData(imageData, 0, 0);
+    cx.putImageData(new ImageData(data, width, height), 0, 0);
 };
 
 export const applyGradient = () => {
