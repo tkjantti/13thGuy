@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "vite",
     "start": "vite",
+    "prebuild": "node scripts/prebuild.js",
     "build": "tsc && vite build",
-    "postbuild": "node createDeployPackage.js",
+    "postbuild": "node scripts/postbuild.js",
     "preview": "vite preview",
     "lint": "eslint ."
   },
