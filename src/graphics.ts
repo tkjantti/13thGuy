@@ -52,7 +52,7 @@ export const applyCRTEffect = (noisy = true): void => {
     const width = canvas.width;
     const height = canvas.height;
     const imageData = cx.getImageData(0, 0, width, height);
-    const data = new Uint8ClampedArray(imageData.data.buffer);
+    const data = imageData.data;
     const opacity = noisy ? 0.7 : 0.8;
     const noiseFactor = noisy ? 10 : 0;
 
@@ -78,7 +78,7 @@ export const applyCRTEffect = (noisy = true): void => {
         }
     }
 
-    cx.putImageData(new ImageData(data, width, height), 0, 0);
+    cx.putImageData(imageData, 0, 0);
 
     // Create scanline canvas if it doesn't exist
     if (
@@ -91,7 +91,9 @@ export const applyCRTEffect = (noisy = true): void => {
 
     // Blend the scanline pattern with the main canvas
     if (scanlineContext && scanlineCanvas) {
+        cx.globalAlpha = opacity;
         cx.drawImage(scanlineCanvas, 0, 0);
+        cx.globalAlpha = 1.0; // Reset alpha
     }
 };
 
