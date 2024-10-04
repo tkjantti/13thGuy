@@ -61,6 +61,20 @@ export class Obstacle implements GameObject {
         bodyGradient.addColorStop(0, "rgb(255, 110, 110)");
         bodyGradient.addColorStop(1, "rgb(255, 60, 60)");
 
+        // Shadow ellipse
+        cx.beginPath();
+        cx.fillStyle = "rgba(0, 0, 0, 0.15)";
+        cx.ellipse(
+            this.width / 2,
+            this.height / 1.3,
+            this.width / 2,
+            this.height / 2,
+            0,
+            0,
+            2 * Math.PI,
+        );
+        cx.fill();
+
         // Bottom ellipse
         cx.fillStyle = bodyGradient;
         cx.beginPath();
@@ -73,13 +87,9 @@ export class Obstacle implements GameObject {
             0,
             2 * Math.PI,
         );
-        cx.shadowOffsetY = this.height * 4;
-        cx.shadowBlur = this.height;
-        cx.shadowColor = "rgba(0, 0, 0, 0.1)";
         cx.fill();
 
-        cx.shadowOffsetY = 0;
-        cx.shadowBlur = 0;
+        cx.fillStyle = bodyGradient;
         cx.fillRect(0, -this.height * 2, this.width, this.height * 2.5);
         const gradient = cx.createLinearGradient(0, 0, this.width, this.height);
         gradient.addColorStop(0, "rgb(255, 140, 140)");
