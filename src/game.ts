@@ -162,10 +162,6 @@ const loadingText = "LOADING...";
 
 const isFirefox = navigator.userAgent.toLowerCase().includes("firefox");
 
-const isSafari = /^((?!chrome|android).)*safari/i.test(
-    navigator.userAgent.toLowerCase(),
-);
-
 const RenderWaitForKey = (text = "Press ENTER to continue", y = 100) => {
     renderText(
         text + (textAnimationCounter++ % 60 === 0 ? "" : "█"),
@@ -402,9 +398,7 @@ const draw = (t: number, dt: number): void => {
             break;
         }
         default: {
-            if (!isSafari) {
-                applyCRTEffect(false);
-            }
+            applyCRTEffect(false);
 
             break;
         }
