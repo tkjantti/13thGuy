@@ -23,6 +23,30 @@
  */
 
 export const canvas = document.querySelector("canvas") as HTMLCanvasElement;
+export const cx: CanvasRenderingContext2D = canvas.getContext("2d", {
+    willReadFrequently: true,
+})!;
+
+let scanlineCanvas: HTMLCanvasElement | null = null;
+let scanlineContext: CanvasRenderingContext2D | null = null;
+
+const createScanlineCanvas = (
+    width: number,
+    height: number,
+    opacity: number,
+): void => {
+    scanlineCanvas = document.createElement("canvas");
+    scanlineCanvas.width = width;
+    scanlineCanvas.height = height;
+    scanlineContext = scanlineCanvas.getContext("2d");
+
+    if (scanlineContext) {
+        scanlineContext.fillStyle = `rgba(0, 0, 0, ${1 - opacity})`;
+        for (let y = 0; y < height; y += 2) {
+            scanlineContext.fillRect(0, y, width, 1);
+        }
+    }
+};
 
 export const applyCRTEffect = (noisy = true): void => {
     const width = canvas.width;
@@ -40,37 +64,35 @@ export const applyCRTEffect = (noisy = true): void => {
         }
     }
 
-    for (let y = 0; y < height; y++) {
-        const isScanline = (y & 1) === 0;
-        const yOffset = y * width;
-        for (let x = 0; x < width; x++) {
-            const index = (yOffset + x) * 4;
-            let r = data[index];
-            let g = data[index + 1];
-            let b = data[index + 2];
-
-            // Apply scanlines
-            if (isScanline) {
-                r *= opacity;
-                g *= opacity;
-                b *= opacity;
-            }
-
-            // Apply noise
-            if (noisy && noiseValues) {
+    // Apply noise
+    if (noisy && noiseValues) {
+        for (let y = 0; y < height; y++) {
+            const yOffset = y * width;
+            for (let x = 0; x < width; x++) {
+                const index = (yOffset + x) * 4;
                 const noise = noiseValues[yOffset + x];
-                r += noise;
-                g += noise;
-                b += noise;
+                data[index] += noise;
+                data[index + 1] += noise;
+                data[index + 2] += noise;
             }
-
-            data[index] = r;
-            data[index + 1] = g;
-            data[index + 2] = b;
         }
     }
 
     cx.putImageData(new ImageData(data, width, height), 0, 0);
+
+    // Create scanline canvas if it doesn't exist
+    if (
+        !scanlineCanvas ||
+        scanlineCanvas.width !== width ||
+        scanlineCanvas.height !== height
+    ) {
+        createScanlineCanvas(width, height, opacity);
+    }
+
+    // Blend the scanline pattern with the main canvas
+    if (scanlineContext && scanlineCanvas) {
+        cx.drawImage(scanlineCanvas, 0, 0);
+    }
 };
 
 export const applyGradient = () => {
@@ -90,10 +112,6 @@ export const applyGradient = () => {
     cx.fillStyle = gradient;
     cx.fillRect(0, 0, width, height);
 };
-
-export const cx: CanvasRenderingContext2D = canvas.getContext("2d", {
-    willReadFrequently: true,
-})!;
 
 // Faster than using .filter
 export const applyGrayscale = () => {

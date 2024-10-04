@@ -157,6 +157,8 @@ const update = (t: number, dt: number): void => {
 let textAnimationCounter = 0;
 const loadingText = "LOADING...";
 
+const isFirefox = navigator.userAgent.toLowerCase().includes("firefox");
+
 const RenderWaitForKey = (text = "Press ENTER to continue", y = 100) => {
     renderText(
         text + (textAnimationCounter++ % 60 === 0 ? "" : "█"),
@@ -165,7 +167,10 @@ const RenderWaitForKey = (text = "Press ENTER to continue", y = 100) => {
         1,
         canvas.height / 2 + y,
         false,
-        canvas.width / 2 - cx.measureText(text).width * 2 + 64,
+        canvas.width / 2 -
+            // Let's check if Firefox as there is a difference in rendering this versus Chromium based browsers
+            cx.measureText(text).width * (isFirefox ? 1.95 : 2) +
+            64,
     );
 };
 
@@ -402,6 +407,15 @@ const draw = (t: number, dt: number): void => {
 const Logo = () => {
     renderText("Don't be the", 24, "Impact", 1, -30);
     renderText("❌ 13TH GUY", 64, "Impact", 1, 30);
+    renderText(
+        "Director's cut (4.10.2024)",
+        16,
+        "Impact",
+        0.5,
+        20,
+        false,
+        canvas.width - 240,
+    );
 };
 
 const drawStartScreen = (t: number, wait: boolean, z: number): void => {
