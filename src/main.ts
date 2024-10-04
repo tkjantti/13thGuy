@@ -34,7 +34,6 @@ const maxWidth = isSafari ? 1024 : 1280;
 const maxHeight = isSafari ? 576 : 720;
 
 const resize = (): void => {
-    console.info(maxHeight, maxWidth);
     // Calculate the aspect ratio
     const aspectRatio = maxWidth / maxHeight;
 
