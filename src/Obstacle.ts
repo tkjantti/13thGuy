@@ -63,12 +63,12 @@ export class Obstacle implements GameObject {
 
         // Shadow ellipse
         cx.beginPath();
-        cx.fillStyle = "rgba(0, 0, 0, 0.15)";
+        cx.fillStyle = "rgba(0, 0, 0, 0.1)";
         cx.ellipse(
             this.width / 2,
-            this.height / 1.3,
+            this.height / 1.5,
             this.width / 2,
-            this.height / 2,
+            this.height / 1.5,
             0,
             0,
             2 * Math.PI,
