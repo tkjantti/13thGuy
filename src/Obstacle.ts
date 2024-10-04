@@ -68,7 +68,7 @@ export class Obstacle implements GameObject {
             this.width / 2,
             this.height / 1.5,
             this.width / 2,
-            this.height / 1.5,
+            this.height,
             0,
             0,
             2 * Math.PI,

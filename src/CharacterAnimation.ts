@@ -132,15 +132,14 @@ export function renderCharacter(
     cx.lineCap = "round";
 
     // Define shadow properties
-    const shadowColor = "rgba(0, 0, 0, 0.25)";
-
+    const shadowColor = "rgba(0, 0, 0, 0.2";
     // Draw shadow (ellipse)
     cx.save();
     cx.fillStyle = shadowColor;
-    cx.translate(0.5 * w, h * 0.99 + bouncing);
-    cx.scale(1, 0.5);
+    cx.translate(0.5 * w, h + bouncing);
+    cx.scale(1, 1);
     cx.beginPath();
-    cx.arc(0, 0, w * 0.35 - bouncing / 2, 0, 2 * Math.PI);
+    cx.arc(0, 0, w * 0.4 - bouncing / 2, 0, 2 * Math.PI);
     cx.fill();
     cx.restore();
 
