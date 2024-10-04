@@ -31,8 +31,11 @@ import {
     CharacterAnimation,
     CharacterFacingDirection,
     renderCharacter,
-} from "./CharacterAnimation.js";
-import { playerColor } from "./Character.js";
+} from "./CharacterAnimation";
+import { playerColor } from "./Character";
+import { VERSION } from "./version";
+
+const versionText = "Director's cut (" + VERSION + ")";
 
 const TIME_STEP = 1000 / 60;
 const MAX_FRAME = TIME_STEP * 5;
@@ -407,15 +410,7 @@ const draw = (t: number, dt: number): void => {
 const Logo = () => {
     renderText("Don't be the", 24, "Impact", 1, -30);
     renderText("❌ 13TH GUY", 64, "Impact", 1, 30);
-    renderText(
-        "Director's cut (4.10.2024)",
-        16,
-        "Impact",
-        0.5,
-        20,
-        false,
-        canvas.width - 240,
-    );
+    renderText(versionText, 16, "Impact", 0.5, 20, false, canvas.width - 240);
 };
 
 const drawStartScreen = (t: number, wait: boolean, z: number): void => {
