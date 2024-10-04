@@ -26,12 +26,8 @@ import "./style.css";
 import { canvas } from "./graphics";
 import { init } from "./game";
 
-const isSafari = /^((?!chrome|android).)*safari/i.test(
-    navigator.userAgent.toLowerCase(),
-);
-
-const maxWidth = isSafari ? 1024 : 1280;
-const maxHeight = isSafari ? 576 : 720;
+const maxWidth = 1280;
+const maxHeight = 720;
 
 const resize = (): void => {
     // Calculate the aspect ratio
