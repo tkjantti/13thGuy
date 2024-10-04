@@ -35,7 +35,7 @@ import {
 import { playerColor } from "./Character";
 import { VERSION } from "./version";
 
-const versionText = "Director's cut (" + VERSION + ")";
+const versionText = "Director's cut (" + (VERSION ? VERSION : "DEV") + ")";
 
 const TIME_STEP = 1000 / 60;
 const MAX_FRAME = TIME_STEP * 5;
