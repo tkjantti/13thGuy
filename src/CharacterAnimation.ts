@@ -137,10 +137,10 @@ export function renderCharacter(
     // Draw shadow (ellipse)
     cx.save();
     cx.fillStyle = shadowColor;
-    cx.translate(0.5 * w, h);
+    cx.translate(0.5 * w, h * 0.99 + bouncing);
     cx.scale(1, 0.3);
     cx.beginPath();
-    cx.arc(0, 0, w * 0.3, 0, 2 * Math.PI);
+    cx.arc(0, 0, w * 0.35 - bouncing / 2, 0, 2 * Math.PI);
     cx.fill();
     cx.restore();
 
