@@ -49,6 +49,8 @@ const LegColorDarker = "rgb(120,120,120)";
 const ArmColor = "rgb(140,140,220)";
 const ArmColorDarker = "rgb(120,120,200)";
 
+const shadowColor = "rgba(0, 0, 0, 0.2";
+
 export function renderCharacter(
     cx: CanvasRenderingContext2D,
     color: string,
@@ -104,6 +106,17 @@ export function renderCharacter(
     }
 
     cx.save();
+
+    // Draw shadow (ellipse)
+    cx.save();
+    cx.fillStyle = shadowColor;
+    cx.translate(0.5 * w, h);
+    cx.scale(1, 1);
+    cx.beginPath();
+    cx.arc(0, 0, w * 0.4 - bouncing / 2, 0, 2 * Math.PI);
+    cx.fill();
+    cx.restore();
+
     cx.translate(0, -bouncing);
 
     const armLength = 0.3 * h;
@@ -130,19 +143,6 @@ export function renderCharacter(
     // Rounded lines
     cx.lineJoin = "round";
     cx.lineCap = "round";
-
-    // Define shadow properties
-    const shadowColor = "rgba(0, 0, 0, 0.3)";
-
-    // Draw shadow (ellipse)
-    cx.save();
-    cx.fillStyle = shadowColor;
-    cx.translate(0.5 * w, h);
-    cx.scale(1, 0.3);
-    cx.beginPath();
-    cx.arc(0, 0, w * 0.3, 0, 2 * Math.PI);
-    cx.fill();
-    cx.restore();
 
     switch (direction) {
         case CharacterFacingDirection.Right:
