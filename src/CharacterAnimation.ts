@@ -106,7 +106,9 @@ export function renderCharacter(
     }
 
     cx.save();
+
     // Draw shadow (ellipse)
+    cx.save();
     cx.fillStyle = shadowColor;
     cx.translate(0.5 * w, h);
     cx.scale(1, 1);
@@ -115,7 +117,6 @@ export function renderCharacter(
     cx.fill();
     cx.restore();
 
-    cx.save();
     cx.translate(0, -bouncing);
 
     const armLength = 0.3 * h;
