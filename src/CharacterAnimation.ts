@@ -49,6 +49,8 @@ const LegColorDarker = "rgb(120,120,120)";
 const ArmColor = "rgb(140,140,220)";
 const ArmColorDarker = "rgb(120,120,200)";
 
+const shadowColor = "rgba(0, 0, 0, 0.2";
+
 export function renderCharacter(
     cx: CanvasRenderingContext2D,
     color: string,
@@ -104,8 +106,6 @@ export function renderCharacter(
     }
 
     cx.save();
-    // Define shadow properties
-    const shadowColor = "rgba(0, 0, 0, 0.2";
     // Draw shadow (ellipse)
     cx.fillStyle = shadowColor;
     cx.translate(0.5 * w, h);
