@@ -104,6 +104,18 @@ export function renderCharacter(
     }
 
     cx.save();
+    // Define shadow properties
+    const shadowColor = "rgba(0, 0, 0, 0.2";
+    // Draw shadow (ellipse)
+    cx.fillStyle = shadowColor;
+    cx.translate(0.5 * w, h);
+    cx.scale(1, 1);
+    cx.beginPath();
+    cx.arc(0, 0, w * 0.4 - bouncing / 2, 0, 2 * Math.PI);
+    cx.fill();
+    cx.restore();
+
+    cx.save();
     cx.translate(0, -bouncing);
 
     const armLength = 0.3 * h;
@@ -130,18 +142,6 @@ export function renderCharacter(
     // Rounded lines
     cx.lineJoin = "round";
     cx.lineCap = "round";
-
-    // Define shadow properties
-    const shadowColor = "rgba(0, 0, 0, 0.2";
-    // Draw shadow (ellipse)
-    cx.save();
-    cx.fillStyle = shadowColor;
-    cx.translate(0.5 * w, h + bouncing);
-    cx.scale(1, 1);
-    cx.beginPath();
-    cx.arc(0, 0, w * 0.4 - bouncing / 2, 0, 2 * Math.PI);
-    cx.fill();
-    cx.restore();
 
     switch (direction) {
         case CharacterFacingDirection.Right:
