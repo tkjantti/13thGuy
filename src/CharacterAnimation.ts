@@ -136,7 +136,6 @@ export function renderCharacter(
     const faceRounding = 0.6 * headRounding;
     const faceWidth = headWidth - faceMargin;
     const faceHeight = headHeight - faceMargin * 1.75;
-    const faceX = (w - faceWidth) / 2;
     const faceY = headHeight - faceHeight;
 
     const torsoWidth = 0.6 * w;
@@ -314,6 +313,7 @@ export function renderCharacter(
             cx.fill();
 
             if (direction === CharacterFacingDirection.Backward) {
+                const faceX = (w - faceWidth) / 2;
                 renderFace(
                     cx,
                     faceX,
@@ -474,6 +474,7 @@ export function renderCharacter(
             );
             cx.fill();
 
+            const faceX = (w - faceWidth) / 2 + (headWidth - faceWidth) / 2;
             renderFace(cx, faceX, faceY, faceWidth, faceHeight, faceRounding);
             break;
         }
