@@ -134,6 +134,10 @@ export function renderCharacter(
 
     const faceMargin = 0.15 * w; // How much face is smaller than head
     const faceRounding = 0.6 * headRounding;
+    const faceWidth = headWidth - faceMargin;
+    const faceHeight = headHeight - faceMargin * 1.75;
+    const faceX = (w - faceWidth) / 2;
+    const faceY = headHeight - faceHeight;
 
     const torsoWidth = 0.6 * w;
     const torsoDepth = 0.5 * w;
@@ -309,6 +313,17 @@ export function renderCharacter(
             );
             cx.fill();
 
+            if (direction === CharacterFacingDirection.Backward) {
+                renderFace(
+                    cx,
+                    faceX,
+                    faceY,
+                    faceWidth,
+                    faceHeight,
+                    faceRounding,
+                );
+            }
+
             break;
         }
         case CharacterFacingDirection.ForwardRight: {
@@ -459,91 +474,94 @@ export function renderCharacter(
             );
             cx.fill();
 
+            renderFace(cx, faceX, faceY, faceWidth, faceHeight, faceRounding);
             break;
         }
         default:
             break;
     }
 
-    // Face with eyes and nose
-    if (
-        direction === CharacterFacingDirection.Backward ||
-        direction === CharacterFacingDirection.BackwardRight
-    ) {
-        cx.save();
+    cx.restore();
+}
 
-        cx.shadowColor = "rgba(0, 0, 0, 0.5)";
+function renderFace(
+    cx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    rounding: number,
+): void {
+    cx.save();
+    cx.translate(x, y);
 
-        // Face
-        cx.fillStyle = faceColor;
-        const faceWidth = headWidth - faceMargin;
-        const faceHeight = headHeight - faceMargin * 1.75;
-        cx.shadowOffsetY = -faceHeight / 10;
-        const faceX = (w - faceWidth) / 2;
-        const faceY = headHeight - faceHeight;
+    cx.shadowColor = "rgba(0, 0, 0, 0.5)";
 
-        cx.beginPath();
-        cx.roundRect(faceX, faceY, faceWidth, faceHeight, faceRounding);
-        cx.fill();
-        cx.closePath();
+    // Face
+    cx.fillStyle = faceColor;
+    cx.shadowOffsetY = -h / 10;
+    const faceX = 0;
+    const faceY = 0;
 
-        cx.shadowOffsetY = 0;
+    cx.beginPath();
+    cx.roundRect(faceX, faceY, w, h, rounding);
+    cx.fill();
+    cx.closePath();
 
-        // Eyes
-        const eyeRadius = 0.05 * headWidth;
-        const eyeXOffset = faceWidth / 4;
-        const eyeYOffset = faceHeight / 3;
-        const leftEyeX = faceX + eyeXOffset;
-        const rightEyeX = faceX + faceWidth - eyeXOffset;
-        const eyeY = faceY + eyeYOffset;
+    cx.shadowOffsetY = 0;
 
-        cx.fillStyle = eyeColor;
-        cx.beginPath();
-        cx.arc(leftEyeX, eyeY, eyeRadius, 0, Math.PI * 2);
-        cx.arc(rightEyeX, eyeY, eyeRadius, 0, Math.PI * 2);
-        cx.fill();
-        cx.closePath();
+    // Eyes
+    const eyeRadius = 0.06 * w;
+    const eyeXOffset = w / 4;
+    const eyeYOffset = h / 3;
+    const leftEyeX = faceX + eyeXOffset;
+    const rightEyeX = faceX + w - eyeXOffset;
+    const eyeY = faceY + eyeYOffset;
 
-        // Pupils
-        const pupilRadius = 0.02 * headWidth;
-        const pupilXOffset = 0.01 * headWidth;
-        const pupilYOffset = 0.01 * headHeight;
+    cx.fillStyle = eyeColor;
+    cx.beginPath();
+    cx.arc(leftEyeX, eyeY, eyeRadius, 0, Math.PI * 2);
+    cx.arc(rightEyeX, eyeY, eyeRadius, 0, Math.PI * 2);
+    cx.fill();
+    cx.closePath();
 
-        cx.fillStyle = pupilColor;
-        cx.beginPath();
-        cx.arc(
-            leftEyeX + pupilXOffset,
-            eyeY + pupilYOffset,
-            pupilRadius,
-            0,
-            Math.PI * 2,
-        );
-        cx.arc(
-            rightEyeX + pupilXOffset,
-            eyeY + pupilYOffset,
-            pupilRadius,
-            0,
-            Math.PI * 2,
-        );
-        cx.fill();
-        cx.closePath();
+    // Pupils
+    const pupilRadius = 0.025 * w;
+    const pupilXOffset = 0.01 * w;
+    const pupilYOffset = 0.01 * h;
 
-        // Nose
-        const noseWidth = 0.1 * headWidth;
-        const noseHeight = 0.15 * headHeight;
-        const noseX = faceX + (faceWidth - noseWidth) / 1.75;
-        const noseY = faceY + (faceHeight - noseHeight) / 1.5;
+    cx.fillStyle = pupilColor;
+    cx.beginPath();
+    cx.arc(
+        leftEyeX + pupilXOffset,
+        eyeY + pupilYOffset,
+        pupilRadius,
+        0,
+        Math.PI * 2,
+    );
+    cx.arc(
+        rightEyeX + pupilXOffset,
+        eyeY + pupilYOffset,
+        pupilRadius,
+        0,
+        Math.PI * 2,
+    );
+    cx.fill();
+    cx.closePath();
 
-        cx.fillStyle = noseColor;
-        cx.beginPath();
-        cx.moveTo(noseX, noseY);
-        cx.lineTo(noseX + noseWidth / 2, noseY + noseHeight);
-        cx.lineTo(noseX - noseWidth / 2, noseY + noseHeight);
-        cx.closePath();
-        cx.fill();
+    // Nose
+    const noseWidth = 0.15 * w;
+    const noseHeight = 0.2 * h;
+    const noseX = faceX + (w - noseWidth) / 1.75;
+    const noseY = faceY + (h - noseHeight) / 1.5;
 
-        cx.restore();
-    }
+    cx.fillStyle = noseColor;
+    cx.beginPath();
+    cx.moveTo(noseX, noseY);
+    cx.lineTo(noseX + noseWidth / 2, noseY + noseHeight);
+    cx.lineTo(noseX - noseWidth / 2, noseY + noseHeight);
+    cx.closePath();
+    cx.fill();
 
     cx.restore();
 }
