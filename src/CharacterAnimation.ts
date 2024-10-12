@@ -112,15 +112,7 @@ export function renderCharacter(
 
     cx.save();
 
-    // Draw shadow (ellipse)
-    cx.save();
-    cx.fillStyle = shadowColor;
-    cx.translate(0.5 * w, h);
-    cx.scale(1, 1);
-    cx.beginPath();
-    cx.arc(0, 0, w * 0.4 - bouncing / 2, 0, 2 * Math.PI);
-    cx.fill();
-    cx.restore();
+    renderShadow(cx, 0.5 * w, h, w * 0.4 - bouncing / 2);
 
     cx.translate(0, -bouncing);
 
@@ -442,6 +434,21 @@ export function renderCharacter(
             break;
     }
 
+    cx.restore();
+}
+
+function renderShadow(
+    cx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    radius: number,
+): void {
+    cx.save();
+    cx.fillStyle = shadowColor;
+    cx.translate(x, y);
+    cx.beginPath();
+    cx.arc(0, 0, radius, 0, 2 * Math.PI);
+    cx.fill();
     cx.restore();
 }
 
