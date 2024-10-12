@@ -29,6 +29,7 @@ export enum CharacterAnimation {
     Stand,
     Walk,
     Fall,
+    Celebrate,
 }
 
 export enum CharacterFacingDirection {
@@ -73,10 +74,6 @@ export function renderCharacter(
     let bouncing = 0;
 
     switch (animation) {
-        case CharacterAnimation.Stand:
-            period = 800;
-            bouncing = easeInOutSine(triangle(period / 2, t)) * 0.04 * h;
-            break;
         case CharacterAnimation.Walk:
             period = 250;
             bouncing = easeInOutSine(triangle(period / 2, t / 2)) * 0.015 * h;
@@ -87,6 +84,15 @@ export function renderCharacter(
             leg2Angle = arm1Angle =
                 -Math.PI / 8 +
                 easeInOutQuad(triangle(period, t + period / 2)) * (Math.PI / 4);
+            break;
+        case CharacterAnimation.Celebrate:
+            period = 3000;
+            bouncing = easeInOutSine(triangle(period / 2, t / 2)) * 0.3 * h;
+            leg1Angle = easeInOutQuad(triangle(period, t)) * Math.PI * (1 / 8);
+            leg2Angle = -easeInOutQuad(triangle(period, t)) * Math.PI * (3 / 8);
+            arm2Angle = -easeInOutQuad(triangle(period, t)) * Math.PI * (9 / 8);
+            arm1Angle =
+                -easeInOutQuad(triangle(period, t)) * Math.PI * (10 / 8);
             break;
         case CharacterAnimation.Fall:
             period = 3200;
@@ -107,6 +113,8 @@ export function renderCharacter(
             arm2Angle =
                 -Math.PI * (8 / 8) +
                 easeInOutQuad(triangle(period, t)) * (Math.PI / 4);
+            break;
+        default:
             break;
     }
 
@@ -447,7 +455,7 @@ function renderShadow(
     cx.fillStyle = shadowColor;
     cx.translate(x, y);
     cx.beginPath();
-    cx.arc(0, 0, radius, 0, 2 * Math.PI);
+    cx.arc(0, 0, Math.max(0, radius), 0, 2 * Math.PI);
     cx.fill();
     cx.restore();
 }
