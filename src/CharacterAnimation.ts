@@ -29,6 +29,7 @@ export enum CharacterAnimation {
     Stand,
     Walk,
     Fall,
+    Celebrate,
 }
 
 export enum CharacterFacingDirection {
@@ -37,6 +38,11 @@ export enum CharacterFacingDirection {
     Backward,
     ForwardRight,
     BackwardRight,
+}
+
+enum HorizontalDirection {
+    Left = -1,
+    Right = 1,
 }
 
 const faceColor = "rgb(200,150,150)";
@@ -68,10 +74,6 @@ export function renderCharacter(
     let bouncing = 0;
 
     switch (animation) {
-        case CharacterAnimation.Stand:
-            period = 800;
-            bouncing = easeInOutSine(triangle(period / 2, t)) * 0.04 * h;
-            break;
         case CharacterAnimation.Walk:
             period = 250;
             bouncing = easeInOutSine(triangle(period / 2, t / 2)) * 0.015 * h;
@@ -83,6 +85,18 @@ export function renderCharacter(
                 -Math.PI / 8 +
                 easeInOutQuad(triangle(period, t + period / 2)) * (Math.PI / 4);
             break;
+        case CharacterAnimation.Celebrate: {
+            period = 1500;
+            bouncing = easeInOutSine(triangle(period / 2, t / 2)) * 0.15 * h;
+            const amount = triangle(period, t);
+            leg1Angle = easeInOutQuad(amount) * Math.PI * (1 / 8);
+            leg2Angle = -easeInOutQuad(amount) * Math.PI * (3 / 8);
+            arm2Angle =
+                Math.PI * (1 / 8) - easeInOutQuad(amount) * Math.PI * (9 / 8);
+            arm1Angle =
+                Math.PI * (1 / 8) - easeInOutQuad(amount) * Math.PI * (10 / 8);
+            break;
+        }
         case CharacterAnimation.Fall:
             period = 3200;
             bouncing = easeInOutSine(triangle(period / 2, t)) * 0.02 * h;
@@ -103,19 +117,13 @@ export function renderCharacter(
                 -Math.PI * (8 / 8) +
                 easeInOutQuad(triangle(period, t)) * (Math.PI / 4);
             break;
+        default:
+            break;
     }
 
     cx.save();
 
-    // Draw shadow (ellipse)
-    cx.save();
-    cx.fillStyle = shadowColor;
-    cx.translate(0.5 * w, h);
-    cx.scale(1, 1);
-    cx.beginPath();
-    cx.arc(0, 0, w * 0.4 - bouncing / 2, 0, 2 * Math.PI);
-    cx.fill();
-    cx.restore();
+    renderShadow(cx, 0.5 * w, h, w * 0.4 - bouncing / 2);
 
     cx.translate(0, -bouncing);
 
@@ -134,6 +142,9 @@ export function renderCharacter(
 
     const faceMargin = 0.15 * w; // How much face is smaller than head
     const faceRounding = 0.6 * headRounding;
+    const faceWidth = headWidth - faceMargin;
+    const faceHeight = headHeight - faceMargin * 1.75;
+    const faceY = headHeight - faceHeight;
 
     const torsoWidth = 0.6 * w;
     const torsoDepth = 0.5 * w;
@@ -147,57 +158,39 @@ export function renderCharacter(
     switch (direction) {
         case CharacterFacingDirection.Right:
             {
-                // Arm (back)
-                cx.save();
-                cx.strokeStyle = ArmColorDarker;
-                cx.lineWidth = armWidth;
-                cx.translate(0.5 * w, 0.4 * h);
-                cx.rotate(arm1Angle);
-                cx.rotate((10 * Math.PI) / 180);
-                cx.beginPath();
-                cx.moveTo(0, 0);
-                cx.quadraticCurveTo(
-                    -armLength / 4,
-                    armLength / 2,
-                    0,
+                const armX = 0.5 * w;
+                const armY = 0.4 * h;
+
+                const legX = 0.5 * w;
+                const legY = 0.7 * h;
+
+                renderArmSideways(
+                    cx,
+                    ArmColorDarker,
+                    armX,
+                    armY,
+                    armWidth,
                     armLength,
+                    arm1Angle,
                 );
-                cx.stroke();
-                cx.restore();
-
-                // Leg (back)
-                cx.save();
-                cx.strokeStyle = LegColorDarker;
-                cx.lineWidth = limbWidth;
-                cx.translate(0.5 * w, 0.7 * h);
-                cx.rotate(leg1Angle);
-                cx.beginPath();
-                cx.moveTo(0, 0);
-                cx.quadraticCurveTo(
-                    -legLength / 8,
-                    legLength / 2,
-                    0,
+                renderLegSideways(
+                    cx,
+                    LegColorDarker,
+                    legX,
+                    legY,
+                    limbWidth,
                     legLength,
+                    leg1Angle,
                 );
-                cx.stroke();
-                cx.restore();
-
-                // Leg (front)
-                cx.save();
-                cx.strokeStyle = LegColor;
-                cx.lineWidth = limbWidth;
-                cx.translate(0.5 * w, 0.7 * h);
-                cx.rotate(leg2Angle);
-                cx.beginPath();
-                cx.moveTo(0, 0);
-                cx.quadraticCurveTo(
-                    -legLength / 8,
-                    legLength / 2,
-                    0,
+                renderLegSideways(
+                    cx,
+                    LegColor,
+                    legX,
+                    legY,
+                    limbWidth,
                     legLength,
+                    leg2Angle,
                 );
-                cx.stroke();
-                cx.restore();
 
                 // Head
                 cx.beginPath();
@@ -219,75 +212,41 @@ export function renderCharacter(
                 );
                 cx.fill();
 
-                // Arm (front)
-                cx.save();
-                cx.strokeStyle = ArmColor;
-                cx.lineWidth = armWidth;
-                cx.translate(0.5 * w, 0.4 * h);
-                cx.rotate(arm2Angle);
-                cx.beginPath();
-                cx.moveTo(0, 0);
-                cx.quadraticCurveTo(
-                    -armLength / 4,
-                    armLength / 2,
-                    0,
+                renderArmSideways(
+                    cx,
+                    ArmColor,
+                    armX,
+                    armY,
+                    armWidth,
                     armLength,
+                    arm2Angle,
                 );
-                cx.stroke();
-                cx.restore();
             }
             break;
         case CharacterFacingDirection.Forward:
         case CharacterFacingDirection.Backward: {
-            // Leg (left)
-            cx.save();
-            cx.strokeStyle = LegColor;
-            cx.lineWidth = limbWidth;
-            cx.translate(0.35 * w, 0.7 * h);
-            cx.scale(1, Math.cos(leg1Angle + Math.PI / 8));
-            cx.beginPath();
-            cx.moveTo(0, 0);
-            cx.quadraticCurveTo(-legLength / 8, legLength / 2, 0, legLength);
-            cx.stroke();
-            cx.restore();
-
-            // Leg (right)
-            cx.save();
-            cx.strokeStyle = LegColor;
-            cx.lineWidth = limbWidth;
-            cx.translate(0.7 * w, 0.7 * h);
-            cx.scale(1, Math.cos(leg2Angle + Math.PI / 8));
-            cx.beginPath();
-            cx.moveTo(0, 0);
-            cx.quadraticCurveTo(legLength / 8, legLength / 2, 0, legLength);
-            cx.stroke();
-            cx.restore();
-
-            // Arm (left)
-            cx.save();
-            cx.rotate((10 * Math.PI) / 180);
-            cx.strokeStyle = ArmColor;
-            cx.lineWidth = armWidth;
-            cx.translate(0.4 * w, 0.35 * h);
-            cx.scale(1, Math.cos(arm1Angle + Math.PI / 8));
-            cx.beginPath();
-            cx.moveTo(0, 0);
-            cx.quadraticCurveTo(-armLength / 4, armLength / 2, 0, armLength);
-            cx.stroke();
-            cx.restore();
-
-            // Arm (right)
-            cx.save();
-            cx.rotate((-10 * Math.PI) / 180);
-            cx.strokeStyle = ArmColor;
-            cx.lineWidth = armWidth;
-            cx.translate(0.6 * w, 0.4 * h);
-            cx.scale(1, Math.cos(arm2Angle + Math.PI / 8));
-            cx.beginPath();
-            cx.moveTo(0, 0);
-            cx.quadraticCurveTo(armLength / 4, armLength / 2, 0, armLength);
-            cx.stroke();
-            cx.restore();
+            renderLegFacing(
+                cx,
+                LegColor,
+                0.35 * w,
+                0.7 * h,
+                limbWidth,
+                legLength,
+                HorizontalDirection.Left,
+                leg1Angle,
+                0,
+            );
+            renderLegFacing(
+                cx,
+                LegColor,
+                0.7 * w,
+                0.7 * h,
+                limbWidth,
+                legLength,
+                HorizontalDirection.Right,
+                leg2Angle,
+                0,
+            );
 
             // Torso
             cx.beginPath();
@@ -309,60 +268,74 @@ export function renderCharacter(
             );
             cx.fill();
 
+            if (direction === CharacterFacingDirection.Backward) {
+                const faceX = (w - faceWidth) / 2;
+                renderFace(
+                    cx,
+                    faceX,
+                    faceY,
+                    faceWidth,
+                    faceHeight,
+                    faceRounding,
+                );
+            }
+
+            renderArmFacing(
+                cx,
+                ArmColor,
+                0.2 * w,
+                0.33 * h,
+                armWidth,
+                armLength,
+                HorizontalDirection.Left,
+                arm1Angle,
+            );
+            renderArmFacing(
+                cx,
+                ArmColor,
+                0.8 * w,
+                0.33 * h,
+                armWidth,
+                armLength,
+                HorizontalDirection.Right,
+                arm2Angle,
+            );
             break;
         }
         case CharacterFacingDirection.ForwardRight: {
-            // Leg (left)
-            cx.save();
-            cx.strokeStyle = LegColorDarker;
-            cx.lineWidth = limbWidth;
-            cx.translate(0.35 * w, 0.7 * h);
-            cx.rotate(leg2Angle / 4);
-            cx.scale(1, Math.cos(leg1Angle + Math.PI / 8));
-            cx.beginPath();
-            cx.moveTo(0, 0);
-            cx.quadraticCurveTo(-legLength / 8, legLength / 2, 0, legLength);
-            cx.stroke();
-            cx.restore();
-
-            // Leg (right)
-            cx.save();
-            cx.strokeStyle = LegColor;
-            cx.lineWidth = limbWidth;
-            cx.translate(0.65 * w, 0.7 * h);
-            cx.rotate(leg2Angle / 4);
-            cx.scale(1, Math.cos(leg2Angle + Math.PI / 8));
-            cx.beginPath();
-            cx.moveTo(0, 0);
-            cx.quadraticCurveTo(legLength / 8, legLength / 2, 0, legLength);
-            cx.stroke();
-            cx.restore();
-
-            // Arm (left)
-            cx.save();
-            cx.strokeStyle = ArmColor;
-            cx.lineWidth = armWidth;
-            cx.translate(0.2 * w, 0.33 * h);
-            cx.rotate(arm2Angle / 2);
-            cx.scale(1, Math.cos(arm2Angle + Math.PI / 8));
-            cx.beginPath();
-            cx.moveTo(0, 0);
-            cx.quadraticCurveTo(-armLength / 4, armLength / 2, 0, armLength);
-            cx.stroke();
-            cx.restore();
-
-            // Arm (right)
-            cx.save();
-            cx.strokeStyle = ArmColor;
-            cx.lineWidth = armWidth;
-            cx.translate(0.8 * w, 0.33 * h);
-            cx.rotate(arm2Angle / 2);
-            cx.scale(1, Math.cos(arm2Angle + Math.PI / 8));
-            cx.beginPath();
-            cx.moveTo(0, 0);
-            cx.quadraticCurveTo(armLength / 4, armLength / 2, 0, armLength);
-            cx.stroke();
-            cx.restore();
+            renderLegFacing(
+                cx,
+                LegColorDarker,
+                0.35 * w,
+                0.7 * h,
+                limbWidth,
+                legLength,
+                HorizontalDirection.Left,
+                leg1Angle,
+                leg2Angle / 4,
+            );
+            renderLegFacing(
+                cx,
+                LegColor,
+                0.65 * w,
+                0.7 * h,
+                limbWidth,
+                legLength,
+                HorizontalDirection.Right,
+                leg2Angle,
+                leg2Angle / 4,
+            );
+            renderArmFacing(
+                cx,
+                ArmColorDarker,
+                0.2 * w,
+                0.33 * h,
+                armWidth,
+                armLength,
+                HorizontalDirection.Left,
+                arm2Angle,
+                arm2Angle / 2,
+            );
 
             // Head
             cx.beginPath();
@@ -384,60 +357,53 @@ export function renderCharacter(
             );
             cx.fill();
 
+            renderArmFacing(
+                cx,
+                ArmColor,
+                0.8 * w,
+                0.33 * h,
+                armWidth,
+                armLength,
+                HorizontalDirection.Right,
+                arm1Angle,
+                arm2Angle / 2,
+            );
             break;
         }
         case CharacterFacingDirection.BackwardRight: {
-            // Leg (right)
-            cx.save();
-            cx.strokeStyle = LegColor;
-            cx.lineWidth = limbWidth;
-            cx.translate(0.65 * w, 0.7 * h);
-            cx.rotate(leg2Angle / 4);
-            cx.scale(1, Math.cos(leg2Angle + Math.PI / 8));
-            cx.beginPath();
-            cx.moveTo(0, 0);
-            cx.quadraticCurveTo(legLength / 8, legLength / 2, 0, legLength);
-            cx.stroke();
-            cx.restore();
-
-            // Leg (left)
-            cx.save();
-            cx.strokeStyle = LegColorDarker;
-            cx.lineWidth = limbWidth;
-            cx.translate(0.35 * w, 0.7 * h);
-            cx.rotate(leg2Angle / 4);
-            cx.scale(1, Math.cos(leg1Angle + Math.PI / 8));
-            cx.beginPath();
-            cx.moveTo(0, 0);
-            cx.quadraticCurveTo(-legLength / 8, legLength / 2, 0, legLength);
-            cx.stroke();
-            cx.restore();
-
-            // Arm (right)
-            cx.save();
-            cx.strokeStyle = ArmColor;
-            cx.lineWidth = armWidth;
-            cx.translate(0.8 * w, 0.35 * h);
-            cx.rotate(arm2Angle / 2);
-            cx.scale(1, Math.cos(arm2Angle + Math.PI / 8));
-            cx.beginPath();
-            cx.moveTo(0, 0);
-            cx.quadraticCurveTo(armLength / 4, armLength / 2, 0, armLength);
-            cx.stroke();
-            cx.restore();
-
-            // Arm (left)
-            cx.save();
-            cx.strokeStyle = ArmColor;
-            cx.lineWidth = armWidth;
-            cx.translate(0.2 * w, 0.35 * h);
-            cx.rotate(arm2Angle / 2);
-            cx.scale(1, Math.cos(arm2Angle + Math.PI / 8));
-            cx.beginPath();
-            cx.moveTo(0, 0);
-            cx.quadraticCurveTo(-armLength / 4, armLength / 2, 0, armLength);
-            cx.stroke();
-            cx.restore();
+            renderLegFacing(
+                cx,
+                LegColorDarker,
+                0.65 * w,
+                0.7 * h,
+                limbWidth,
+                legLength,
+                HorizontalDirection.Right,
+                leg2Angle,
+                leg2Angle / 4,
+            );
+            renderLegFacing(
+                cx,
+                LegColor,
+                0.35 * w,
+                0.7 * h,
+                limbWidth,
+                legLength,
+                HorizontalDirection.Left,
+                leg1Angle,
+                leg2Angle / 4,
+            );
+            renderArmFacing(
+                cx,
+                ArmColorDarker,
+                0.8 * w,
+                0.35 * h,
+                armWidth,
+                armLength,
+                HorizontalDirection.Right,
+                arm2Angle,
+                arm2Angle / 2,
+            );
 
             // Head
             cx.beginPath();
@@ -459,91 +425,216 @@ export function renderCharacter(
             );
             cx.fill();
 
+            renderArmFacing(
+                cx,
+                ArmColor,
+                0.2 * w,
+                0.35 * h,
+                armWidth,
+                armLength,
+                HorizontalDirection.Left,
+                arm1Angle,
+                arm2Angle / 2,
+            );
+
+            const faceX = (w - faceWidth) / 2 + (headWidth - faceWidth) / 2;
+            renderFace(cx, faceX, faceY, faceWidth, faceHeight, faceRounding);
             break;
         }
         default:
             break;
     }
 
-    // Face with eyes and nose
-    if (
-        direction === CharacterFacingDirection.Backward ||
-        direction === CharacterFacingDirection.BackwardRight
-    ) {
-        cx.save();
+    cx.restore();
+}
 
-        cx.shadowColor = "rgba(0, 0, 0, 0.5)";
+function renderShadow(
+    cx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    radius: number,
+): void {
+    cx.save();
+    cx.fillStyle = shadowColor;
+    cx.translate(x, y);
+    cx.beginPath();
+    cx.arc(0, 0, Math.max(0, radius), 0, 2 * Math.PI);
+    cx.fill();
+    cx.restore();
+}
 
-        // Face
-        cx.fillStyle = faceColor;
-        const faceWidth = headWidth - faceMargin;
-        const faceHeight = headHeight - faceMargin * 1.75;
-        cx.shadowOffsetY = -faceHeight / 10;
-        const faceX = (w - faceWidth) / 2;
-        const faceY = headHeight - faceHeight;
+function renderArmSideways(
+    cx: CanvasRenderingContext2D,
+    style: string,
+    x: number,
+    y: number,
+    w: number,
+    length: number,
+    angle: number,
+): void {
+    cx.save();
+    cx.strokeStyle = style;
+    cx.lineWidth = w;
+    cx.translate(x, y);
+    cx.rotate(angle);
+    cx.beginPath();
+    cx.moveTo(0, 0);
+    cx.quadraticCurveTo(-length / 4, length / 2, 0, length);
+    cx.stroke();
+    cx.restore();
+}
 
-        cx.beginPath();
-        cx.roundRect(faceX, faceY, faceWidth, faceHeight, faceRounding);
-        cx.fill();
-        cx.closePath();
+function renderLegSideways(
+    cx: CanvasRenderingContext2D,
+    style: string,
+    x: number,
+    y: number,
+    w: number,
+    length: number,
+    angle: number,
+): void {
+    cx.save();
+    cx.strokeStyle = style;
+    cx.lineWidth = w;
+    cx.translate(x, y);
+    cx.rotate(angle);
+    cx.beginPath();
+    cx.moveTo(0, 0);
+    cx.quadraticCurveTo(-length / 8, length / 2, 0, length);
+    cx.stroke();
+    cx.restore();
+}
 
-        cx.shadowOffsetY = 0;
+function renderArmFacing(
+    cx: CanvasRenderingContext2D,
+    style: string,
+    x: number,
+    y: number,
+    w: number,
+    length: number,
+    bendDirection: HorizontalDirection,
+    angle: number,
+    sidewaysAngle: number = 0,
+): void {
+    cx.save();
+    cx.strokeStyle = style;
+    cx.lineWidth = w;
+    cx.translate(x, y);
 
-        // Eyes
-        const eyeRadius = 0.05 * headWidth;
-        const eyeXOffset = faceWidth / 4;
-        const eyeYOffset = faceHeight / 3;
-        const leftEyeX = faceX + eyeXOffset;
-        const rightEyeX = faceX + faceWidth - eyeXOffset;
-        const eyeY = faceY + eyeYOffset;
+    // Rotate curved arms a little so that they don't overlap with the body.
+    cx.rotate(-bendDirection * 0.05 * Math.PI);
 
-        cx.fillStyle = eyeColor;
-        cx.beginPath();
-        cx.arc(leftEyeX, eyeY, eyeRadius, 0, Math.PI * 2);
-        cx.arc(rightEyeX, eyeY, eyeRadius, 0, Math.PI * 2);
-        cx.fill();
-        cx.closePath();
+    cx.rotate(sidewaysAngle);
+    cx.scale(1, Math.cos(angle + Math.PI / 8));
+    cx.beginPath();
+    cx.moveTo(0, 0);
+    cx.quadraticCurveTo((bendDirection * length) / 4, length / 2, 0, length);
+    cx.stroke();
+    cx.restore();
+}
 
-        // Pupils
-        const pupilRadius = 0.02 * headWidth;
-        const pupilXOffset = 0.01 * headWidth;
-        const pupilYOffset = 0.01 * headHeight;
+function renderLegFacing(
+    cx: CanvasRenderingContext2D,
+    style: string,
+    x: number,
+    y: number,
+    w: number,
+    length: number,
+    bendDirection: HorizontalDirection,
+    angle: number,
+    sidewaysAngle: number,
+): void {
+    cx.save();
+    cx.strokeStyle = style;
+    cx.lineWidth = w;
+    cx.translate(x, y);
+    cx.rotate(sidewaysAngle);
+    cx.scale(1, Math.cos(angle + Math.PI / 8));
+    cx.beginPath();
+    cx.moveTo(0, 0);
+    cx.quadraticCurveTo((bendDirection * length) / 8, length / 2, 0, length);
+    cx.stroke();
+    cx.restore();
+}
 
-        cx.fillStyle = pupilColor;
-        cx.beginPath();
-        cx.arc(
-            leftEyeX + pupilXOffset,
-            eyeY + pupilYOffset,
-            pupilRadius,
-            0,
-            Math.PI * 2,
-        );
-        cx.arc(
-            rightEyeX + pupilXOffset,
-            eyeY + pupilYOffset,
-            pupilRadius,
-            0,
-            Math.PI * 2,
-        );
-        cx.fill();
-        cx.closePath();
+function renderFace(
+    cx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    rounding: number,
+): void {
+    cx.save();
+    cx.translate(x, y);
 
-        // Nose
-        const noseWidth = 0.1 * headWidth;
-        const noseHeight = 0.15 * headHeight;
-        const noseX = faceX + (faceWidth - noseWidth) / 1.75;
-        const noseY = faceY + (faceHeight - noseHeight) / 1.5;
+    cx.shadowColor = "rgba(0, 0, 0, 0.5)";
 
-        cx.fillStyle = noseColor;
-        cx.beginPath();
-        cx.moveTo(noseX, noseY);
-        cx.lineTo(noseX + noseWidth / 2, noseY + noseHeight);
-        cx.lineTo(noseX - noseWidth / 2, noseY + noseHeight);
-        cx.closePath();
-        cx.fill();
+    // Face
+    cx.fillStyle = faceColor;
+    cx.shadowOffsetY = -h / 10;
+    const faceX = 0;
+    const faceY = 0;
 
-        cx.restore();
-    }
+    cx.beginPath();
+    cx.roundRect(faceX, faceY, w, h, rounding);
+    cx.fill();
+    cx.closePath();
+
+    cx.shadowOffsetY = 0;
+
+    // Eyes
+    const eyeRadius = 0.06 * w;
+    const eyeXOffset = w / 4;
+    const eyeYOffset = h / 3;
+    const leftEyeX = faceX + eyeXOffset;
+    const rightEyeX = faceX + w - eyeXOffset;
+    const eyeY = faceY + eyeYOffset;
+
+    cx.fillStyle = eyeColor;
+    cx.beginPath();
+    cx.arc(leftEyeX, eyeY, eyeRadius, 0, Math.PI * 2);
+    cx.arc(rightEyeX, eyeY, eyeRadius, 0, Math.PI * 2);
+    cx.fill();
+    cx.closePath();
+
+    // Pupils
+    const pupilRadius = 0.025 * w;
+    const pupilXOffset = 0.01 * w;
+    const pupilYOffset = 0.01 * h;
+
+    cx.fillStyle = pupilColor;
+    cx.beginPath();
+    cx.arc(
+        leftEyeX + pupilXOffset,
+        eyeY + pupilYOffset,
+        pupilRadius,
+        0,
+        Math.PI * 2,
+    );
+    cx.arc(
+        rightEyeX + pupilXOffset,
+        eyeY + pupilYOffset,
+        pupilRadius,
+        0,
+        Math.PI * 2,
+    );
+    cx.fill();
+    cx.closePath();
+
+    // Nose
+    const noseWidth = 0.15 * w;
+    const noseHeight = 0.2 * h;
+    const noseX = faceX + (w - noseWidth) / 1.75;
+    const noseY = faceY + (h - noseHeight) / 1.5;
+
+    cx.fillStyle = noseColor;
+    cx.beginPath();
+    cx.moveTo(noseX, noseY);
+    cx.lineTo(noseX + noseWidth / 2, noseY + noseHeight);
+    cx.lineTo(noseX - noseWidth / 2, noseY + noseHeight);
+    cx.closePath();
+    cx.fill();
 
     cx.restore();
 }

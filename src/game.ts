@@ -384,7 +384,7 @@ const draw = (t: number, dt: number): void => {
                         : CharacterFacingDirection.Backward,
                     level.characters.length > 14
                         ? CharacterAnimation.Walk
-                        : CharacterAnimation.Stand,
+                        : CharacterAnimation.Celebrate,
                 );
                 cx.restore();
             }
