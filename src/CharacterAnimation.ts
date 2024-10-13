@@ -85,15 +85,18 @@ export function renderCharacter(
                 -Math.PI / 8 +
                 easeInOutQuad(triangle(period, t + period / 2)) * (Math.PI / 4);
             break;
-        case CharacterAnimation.Celebrate:
-            period = 3000;
-            bouncing = easeInOutSine(triangle(period / 2, t / 2)) * 0.3 * h;
-            leg1Angle = easeInOutQuad(triangle(period, t)) * Math.PI * (1 / 8);
-            leg2Angle = -easeInOutQuad(triangle(period, t)) * Math.PI * (3 / 8);
-            arm2Angle = -easeInOutQuad(triangle(period, t)) * Math.PI * (9 / 8);
+        case CharacterAnimation.Celebrate: {
+            period = 1500;
+            bouncing = easeInOutSine(triangle(period / 2, t / 2)) * 0.15 * h;
+            const amount = triangle(period, t);
+            leg1Angle = easeInOutQuad(amount) * Math.PI * (1 / 8);
+            leg2Angle = -easeInOutQuad(amount) * Math.PI * (3 / 8);
+            arm2Angle =
+                Math.PI * (1 / 8) - easeInOutQuad(amount) * Math.PI * (9 / 8);
             arm1Angle =
-                -easeInOutQuad(triangle(period, t)) * Math.PI * (10 / 8);
+                Math.PI * (1 / 8) - easeInOutQuad(amount) * Math.PI * (10 / 8);
             break;
+        }
         case CharacterAnimation.Fall:
             period = 3200;
             bouncing = easeInOutSine(triangle(period / 2, t)) * 0.02 * h;
