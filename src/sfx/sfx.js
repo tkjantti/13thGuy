@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 /*
  * Copyright (c) 2024 Tero Jäntti, Sami Heikkinen
  *
@@ -31,13 +30,17 @@ import {
     kbSfx,
     finishSfx,
     gameoverSfx,
+    teleportSfx,
 } from "./sfxData.js";
+
+import { zzfx } from "./sfxPlayer.js"
 import CPlayer from "./musicplayer.js";
 
 export const SFX_START = "start";
 export const SFX_RACE = "race";
 export const SFX_BOUNCE = "bounce";
 export const SFX_HIT = "hit";
+export const SFX_TELEPORT = "teleport";
 export const SFX_KB = "keyboard";
 export const SFX_FINISHED = "finished";
 export const SFX_GAMEOVER = "gameover";
@@ -46,9 +49,6 @@ export const SFX_RESTART = "restart";
 const startTune = document.createElement("audio");
 const raceTune = document.createElement("audio");
 const bounceFx = document.createElement("audio");
-const hitFx = document.createElement("audio");
-const kbFx = document.createElement("audio");
-const finishFx = document.createElement("audio");
 const gameoverFx = document.createElement("audio");
 
 export const initMusicPlayer = (audioTrack, tune, isLooped) => {
@@ -81,9 +81,6 @@ export const initialize = () => {
         initMusicPlayer(startTune, song1, true),
         initMusicPlayer(raceTune, song2, true),
         initMusicPlayer(bounceFx, bounceSfx, false),
-        initMusicPlayer(hitFx, hitSfx, false),
-        initMusicPlayer(kbFx, kbSfx, false),
-        initMusicPlayer(finishFx, finishSfx, false),
         initMusicPlayer(gameoverFx, gameoverSfx, false),
     ]);
 };
@@ -140,7 +137,7 @@ const FadeOutIn = (tune1, tune2) => {
     }, 100);
 };
 
-export const playTune = (tune, vol = 1) => {
+export const playTune = (tune, vol) => {
     switch (tune) {
         case SFX_RACE: {
             raceTune.currentTime = 0;
@@ -148,14 +145,13 @@ export const playTune = (tune, vol = 1) => {
             break;
         }
         case SFX_FINISHED: {
-            finishFx.volume = vol;
-            finishFx.play();
+            zzfx(0.1,...finishSfx);
             startTune.currentTime = 0;
             FadeOutIn(raceTune, startTune);
             break;
         }
         case SFX_GAMEOVER: {
-            gameoverFx.volume = vol;
+            gameoverFx.volume = 1;
             gameoverFx.play();
             startTune.currentTime = 0;
             FadeOut(raceTune);
@@ -191,13 +187,15 @@ export const playTune = (tune, vol = 1) => {
             break;
         }
         case SFX_HIT: {
-            hitFx.volume = vol;
-            hitFx.play();
+            zzfx(vol, ...hitSfx);
             break;
         }
         case SFX_KB: {
-            kbFx.volume = vol;
-            kbFx.play();
+            zzfx(0.5, ...kbSfx);
+            break;
+        }
+        case SFX_TELEPORT: {
+            zzfx(vol,...teleportSfx);
             break;
         }
     }

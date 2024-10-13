@@ -2,3 +2,4 @@ build
 coverage
 package.json
 package-lock.json
+*.js

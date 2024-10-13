@@ -1,7 +1,5 @@
 // Adapted from: https://github.com/sz-piotr/js13k-webpack-starter/blob/master/postbuild.js
 
-/* eslint-disable no-undef */
-
 import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";

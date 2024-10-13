@@ -509,6 +509,7 @@ export const init = async (): Promise<void> => {
     setState(GameState.Init);
 
     await waitForAnyKey();
+
     playTune(SFX_START);
     setState(GameState.Start);
     startRace();

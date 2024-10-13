@@ -39,6 +39,7 @@ import {
     playTune,
     SFX_BOUNCE,
     SFX_HIT,
+    SFX_TELEPORT,
     // Ignore lint errors from JS import
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -55,6 +56,8 @@ const BANK_WIDTH = 5;
 // Length of empty area before the start and after the end of the
 // track.
 const BANK_HEIGHT = 40;
+
+const maxSfxDistance = 200;
 
 export enum State {
     RUNNING,
@@ -209,11 +212,14 @@ export class Level implements Area {
             for (let oi = ci + 1; oi < this.characters.length; oi++) {
                 const other = this.characters[oi];
                 if (other.finished || other.eliminated) continue;
-
                 if (calculateCollisionBetweenCharacters(c, other)) {
                     const yDistance = Math.abs(c.y - this.player.y);
-                    const volumeByDistance =
-                        ci === 0 ? 1 : 1 - Math.min(yDistance / 100, 1);
+                    const volumeByDistance = !c.ai
+                        ? 1
+                        : Math.max(
+                              0,
+                              Math.min(1, 1 - yDistance / maxSfxDistance),
+                          );
                     if (volumeByDistance > 0)
                         playTune(SFX_HIT, volumeByDistance);
                 }
@@ -235,8 +241,12 @@ export class Level implements Area {
                     // Basic distance check if sound should be played
                     if (calculateCollisionToObstacle(c, o)) {
                         const yDistance = Math.abs(o.y - this.player.y);
-                        const volumeByDistance =
-                            ci === 0 ? 1 : 1 - Math.min(yDistance / 100, 1);
+                        const volumeByDistance = !c.ai
+                            ? 1
+                            : Math.max(
+                                  0,
+                                  Math.min(1, 1 - yDistance / maxSfxDistance),
+                              );
                         if (volumeByDistance > 0)
                             playTune(SFX_BOUNCE, volumeByDistance);
                     }
@@ -337,6 +347,12 @@ export class Level implements Area {
             if (!c.ai) this.state = State.GAME_OVER;
             return;
         }
+
+        const yDistance = Math.abs(c.y - this.player.y);
+        const volumeByDistance = !c.ai
+            ? 1
+            : Math.max(0, Math.min(1, 1 - yDistance / maxSfxDistance));
+        if (volumeByDistance > 0) playTune(SFX_TELEPORT, volumeByDistance);
 
         c.drop(dropPosition);
     }
