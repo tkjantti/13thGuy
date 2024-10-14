@@ -191,27 +191,22 @@ export function renderCharacter(
                     legLength,
                     leg2Angle,
                 );
-
-                // Head
-                cx.beginPath();
-                cx.roundRect(
+                renderHead(
+                    cx,
                     0.3 * w,
                     headHeight / 4,
                     headDepth,
                     headHeight,
                     headRounding,
                 );
-
-                // Torso
-                cx.roundRect(
+                renderTorso(
+                    cx,
                     (w - torsoDepth) / 2,
                     0.3 * h,
                     torsoDepth,
                     torsoLength,
                     torsoRounding,
                 );
-                cx.fill();
-
                 renderArmSideways(
                     cx,
                     ArmColor,
@@ -247,26 +242,44 @@ export function renderCharacter(
                 leg2Angle,
                 0,
             );
-
-            // Torso
-            cx.beginPath();
-            cx.roundRect(
-                0.2 * w,
-                0.3 * h,
-                torsoWidth,
-                torsoLength,
-                torsoRounding,
-            );
-
-            // Head
-            cx.roundRect(
+            // Render head before arms so that celebration animation looks good
+            // when shown in the backward direction.
+            renderHead(
+                cx,
                 (w - headWidth) / 2,
                 headHeight / 4,
                 headWidth,
                 headHeight,
                 headRounding,
             );
-            cx.fill();
+            renderArmFacing(
+                cx,
+                ArmColor,
+                0.25 * w,
+                0.35 * h,
+                armWidth,
+                armLength,
+                HorizontalDirection.Left,
+                arm1Angle,
+            );
+            renderArmFacing(
+                cx,
+                ArmColor,
+                0.75 * w,
+                0.35 * h,
+                armWidth,
+                armLength,
+                HorizontalDirection.Right,
+                arm2Angle,
+            );
+            renderTorso(
+                cx,
+                0.2 * w,
+                0.3 * h,
+                torsoWidth,
+                torsoLength,
+                torsoRounding,
+            );
 
             if (direction === CharacterFacingDirection.Backward) {
                 const faceX = (w - faceWidth) / 2;
@@ -279,27 +292,6 @@ export function renderCharacter(
                     faceRounding,
                 );
             }
-
-            renderArmFacing(
-                cx,
-                ArmColor,
-                0.2 * w,
-                0.33 * h,
-                armWidth,
-                armLength,
-                HorizontalDirection.Left,
-                arm1Angle,
-            );
-            renderArmFacing(
-                cx,
-                ArmColor,
-                0.8 * w,
-                0.33 * h,
-                armWidth,
-                armLength,
-                HorizontalDirection.Right,
-                arm2Angle,
-            );
             break;
         }
         case CharacterFacingDirection.ForwardRight: {
@@ -328,40 +320,35 @@ export function renderCharacter(
             renderArmFacing(
                 cx,
                 ArmColorDarker,
-                0.2 * w,
-                0.33 * h,
+                0.25 * w,
+                0.35 * h,
                 armWidth,
                 armLength,
                 HorizontalDirection.Left,
                 arm2Angle,
                 arm2Angle / 2,
             );
-
-            // Head
-            cx.beginPath();
-            cx.roundRect(
+            renderHead(
+                cx,
                 (w - headWidth) / 2,
                 headHeight / 4,
                 headWidth,
                 headHeight,
                 headRounding,
             );
-
-            // Torso
-            cx.roundRect(
+            renderTorso(
+                cx,
                 (w - torsoWidth) / 2,
                 0.3 * h,
                 torsoWidth,
                 torsoLength,
                 torsoRounding,
             );
-            cx.fill();
-
             renderArmFacing(
                 cx,
                 ArmColor,
-                0.8 * w,
-                0.33 * h,
+                0.75 * w,
+                0.35 * h,
                 armWidth,
                 armLength,
                 HorizontalDirection.Right,
@@ -396,7 +383,7 @@ export function renderCharacter(
             renderArmFacing(
                 cx,
                 ArmColorDarker,
-                0.8 * w,
+                0.75 * w,
                 0.35 * h,
                 armWidth,
                 armLength,
@@ -404,31 +391,26 @@ export function renderCharacter(
                 arm2Angle,
                 arm2Angle / 2,
             );
-
-            // Head
-            cx.beginPath();
-            cx.roundRect(
+            renderHead(
+                cx,
                 (w - headWidth) / 2,
                 headHeight / 4,
                 headWidth,
                 headHeight,
                 headRounding,
             );
-
-            // Torso
-            cx.roundRect(
+            renderTorso(
+                cx,
                 (w - torsoWidth) / 2,
                 0.3 * h,
                 torsoWidth,
                 torsoLength,
                 torsoRounding,
             );
-            cx.fill();
-
             renderArmFacing(
                 cx,
                 ArmColor,
-                0.2 * w,
+                0.25 * w,
                 0.35 * h,
                 armWidth,
                 armLength,
@@ -461,6 +443,32 @@ function renderShadow(
     cx.arc(0, 0, Math.max(0, radius), 0, 2 * Math.PI);
     cx.fill();
     cx.restore();
+}
+
+function renderTorso(
+    cx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    rounding: number,
+): void {
+    cx.beginPath();
+    cx.roundRect(x, y, w, h, rounding);
+    cx.fill();
+}
+
+function renderHead(
+    cx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    rounding: number,
+): void {
+    cx.beginPath();
+    cx.roundRect(x, y, w, h, rounding);
+    cx.fill();
 }
 
 function renderArmSideways(
@@ -522,7 +530,7 @@ function renderArmFacing(
     cx.translate(x, y);
 
     // Rotate curved arms a little so that they don't overlap with the body.
-    cx.rotate(-bendDirection * 0.05 * Math.PI);
+    cx.rotate(-bendDirection * 0.07 * Math.PI);
 
     cx.rotate(sidewaysAngle);
     cx.scale(1, Math.cos(angle + Math.PI / 8));
