@@ -191,27 +191,22 @@ export function renderCharacter(
                     legLength,
                     leg2Angle,
                 );
-
-                // Head
-                cx.beginPath();
-                cx.roundRect(
+                renderHead(
+                    cx,
                     0.3 * w,
                     headHeight / 4,
                     headDepth,
                     headHeight,
                     headRounding,
                 );
-
-                // Torso
-                cx.roundRect(
+                renderTorso(
+                    cx,
                     (w - torsoDepth) / 2,
                     0.3 * h,
                     torsoDepth,
                     torsoLength,
                     torsoRounding,
                 );
-                cx.fill();
-
                 renderArmSideways(
                     cx,
                     ArmColor,
@@ -247,26 +242,22 @@ export function renderCharacter(
                 leg2Angle,
                 0,
             );
-
-            // Torso
-            cx.beginPath();
-            cx.roundRect(
-                0.2 * w,
-                0.3 * h,
-                torsoWidth,
-                torsoLength,
-                torsoRounding,
-            );
-
-            // Head
-            cx.roundRect(
+            renderHead(
+                cx,
                 (w - headWidth) / 2,
                 headHeight / 4,
                 headWidth,
                 headHeight,
                 headRounding,
             );
-            cx.fill();
+            renderTorso(
+                cx,
+                0.2 * w,
+                0.3 * h,
+                torsoWidth,
+                torsoLength,
+                torsoRounding,
+            );
 
             if (direction === CharacterFacingDirection.Backward) {
                 const faceX = (w - faceWidth) / 2;
@@ -336,27 +327,22 @@ export function renderCharacter(
                 arm2Angle,
                 arm2Angle / 2,
             );
-
-            // Head
-            cx.beginPath();
-            cx.roundRect(
+            renderHead(
+                cx,
                 (w - headWidth) / 2,
                 headHeight / 4,
                 headWidth,
                 headHeight,
                 headRounding,
             );
-
-            // Torso
-            cx.roundRect(
+            renderTorso(
+                cx,
                 (w - torsoWidth) / 2,
                 0.3 * h,
                 torsoWidth,
                 torsoLength,
                 torsoRounding,
             );
-            cx.fill();
-
             renderArmFacing(
                 cx,
                 ArmColor,
@@ -404,27 +390,22 @@ export function renderCharacter(
                 arm2Angle,
                 arm2Angle / 2,
             );
-
-            // Head
-            cx.beginPath();
-            cx.roundRect(
+            renderHead(
+                cx,
                 (w - headWidth) / 2,
                 headHeight / 4,
                 headWidth,
                 headHeight,
                 headRounding,
             );
-
-            // Torso
-            cx.roundRect(
+            renderTorso(
+                cx,
                 (w - torsoWidth) / 2,
                 0.3 * h,
                 torsoWidth,
                 torsoLength,
                 torsoRounding,
             );
-            cx.fill();
-
             renderArmFacing(
                 cx,
                 ArmColor,
@@ -461,6 +442,32 @@ function renderShadow(
     cx.arc(0, 0, Math.max(0, radius), 0, 2 * Math.PI);
     cx.fill();
     cx.restore();
+}
+
+function renderTorso(
+    cx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    rounding: number,
+): void {
+    cx.beginPath();
+    cx.roundRect(x, y, w, h, rounding);
+    cx.fill();
+}
+
+function renderHead(
+    cx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    rounding: number,
+): void {
+    cx.beginPath();
+    cx.roundRect(x, y, w, h, rounding);
+    cx.fill();
 }
 
 function renderArmSideways(
