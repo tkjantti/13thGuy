@@ -138,6 +138,8 @@ const FadeOutIn = (tune1, tune2) => {
 };
 
 export const playTune = (tune, vol) => {
+    if (vol === 0) return
+
     switch (tune) {
         case SFX_RACE: {
             raceTune.currentTime = 0;
@@ -153,7 +155,6 @@ export const playTune = (tune, vol) => {
         case SFX_GAMEOVER: {
             gameoverFx.volume = 1;
             gameoverFx.play();
-            startTune.currentTime = 0;
             FadeOut(raceTune);
             break;
         }

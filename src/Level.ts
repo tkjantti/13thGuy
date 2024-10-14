@@ -45,6 +45,7 @@ import {
     // @ts-ignore
 } from "./sfx/sfx.js";
 import { randomMinMax } from "./random.js";
+import { BLOCK_HEIGHT } from "./TrackElement";
 
 const TRACK_VISIBLE_HEIGHT = 70;
 
@@ -57,7 +58,7 @@ const BANK_WIDTH = 5;
 // track.
 const BANK_HEIGHT = 40;
 
-const maxSfxDistance = 200;
+const maxSfxDistance = 3 * BLOCK_HEIGHT;
 
 export enum State {
     RUNNING,
@@ -173,6 +174,14 @@ export class Level implements Area {
         this.checkGameState();
     }
 
+    private playWithVolumeByDistance(sound: string, y: number): void {
+        const yDistance = Math.abs(y - this.player.y);
+        playTune(
+            sound,
+            Math.max(0, Math.min(1, 1 - yDistance / maxSfxDistance)),
+        );
+    }
+
     private calculateMovement(t: number, dt: number): void {
         for (let i = 0; i < this.characters.length; i++) {
             const c = this.characters[i];
@@ -213,15 +222,7 @@ export class Level implements Area {
                 const other = this.characters[oi];
                 if (other.finished || other.eliminated) continue;
                 if (calculateCollisionBetweenCharacters(c, other)) {
-                    const yDistance = Math.abs(c.y - this.player.y);
-                    const volumeByDistance = !c.ai
-                        ? 1
-                        : Math.max(
-                              0,
-                              Math.min(1, 1 - yDistance / maxSfxDistance),
-                          );
-                    if (volumeByDistance > 0)
-                        playTune(SFX_HIT, volumeByDistance);
+                    this.playWithVolumeByDistance(SFX_HIT, c.y);
                 }
             }
         }
@@ -240,15 +241,7 @@ export class Level implements Area {
 
                     // Basic distance check if sound should be played
                     if (calculateCollisionToObstacle(c, o)) {
-                        const yDistance = Math.abs(o.y - this.player.y);
-                        const volumeByDistance = !c.ai
-                            ? 1
-                            : Math.max(
-                                  0,
-                                  Math.min(1, 1 - yDistance / maxSfxDistance),
-                              );
-                        if (volumeByDistance > 0)
-                            playTune(SFX_BOUNCE, volumeByDistance);
+                        this.playWithVolumeByDistance(SFX_BOUNCE, o.y);
                     }
                 }
             }
@@ -348,13 +341,9 @@ export class Level implements Area {
             return;
         }
 
-        const yDistance = Math.abs(c.y - this.player.y);
-        const volumeByDistance = !c.ai
-            ? 1
-            : Math.max(0, Math.min(1, 1 - yDistance / maxSfxDistance));
-        if (volumeByDistance > 0) playTune(SFX_TELEPORT, volumeByDistance);
-
         c.drop(dropPosition);
+
+        this.playWithVolumeByDistance(SFX_TELEPORT, c.y);
     }
 
     // Function to draw a cross (❌) for better browser compatibility
