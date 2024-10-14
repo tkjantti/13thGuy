@@ -242,6 +242,8 @@ export function renderCharacter(
                 leg2Angle,
                 0,
             );
+            // Render head before arms so that celebration animation looks good
+            // when shown in the backward direction.
             renderHead(
                 cx,
                 (w - headWidth) / 2,
@@ -249,6 +251,26 @@ export function renderCharacter(
                 headWidth,
                 headHeight,
                 headRounding,
+            );
+            renderArmFacing(
+                cx,
+                ArmColor,
+                0.2 * w,
+                0.35 * h,
+                armWidth,
+                armLength,
+                HorizontalDirection.Left,
+                arm1Angle,
+            );
+            renderArmFacing(
+                cx,
+                ArmColor,
+                0.8 * w,
+                0.35 * h,
+                armWidth,
+                armLength,
+                HorizontalDirection.Right,
+                arm2Angle,
             );
             renderTorso(
                 cx,
@@ -270,27 +292,6 @@ export function renderCharacter(
                     faceRounding,
                 );
             }
-
-            renderArmFacing(
-                cx,
-                ArmColor,
-                0.2 * w,
-                0.35 * h,
-                armWidth,
-                armLength,
-                HorizontalDirection.Left,
-                arm1Angle,
-            );
-            renderArmFacing(
-                cx,
-                ArmColor,
-                0.8 * w,
-                0.35 * h,
-                armWidth,
-                armLength,
-                HorizontalDirection.Right,
-                arm2Angle,
-            );
             break;
         }
         case CharacterFacingDirection.ForwardRight: {
