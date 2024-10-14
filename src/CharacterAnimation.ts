@@ -255,7 +255,7 @@ export function renderCharacter(
             renderArmFacing(
                 cx,
                 ArmColor,
-                0.2 * w,
+                0.25 * w,
                 0.35 * h,
                 armWidth,
                 armLength,
@@ -265,7 +265,7 @@ export function renderCharacter(
             renderArmFacing(
                 cx,
                 ArmColor,
-                0.8 * w,
+                0.75 * w,
                 0.35 * h,
                 armWidth,
                 armLength,
@@ -320,7 +320,7 @@ export function renderCharacter(
             renderArmFacing(
                 cx,
                 ArmColorDarker,
-                0.2 * w,
+                0.25 * w,
                 0.35 * h,
                 armWidth,
                 armLength,
@@ -347,7 +347,7 @@ export function renderCharacter(
             renderArmFacing(
                 cx,
                 ArmColor,
-                0.8 * w,
+                0.75 * w,
                 0.35 * h,
                 armWidth,
                 armLength,
@@ -383,7 +383,7 @@ export function renderCharacter(
             renderArmFacing(
                 cx,
                 ArmColorDarker,
-                0.8 * w,
+                0.75 * w,
                 0.35 * h,
                 armWidth,
                 armLength,
@@ -410,7 +410,7 @@ export function renderCharacter(
             renderArmFacing(
                 cx,
                 ArmColor,
-                0.2 * w,
+                0.25 * w,
                 0.35 * h,
                 armWidth,
                 armLength,
@@ -530,7 +530,7 @@ function renderArmFacing(
     cx.translate(x, y);
 
     // Rotate curved arms a little so that they don't overlap with the body.
-    cx.rotate(-bendDirection * 0.05 * Math.PI);
+    cx.rotate(-bendDirection * 0.07 * Math.PI);
 
     cx.rotate(sidewaysAngle);
     cx.scale(1, Math.cos(angle + Math.PI / 8));
