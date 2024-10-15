@@ -203,12 +203,11 @@ export class Level implements Area {
         for (let ci = 0; ci < this.characters.length; ci++) {
             const c = this.characters[ci];
 
-            // Do not collide if character is finished or eliminated
-            if (c.finished || c.eliminated) continue;
+            if (c.doesNotCollide) continue;
 
             for (let oi = ci + 1; oi < this.characters.length; oi++) {
                 const other = this.characters[oi];
-                if (other.finished || other.eliminated) continue;
+                if (other.doesNotCollide) continue;
 
                 if (calculateCollisionBetweenCharacters(c, other)) {
                     const yDistance = Math.abs(c.y - this.player.y);
