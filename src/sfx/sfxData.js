@@ -7,97 +7,11 @@
 // use it in a demo.
 
 // SFX
-export const bounceSfx = {
-    songData: [
-        {
-            // Instrument 0
-            i: [
-                0, // OSC1_WAVEFORM
-                255, // OSC1_VOL
-                128, // OSC1_SEMI
-                0, // OSC1_XENV
-                3, // OSC2_WAVEFORM
-                255, // OSC2_VOL
-                128, // OSC2_SEMI
-                0, // OSC2_DETUNE
-                0, // OSC2_XENV
-                0, // NOISE_VOL
-                5, // ENV_ATTACK
-                6, // ENV_SUSTAIN
-                64, // ENV_RELEASE
-                0, // ENV_EXP_DECAY
-                0, // ARP_CHORD
-                0, // ARP_SPEED
-                0, // LFO_WAVEFORM
-                195, // LFO_AMT
-                6, // LFO_FREQ
-                1, // LFO_FX_FREQ
-                2, // FX_FILTER
-                135, // FX_FREQ
-                0, // FX_RESONANCE
-                0, // FX_DIST
-                32, // FX_DRIVE
-                147, // FX_PAN_AMT
-                6, // FX_PAN_FREQ
-                0, // FX_DELAY_AMT
-                6, // FX_DELAY_TIME
-            ],
-            // Patterns
-            p: [1],
-            // Columns
-            c: [
-                {
-                    n: [
-                        99,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        111,
-                    ],
-                    f: [],
-                },
-            ],
-        },
-    ],
-    rowLen: 500, // In sample lengths
-    patternLen: 32, // Rows per pattern
-    endPattern: 0, // End pattern
-    numChannels: 1, // Number of channels
-};
-
+export const bounceSfx = [1,,82,.01,.08,.2,,2.6,,,,,,.1,,,,.61,.02,,-1686]
 export const kbSfx = [2,,12,,,0.008,,1.2,23,-7,,,0.05,0.4,,,0.15,0.82,0.03,0.28,];
-
 export const teleportSfx = [1,,85,.08,.1,.01,1,4,,-11,1,.07,,.1,101,,.05,.68,.4,.12,1];
-
 export const finishSfx = [.1,,523.2511,.1,3,3,4,0,,,2250,,.04,,10,.01,,.82,1,,30];
+export const hitSfx = [1,,185,,,,3,1.6,-7,,,,,,,.2,.19,.1,,.38,985]
 
 export const gameoverSfx = {
     songData: [
@@ -190,7 +104,6 @@ export const gameoverSfx = {
     numChannels: 1, // Number of channels
 };
 
-export const hitSfx = [,,64,.01,,.01,1,2,,-44,,,,,,.1,,0,.09]
 
 // Song data
 export const song1 = {

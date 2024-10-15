@@ -19,7 +19,7 @@
 // @language_out ECMASCRIPT_2019
 // ==/ClosureCompiler==
 
-// Added volume support by Tero Jäntti, Sami Heikkinen
+// Added volume as a prop by Tero Jäntti, Sami Heikkinen
 export const zzfx = (vol, ...z)=> zzfxP(vol, zzfxG(vol,...z)); // generate and play sound
 const zzfxR = 44100; // sample rate
 
@@ -50,7 +50,6 @@ const zzfxG = // generate samples
 )=>
 
 {
-    console.info(volume, vol)
     // init parameters
     let PI2 = Math.PI*2, sign = v => v<0?-1:1, 
         startSlide = slide *= 500 * PI2 / zzfxR / zzfxR,

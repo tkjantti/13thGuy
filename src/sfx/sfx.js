@@ -48,7 +48,6 @@ export const SFX_RESTART = "restart";
 
 const startTune = document.createElement("audio");
 const raceTune = document.createElement("audio");
-const bounceFx = document.createElement("audio");
 const gameoverFx = document.createElement("audio");
 
 export const initMusicPlayer = (audioTrack, tune, isLooped) => {
@@ -80,7 +79,6 @@ export const initialize = () => {
     return Promise.all([
         initMusicPlayer(startTune, song1, true),
         initMusicPlayer(raceTune, song2, true),
-        initMusicPlayer(bounceFx, bounceSfx, false),
         initMusicPlayer(gameoverFx, gameoverSfx, false),
     ]);
 };
@@ -183,8 +181,7 @@ export const playTune = (tune, vol) => {
         }
         //SFX
         case SFX_BOUNCE: {
-            bounceFx.volume = vol;
-            bounceFx.play();
+            zzfx(vol, ...bounceSfx);
             break;
         }
         case SFX_HIT: {
