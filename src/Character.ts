@@ -116,6 +116,10 @@ export class Character implements GameObject {
 
     latestCheckpointIndex: number = 0;
 
+    get doesNotCollide(): boolean {
+        return this.finished || this.eliminated || this.fallStartTime != null;
+    }
+
     constructor(
         id: number,
         track: Track | undefined,
