@@ -222,7 +222,9 @@ export class Level implements Area {
                 const other = this.characters[oi];
                 if (other.finished || other.eliminated) continue;
                 if (calculateCollisionBetweenCharacters(c, other)) {
-                    this.playWithVolumeByDistance(SFX_HIT, c.y);
+                    // Check if character is the player or the velocity is bit larger in any direction to prevent too much sfx plays
+                    if (!c.ai || c.velocity.y > 0.05 || c.velocity.x > 0.05)
+                        this.playWithVolumeByDistance(SFX_HIT, c.y);
                 }
             }
         }

@@ -145,7 +145,7 @@ export const playTune = (tune, vol) => {
             break;
         }
         case SFX_FINISHED: {
-            zzfx(0.1,...finishSfx);
+            zzfx(0.04,...finishSfx);
             startTune.currentTime = 0;
             FadeOutIn(raceTune, startTune);
             break;
