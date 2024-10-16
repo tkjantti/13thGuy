@@ -573,52 +573,55 @@ export class Level implements Area {
 
             sortedCharacters.forEach((char, index) => {
                 char.rank = index + 1; // Update ranks of characters
-                const text = `${char.rank}`;
-                cx.fillStyle =
-                    char.rank === 13
-                        ? "red"
-                        : char.eliminated
-                          ? "crimson"
-                          : char.rank > characters.length - 13
-                            ? "orange"
-                            : char.rank === 1
-                              ? "lightgreen"
-                              : char.ai
-                                ? "white"
-                                : "yellow";
 
-                cx.font = !char.ai
-                    ? "1.4px Sans-serif"
-                    : char.eliminated || char.rank === 13
-                      ? "1.2px Sans-serif"
-                      : "1px Sans-serif";
+                if (char.isVisible(t)) {
+                    const text = `${char.rank}`;
+                    cx.fillStyle =
+                        char.rank === 13
+                            ? "red"
+                            : char.eliminated
+                              ? "crimson"
+                              : char.rank > characters.length - 13
+                                ? "orange"
+                                : char.rank === 1
+                                  ? "lightgreen"
+                                  : char.ai
+                                    ? "white"
+                                    : "yellow";
 
-                if (!char.ai) {
-                    cx.save();
-                    cx.font = "4.0px Sans-serif";
+                    cx.font = !char.ai
+                        ? "1.4px Sans-serif"
+                        : char.eliminated || char.rank === 13
+                          ? "1.2px Sans-serif"
+                          : "1px Sans-serif";
+
+                    if (!char.ai) {
+                        cx.save();
+                        cx.font = "4.0px Sans-serif";
+                        this.renderText(
+                            "▲",
+                            char.x,
+                            char.y - char.height * 3.25,
+                            char.width,
+                        );
+
+                        cx.restore();
+                    }
+
+                    if (char.eliminated) {
+                        this.drawCross(
+                            char.x - 0.25,
+                            char.y - char.height * 2.7,
+                            1,
+                        );
+                    }
                     this.renderText(
-                        "▲",
+                        char.eliminated ? "13" : text,
                         char.x,
-                        char.y - char.height * 3.25,
+                        char.y - char.height * 2.5,
                         char.width,
                     );
-
-                    cx.restore();
                 }
-
-                if (char.eliminated) {
-                    this.drawCross(
-                        char.x - 0.25,
-                        char.y - char.height * 2.7,
-                        1,
-                    );
-                }
-                this.renderText(
-                    char.eliminated ? "13" : text,
-                    char.x,
-                    char.y - char.height * 2.5,
-                    char.width,
-                );
             });
 
             // Top status texts

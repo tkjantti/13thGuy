@@ -132,6 +132,12 @@ export class Character implements GameObject {
         this.height = CHARACTER_DIMENSIONS.height * hOffset;
     }
 
+    isVisible(t: number): boolean {
+        return !(
+            this.fallStartTime != null && FALL_TIME < t - this.fallStartTime
+        );
+    }
+
     setDirection(direction: Vector): void {
         this.direction = direction;
         if (!isZero(direction)) {
