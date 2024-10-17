@@ -381,7 +381,9 @@ const draw = (t: number, dt: number): void => {
                     t,
                     radius < canvas.width / 6
                         ? CharacterFacingDirection.Right
-                        : CharacterFacingDirection.Backward,
+                        : t % 3600 > 1800
+                          ? CharacterFacingDirection.Backward
+                          : CharacterFacingDirection.BackwardRight,
                     level.characters.length > 14
                         ? CharacterAnimation.Walk
                         : CharacterAnimation.Celebrate,
@@ -430,7 +432,9 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
         t,
         wait
             ? CharacterFacingDirection.Forward
-            : CharacterFacingDirection.Backward,
+            : t % 3600 < 1800
+              ? CharacterFacingDirection.BackwardRight
+              : CharacterFacingDirection.Backward,
         CharacterAnimation.Walk,
     );
     cx.restore();

@@ -46,6 +46,7 @@ import {
 } from "./sfx/sfx.js";
 import { randomMinMax } from "./random.js";
 import { BLOCK_HEIGHT } from "./TrackElement";
+import { length } from "./Vector.js";
 
 const TRACK_VISIBLE_HEIGHT = 70;
 
@@ -223,7 +224,7 @@ export class Level implements Area {
                 if (other.finished || other.eliminated) continue;
                 if (calculateCollisionBetweenCharacters(c, other)) {
                     // Check if character is the player or the velocity is bit larger in any direction to prevent too much sfx plays
-                    if (!c.ai || c.velocity.y > 0.05 || c.velocity.x > 0.05)
+                    if (!c.ai || length(c.velocity) > 0.3)
                         this.playWithVolumeByDistance(SFX_HIT, c.y);
                 }
             }
