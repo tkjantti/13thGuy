@@ -39,11 +39,14 @@ import {
     playTune,
     SFX_BOUNCE,
     SFX_HIT,
+    SFX_TELEPORT,
     // Ignore lint errors from JS import
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
 } from "./sfx/sfx.js";
 import { randomMinMax } from "./random.js";
+import { BLOCK_HEIGHT } from "./TrackElement";
+import { length } from "./Vector.js";
 
 const TRACK_VISIBLE_HEIGHT = 70;
 
@@ -55,6 +58,8 @@ const BANK_WIDTH = 5;
 // Length of empty area before the start and after the end of the
 // track.
 const BANK_HEIGHT = 40;
+
+const maxSfxDistance = 3 * BLOCK_HEIGHT;
 
 export enum State {
     RUNNING,
@@ -170,6 +175,14 @@ export class Level implements Area {
         this.checkGameState();
     }
 
+    private playWithVolumeByDistance(sound: string, y: number): void {
+        const yDistance = Math.abs(y - this.player.y);
+        playTune(
+            sound,
+            Math.max(0, Math.min(1, 1 - yDistance / maxSfxDistance)),
+        );
+    }
+
     private calculateMovement(t: number, dt: number): void {
         for (let i = 0; i < this.characters.length; i++) {
             const c = this.characters[i];
@@ -209,13 +222,10 @@ export class Level implements Area {
             for (let oi = ci + 1; oi < this.characters.length; oi++) {
                 const other = this.characters[oi];
                 if (other.finished || other.eliminated) continue;
-
                 if (calculateCollisionBetweenCharacters(c, other)) {
-                    const yDistance = Math.abs(c.y - this.player.y);
-                    const volumeByDistance =
-                        ci === 0 ? 1 : 1 - Math.min(yDistance / 100, 1);
-                    if (volumeByDistance > 0)
-                        playTune(SFX_HIT, volumeByDistance);
+                    // Check if character is the player or the velocity is bit larger in any direction to prevent too much sfx plays
+                    if (!c.ai || length(c.velocity) > 0.3)
+                        this.playWithVolumeByDistance(SFX_HIT, c.y);
                 }
             }
         }
@@ -234,11 +244,7 @@ export class Level implements Area {
 
                     // Basic distance check if sound should be played
                     if (calculateCollisionToObstacle(c, o)) {
-                        const yDistance = Math.abs(o.y - this.player.y);
-                        const volumeByDistance =
-                            ci === 0 ? 1 : 1 - Math.min(yDistance / 100, 1);
-                        if (volumeByDistance > 0)
-                            playTune(SFX_BOUNCE, volumeByDistance);
+                        this.playWithVolumeByDistance(SFX_BOUNCE, o.y);
                     }
                 }
             }
@@ -339,6 +345,8 @@ export class Level implements Area {
         }
 
         c.drop(dropPosition);
+
+        this.playWithVolumeByDistance(SFX_TELEPORT, c.y);
     }
 
     // Function to draw a cross (❌) for better browser compatibility
