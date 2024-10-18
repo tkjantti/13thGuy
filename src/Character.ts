@@ -116,6 +116,10 @@ export class Character implements GameObject {
 
     latestCheckpointIndex: number = 0;
 
+    get doesNotCollide(): boolean {
+        return this.finished || this.eliminated || this.fallStartTime != null;
+    }
+
     constructor(
         id: number,
         track: Track | undefined,
@@ -126,6 +130,12 @@ export class Character implements GameObject {
         this.color = 0 <= id && id < colors.length ? colors[id] : "black";
         this.width = CHARACTER_DIMENSIONS.width * wOffset;
         this.height = CHARACTER_DIMENSIONS.height * hOffset;
+    }
+
+    isVisible(t: number): boolean {
+        return !(
+            this.fallStartTime != null && FALL_TIME < t - this.fallStartTime
+        );
     }
 
     setDirection(direction: Vector): void {

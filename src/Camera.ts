@@ -23,15 +23,28 @@
  */
 
 import { Area, Dimensions } from "./Area";
+import { easeInOutExpo } from "./easings";
 import { GameObject } from "./GameObject";
 
+export interface Transition {
+    startY: number;
+    endY: number;
+    startTime: number;
+    duration: number;
+}
+
 export class Camera {
-    public x = 0;
-    public y = 0;
-    public zoom = 1;
-    public visibleAreaHeight?: number;
+    x = 0;
+    y = 0;
+    zoom = 1;
+    visibleAreaHeight?: number;
+
+    // Adjusts the camera y position, relative to the visible level
+    // area.
+    yAdjust: number = 0;
 
     private target: GameObject | null = null;
+    private transition: Transition | null = null;
 
     constructor(
         private level: Area,
@@ -56,12 +69,32 @@ export class Camera {
         this.target = target;
     }
 
-    update(): void {
+    setTransition(transition: Transition): void {
+        const viewAreaHeight = this.view.height / this.zoom;
+        this.transition = {
+            ...transition,
+            endY: transition.endY + viewAreaHeight * this.yAdjust,
+        };
+        this.target = null;
+    }
+
+    update(t: number): void {
         if (this.visibleAreaHeight != null) {
             this.zoom = this.view.height / this.visibleAreaHeight;
         }
 
-        if (this.target) {
+        if (this.transition != null) {
+            const { startY, endY, startTime, duration } = this.transition;
+
+            if (t < startTime + duration) {
+                const elapsedTime = t - this.transition.startTime;
+                const progress = elapsedTime / this.transition.duration;
+
+                this.y = startY + easeInOutExpo(progress) * (endY - startY);
+            } else {
+                this.transition = null;
+            }
+        } else if (this.target) {
             this.followFrame(this.target);
         }
     }
@@ -88,10 +121,6 @@ export class Camera {
             this.x = 0;
         }
 
-        let y = o.y + o.height;
-        // Characted should be 1/4 height from bottom
-        y -= viewAreaHeight / 4;
-
-        this.y = y;
+        this.y = o.y + viewAreaHeight * this.yAdjust;
     }
 }
