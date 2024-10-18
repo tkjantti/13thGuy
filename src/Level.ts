@@ -61,6 +61,9 @@ const BANK_HEIGHT = 40;
 
 const maxSfxDistance = 3 * BLOCK_HEIGHT;
 
+// Time after falling to being dropped to a checkpoint.
+const CAMERA_CHECKPOINT_MOVEMENT_TIME = 1000;
+
 export enum State {
     RUNNING,
     GAME_OVER,
@@ -154,11 +157,13 @@ export class Level implements Area {
 
         this.camera.follow(this.player);
         this.camera.visibleAreaHeight = TRACK_VISIBLE_HEIGHT;
-        this.camera.update();
+        // Characted should be 1/4 height from bottom
+        this.camera.yAdjust = -(1 / 4);
+        this.camera.update(0);
     }
 
     update(t: number, dt: number): void {
-        this.camera.update();
+        this.camera.update(t);
 
         this.track.update(t, dt, this.characters);
 
@@ -193,8 +198,8 @@ export class Level implements Area {
 
             if (c.fallStartTime != null) {
                 // Can't move when falling.
-
-                if (t - c.fallStartTime > FALL_TIME) {
+                const fallTime = t - c.fallStartTime;
+                if (fallTime > FALL_TIME + CAMERA_CHECKPOINT_MOVEMENT_TIME) {
                     this.dropToLatestCheckpoint(c);
                 }
             } else if (
@@ -202,6 +207,22 @@ export class Level implements Area {
                 !this.track.isOnPlatform(range, c)
             ) {
                 c.fallStartTime = t;
+                if (c === this.player) {
+                    const checkpoint = this.track.getCheckpoint(
+                        this.player.latestCheckpointIndex,
+                    );
+                    const dropY = checkpoint.y + checkpoint.height / 2;
+
+                    setTimeout(() => {
+                        this.camera.setTransition({
+                            startY: this.player.y,
+                            endY: dropY,
+                            startTime: t,
+                            // A bit longer duration here looks better for some reason.
+                            duration: CAMERA_CHECKPOINT_MOVEMENT_TIME + 500,
+                        });
+                    }, FALL_TIME);
+                }
             } else {
                 movementDirection = c.getMovement(t, dt);
 
@@ -347,6 +368,10 @@ export class Level implements Area {
         c.drop(dropPosition);
 
         this.playWithVolumeByDistance(SFX_TELEPORT, c.y);
+
+        if (c === this.player) {
+            this.camera.follow(c);
+        }
     }
 
     // Function to draw a cross (❌) for better browser compatibility
