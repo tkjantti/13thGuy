@@ -73,9 +73,15 @@ export function renderCharacter(
     let arm2Angle = 0;
     let bouncing = 0;
 
+    const verticalDirection =
+        direction === CharacterFacingDirection.ForwardRight ||
+        direction === CharacterFacingDirection.BackwardRight;
+
+    const rightDirection = direction === CharacterFacingDirection.Right;
+
     switch (animation) {
         case CharacterAnimation.Walk:
-            period = 250;
+            period = rightDirection ? 400 : verticalDirection ? 300 : 250;
             bouncing = easeInOutSine(triangle(period / 2, t / 2)) * 0.015 * h;
             leg1Angle = arm2Angle =
                 -Math.PI / 8 +
