@@ -61,6 +61,9 @@ const BANK_HEIGHT = 40;
 
 const maxSfxDistance = 3 * BLOCK_HEIGHT;
 
+// Time after falling to being dropped to a checkpoint.
+const CAMERA_CHECKPOINT_MOVEMENT_TIME = 1000;
+
 export enum State {
     RUNNING,
     GAME_OVER,
@@ -154,11 +157,13 @@ export class Level implements Area {
 
         this.camera.follow(this.player);
         this.camera.visibleAreaHeight = TRACK_VISIBLE_HEIGHT;
-        this.camera.update();
+        // Characted should be 1/4 height from bottom
+        this.camera.yAdjust = -(1 / 4);
+        this.camera.update(0);
     }
 
     update(t: number, dt: number): void {
-        this.camera.update();
+        this.camera.update(t);
 
         this.track.update(t, dt, this.characters);
 
@@ -193,8 +198,8 @@ export class Level implements Area {
 
             if (c.fallStartTime != null) {
                 // Can't move when falling.
-
-                if (t - c.fallStartTime > FALL_TIME) {
+                const fallTime = t - c.fallStartTime;
+                if (fallTime > FALL_TIME + CAMERA_CHECKPOINT_MOVEMENT_TIME) {
                     this.dropToLatestCheckpoint(c);
                 }
             } else if (
@@ -202,6 +207,22 @@ export class Level implements Area {
                 !this.track.isOnPlatform(range, c)
             ) {
                 c.fallStartTime = t;
+                if (c === this.player) {
+                    setTimeout(() => {
+                        const checkpoint = this.track.getCheckpoint(
+                            this.player.latestCheckpointIndex,
+                        );
+                        const dropY = checkpoint.y + checkpoint.height / 2;
+
+                        this.camera.setTransition({
+                            startY: this.player.y,
+                            endY: dropY,
+                            startTime: t,
+                            // A bit longer duration here looks better for some reason.
+                            duration: CAMERA_CHECKPOINT_MOVEMENT_TIME + 500,
+                        });
+                    }, FALL_TIME);
+                }
             } else {
                 movementDirection = c.getMovement(t, dt);
 
@@ -216,12 +237,12 @@ export class Level implements Area {
         for (let ci = 0; ci < this.characters.length; ci++) {
             const c = this.characters[ci];
 
-            // Do not collide if character is finished or eliminated
-            if (c.finished || c.eliminated) continue;
+            if (c.doesNotCollide) continue;
 
             for (let oi = ci + 1; oi < this.characters.length; oi++) {
                 const other = this.characters[oi];
-                if (other.finished || other.eliminated) continue;
+                if (other.doesNotCollide) continue;
+
                 if (calculateCollisionBetweenCharacters(c, other)) {
                     // Check if character is the player or the velocity is bit larger in any direction to prevent too much sfx plays
                     if (!c.ai || length(c.velocity) > 0.3)
@@ -347,6 +368,10 @@ export class Level implements Area {
         c.drop(dropPosition);
 
         this.playWithVolumeByDistance(SFX_TELEPORT, c.y);
+
+        if (c === this.player) {
+            this.camera.follow(c);
+        }
     }
 
     // Function to draw a cross (❌) for better browser compatibility
@@ -573,52 +598,55 @@ export class Level implements Area {
 
             sortedCharacters.forEach((char, index) => {
                 char.rank = index + 1; // Update ranks of characters
-                const text = `${char.rank}`;
-                cx.fillStyle =
-                    char.rank === 13
-                        ? "red"
-                        : char.eliminated
-                          ? "crimson"
-                          : char.rank > characters.length - 13
-                            ? "orange"
-                            : char.rank === 1
-                              ? "lightgreen"
-                              : char.ai
-                                ? "white"
-                                : "yellow";
 
-                cx.font = !char.ai
-                    ? "1.4px Sans-serif"
-                    : char.eliminated || char.rank === 13
-                      ? "1.2px Sans-serif"
-                      : "1px Sans-serif";
+                if (char.isVisible(t)) {
+                    const text = `${char.rank}`;
+                    cx.fillStyle =
+                        char.rank === 13
+                            ? "red"
+                            : char.eliminated
+                              ? "crimson"
+                              : char.rank > characters.length - 13
+                                ? "orange"
+                                : char.rank === 1
+                                  ? "lightgreen"
+                                  : char.ai
+                                    ? "white"
+                                    : "yellow";
 
-                if (!char.ai) {
-                    cx.save();
-                    cx.font = "4.0px Sans-serif";
+                    cx.font = !char.ai
+                        ? "1.4px Sans-serif"
+                        : char.eliminated || char.rank === 13
+                          ? "1.2px Sans-serif"
+                          : "1px Sans-serif";
+
+                    if (!char.ai) {
+                        cx.save();
+                        cx.font = "4.0px Sans-serif";
+                        this.renderText(
+                            "▲",
+                            char.x,
+                            char.y - char.height * 3.25,
+                            char.width,
+                        );
+
+                        cx.restore();
+                    }
+
+                    if (char.eliminated) {
+                        this.drawCross(
+                            char.x - 0.25,
+                            char.y - char.height * 2.7,
+                            1,
+                        );
+                    }
                     this.renderText(
-                        "▲",
+                        char.eliminated ? "13" : text,
                         char.x,
-                        char.y - char.height * 3.25,
+                        char.y - char.height * 2.5,
                         char.width,
                     );
-
-                    cx.restore();
                 }
-
-                if (char.eliminated) {
-                    this.drawCross(
-                        char.x - 0.25,
-                        char.y - char.height * 2.7,
-                        1,
-                    );
-                }
-                this.renderText(
-                    char.eliminated ? "13" : text,
-                    char.x,
-                    char.y - char.height * 2.5,
-                    char.width,
-                );
             });
 
             // Top status texts
