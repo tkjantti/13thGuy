@@ -208,12 +208,12 @@ export class Level implements Area {
             ) {
                 c.fallStartTime = t;
                 if (c === this.player) {
-                    const checkpoint = this.track.getCheckpoint(
-                        this.player.latestCheckpointIndex,
-                    );
-                    const dropY = checkpoint.y + checkpoint.height / 2;
-
                     setTimeout(() => {
+                        const checkpoint = this.track.getCheckpoint(
+                            this.player.latestCheckpointIndex,
+                        );
+                        const dropY = checkpoint.y + checkpoint.height / 2;
+
                         this.camera.setTransition({
                             startY: this.player.y,
                             endY: dropY,
