@@ -196,7 +196,6 @@ export class Character implements GameObject {
         this.ai?.reset();
     }
 
-    // eslint-disable-next-line
     draw(t: number, _: number, pattern?: CanvasPattern): void {
         const direction: CharacterFacingDirection =
             this.latestDirection.y !== 0

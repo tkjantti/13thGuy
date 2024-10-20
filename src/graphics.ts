@@ -160,14 +160,13 @@ export const renderText = (
     cx.restore();
 };
 
-export const createTexture = () => {
+export const createFabricTexture = () => {
     const offscreenCanvas = document.createElement("canvas");
     offscreenCanvas.width = 4;
     offscreenCanvas.height = 4;
     const offscreenCtx = offscreenCanvas.getContext("2d");
     if (!offscreenCtx) return;
 
-    // Function to draw a single line
     function drawLine(
         x1: number,
         y1: number,
@@ -193,6 +192,26 @@ export const createTexture = () => {
         drawLine(i, 0, i, offscreenCanvas.height, color);
         drawLine(0, i, offscreenCanvas.width, i, color);
     }
+
+    const pattern = offscreenCtx.createPattern(offscreenCanvas, "repeat");
+    return pattern;
+};
+
+export const createPlateTexture = () => {
+    const offscreenCanvas = document.createElement("canvas");
+    offscreenCanvas.width = 8;
+    offscreenCanvas.height = 8;
+    const offscreenCtx = offscreenCanvas.getContext("2d");
+    if (!offscreenCtx) return;
+
+    offscreenCtx.strokeStyle = "#000000";
+    offscreenCtx.lineWidth = 0.05;
+    offscreenCtx.strokeRect(
+        0,
+        0,
+        offscreenCanvas.width,
+        offscreenCanvas.height,
+    );
 
     const pattern = offscreenCtx.createPattern(offscreenCanvas, "repeat");
     return pattern;
