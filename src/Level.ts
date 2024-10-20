@@ -434,12 +434,13 @@ export class Level implements Area {
 
         this.drawObjects(t, dt, objectsToDraw);
 
-        cx.restore();
+        cx.restore(); // End camera - Drawing no longer in level coordinates
 
         this.drawGradient();
 
         if (this.state === State.RUNNING) {
             cx.save();
+            // Apply camera - drawing in level coordinates after these lines:
             cx.translate(canvas.width / 2, canvas.height / 2);
             cx.scale(this.camera.zoom, this.camera.zoom);
             cx.translate(-this.camera.x, -this.camera.y);
@@ -447,9 +448,9 @@ export class Level implements Area {
             this.drawStatusOfCharacters(t);
 
             this.drawTopStatusTexts();
-        }
 
-        cx.restore(); // End camera - Drawing no longer in level coordinates
+            cx.restore(); // End camera - Drawing no longer in level coordinates
+        }
     }
 
     drawTrack(objectsToDraw: GameObject[]): void {
