@@ -33,7 +33,13 @@ import {
     getMovementVelocity,
 } from "./physics";
 import { Track } from "./Track";
-import { BLOCK_WIDTH, isSlope, TrackElementType, TT } from "./TrackElement";
+import {
+    BLOCK_WIDTH,
+    isSlope,
+    TrackElement,
+    TrackElementType,
+    TT,
+} from "./TrackElement";
 import { Vector, ZERO_VECTOR } from "./Vector";
 import {
     playTune,
@@ -44,7 +50,7 @@ import {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
 } from "./sfx/sfx.js";
-import { randomMinMax } from "./random.js";
+import { randomMinMax } from "./random";
 import { BLOCK_HEIGHT } from "./TrackElement";
 import { length } from "./Vector.js";
 
@@ -475,100 +481,11 @@ export class Level implements Area {
                 (element.type === TrackElementType.Raft ? 2 : 6);
 
             if (element.type === TrackElementType.Raft) cx.globalAlpha = 0.5;
+
             for (let i = 0; i < surfaces.length; i++) {
                 const surface = surfaces[i];
 
-                cx.strokeStyle = "rgba(255,255,255,0.4)";
-                cx.lineWidth = 0.1;
-                // Borders for other than rafts
-                if (element.type !== TrackElementType.Raft) {
-                    cx.strokeRect(
-                        surface.x,
-                        surface.y + 0.1,
-                        surface.width,
-                        surface.height,
-                    );
-                }
-
-                cx.save();
-                if (isSlope(surface)) {
-                    const f = surface.force;
-                    cx.fillStyle = `rgba(${220 + f * 50}, ${80 + f * 50}, ${60 + f * 50}, ${1 - f})`;
-                }
-
-                // Surface
-                cx.fillRect(
-                    surface.x,
-                    surface.y,
-                    surface.width,
-                    surface.height,
-                );
-                cx.restore();
-
-                // Borders for rafts
-                if (element.type === TrackElementType.Raft) {
-                    cx.strokeRect(
-                        surface.x,
-                        surface.y,
-                        surface.width,
-                        surface.height,
-                    );
-                }
-
-                if (
-                    element.type === TrackElementType.CheckPoint ||
-                    element.type === TrackElementType.Finish
-                ) {
-                    cx.fillStyle = "rgba(255, 255, 255, 0.2)";
-                    cx.fillRect(
-                        surface.x,
-                        surface.y + surface.height - 4,
-                        surface.width,
-                        4,
-                    );
-                }
-
-                if (isSlope(surface)) {
-                    // Texture with arrows pointing up
-                    cx.shadowOffsetY = 0;
-                    cx.font = "9px Arial";
-                    cx.textAlign = "center";
-                    cx.textBaseline = "middle";
-                    cx.fillStyle = "rgba(255, 255, 255, 0.1)";
-
-                    const spacing = element.width / (element.width / 10);
-
-                    for (let i = 1; i <= surface.width / 9 - 1; i++) {
-                        cx.fillText(
-                            "⇪",
-                            surface.x + i * spacing,
-                            surface.y + surface.height / 2,
-                        );
-                    }
-                }
-
-                if (
-                    element.type === TrackElementType.CheckPoint ||
-                    element.type === TrackElementType.Finish
-                ) {
-                    cx.shadowOffsetY = 0;
-                    cx.font = "9px Arial";
-                    cx.textAlign = "center";
-                    cx.textBaseline = "middle";
-                    cx.fillStyle = "rgba(255, 255, 255, 0.1)";
-
-                    const spacing = element.width / 10;
-
-                    for (let i = 1; i <= surface.width / 9 - 1; i++) {
-                        cx.fillText(
-                            element.type === TrackElementType.Finish
-                                ? "✪"
-                                : "☂",
-                            surface.x + i * spacing,
-                            surface.y + surface.height / 2.4,
-                        );
-                    }
-                }
+                this.drawSurface(element, surface);
             }
 
             cx.globalAlpha = 1;
@@ -577,6 +494,88 @@ export class Level implements Area {
         }
 
         cx.restore();
+    }
+
+    drawSurface(element: TrackElement, surface: Area): void {
+        cx.strokeStyle = "rgba(255,255,255,0.4)";
+        cx.lineWidth = 0.1;
+        // Borders for other than rafts
+        if (element.type !== TrackElementType.Raft) {
+            cx.strokeRect(
+                surface.x,
+                surface.y + 0.1,
+                surface.width,
+                surface.height,
+            );
+        }
+
+        cx.save();
+        if (isSlope(surface)) {
+            const f = surface.force;
+            cx.fillStyle = `rgba(${220 + f * 50}, ${80 + f * 50}, ${60 + f * 50}, ${1 - f})`;
+        }
+
+        // Surface
+        cx.fillRect(surface.x, surface.y, surface.width, surface.height);
+        cx.restore();
+
+        // Borders for rafts
+        if (element.type === TrackElementType.Raft) {
+            cx.strokeRect(surface.x, surface.y, surface.width, surface.height);
+        }
+
+        if (
+            element.type === TrackElementType.CheckPoint ||
+            element.type === TrackElementType.Finish
+        ) {
+            cx.fillStyle = "rgba(255, 255, 255, 0.2)";
+            cx.fillRect(
+                surface.x,
+                surface.y + surface.height - 4,
+                surface.width,
+                4,
+            );
+        }
+
+        if (isSlope(surface)) {
+            // Texture with arrows pointing up
+            cx.shadowOffsetY = 0;
+            cx.font = "9px Arial";
+            cx.textAlign = "center";
+            cx.textBaseline = "middle";
+            cx.fillStyle = "rgba(255, 255, 255, 0.1)";
+
+            const spacing = element.width / (element.width / 10);
+
+            for (let i = 1; i <= surface.width / 9 - 1; i++) {
+                cx.fillText(
+                    "⇪",
+                    surface.x + i * spacing,
+                    surface.y + surface.height / 2,
+                );
+            }
+        }
+
+        if (
+            element.type === TrackElementType.CheckPoint ||
+            element.type === TrackElementType.Finish
+        ) {
+            cx.shadowOffsetY = 0;
+            cx.font = "9px Arial";
+            cx.textAlign = "center";
+            cx.textBaseline = "middle";
+            cx.fillStyle = "rgba(255, 255, 255, 0.1)";
+
+            const spacing = element.width / 10;
+
+            for (let i = 1; i <= surface.width / 9 - 1; i++) {
+                cx.fillText(
+                    element.type === TrackElementType.Finish ? "✪" : "☂",
+                    surface.x + i * spacing,
+                    surface.y + surface.height / 2.4,
+                );
+            }
+        }
     }
 
     drawObjects(t: number, dt: number, objectsToDraw: GameObject[]) {
