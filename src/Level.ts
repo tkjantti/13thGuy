@@ -33,7 +33,13 @@ import {
     getMovementVelocity,
 } from "./physics";
 import { Track } from "./Track";
-import { BLOCK_WIDTH, isSlope, TrackElementType, TT } from "./TrackElement";
+import {
+    BLOCK_WIDTH,
+    isSlope,
+    TrackElement,
+    TrackElementType,
+    TT,
+} from "./TrackElement";
 import { Vector, ZERO_VECTOR } from "./Vector";
 import {
     playTune,
@@ -44,7 +50,7 @@ import {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
 } from "./sfx/sfx.js";
-import { randomMinMax } from "./random.js";
+import { randomMinMax } from "./random";
 import { BLOCK_HEIGHT } from "./TrackElement";
 import { length } from "./Vector.js";
 
@@ -177,6 +183,7 @@ export class Level implements Area {
             c.move();
         }
 
+        this.updateCharacterRanks();
         this.checkGameState();
     }
 
@@ -276,6 +283,35 @@ export class Level implements Area {
         const textMetrics = cx.measureText(text);
         const textX = x + (width - textMetrics.width) / 2;
         cx.fillText(text, textX, y);
+    }
+
+    private updateCharacterRanks(): void {
+        // Separate finished and unfinished characters
+        const finishedCharacters = this.characters.filter(
+            (char) => char.finished,
+        );
+        const unfinishedCharacters = this.characters.filter(
+            (char) => !char.finished,
+        );
+
+        // Sort finished characters based on their rank
+        finishedCharacters.sort((a, b) => a.rank - b.rank);
+
+        // Sort unfinished characters based on their Y coordinate
+        unfinishedCharacters.sort(
+            (a, b) => a.y + a.height / 2 - (b.y + b.height / 2),
+        );
+
+        // Merge finished and sorted unfinished characters
+        const sortedCharacters = [
+            ...finishedCharacters,
+            ...unfinishedCharacters,
+        ];
+
+        // Update ranks of characters
+        sortedCharacters.forEach((char, index) => {
+            char.rank = index + 1;
+        });
     }
 
     private checkGameState(): void {
@@ -398,8 +434,32 @@ export class Level implements Area {
         cx.scale(this.camera.zoom, this.camera.zoom);
         cx.translate(-this.camera.x, -this.camera.y);
 
-        const objectsToDraw: GameObject[] = [];
+        const objectsToDraw: GameObject[] = [...this.characters];
 
+        this.drawTrack(objectsToDraw);
+
+        this.drawObjects(t, dt, objectsToDraw);
+
+        cx.restore(); // End camera - Drawing no longer in level coordinates
+
+        this.drawGradient();
+
+        if (this.state === State.RUNNING) {
+            cx.save();
+            // Apply camera - drawing in level coordinates after these lines:
+            cx.translate(canvas.width / 2, canvas.height / 2);
+            cx.scale(this.camera.zoom, this.camera.zoom);
+            cx.translate(-this.camera.x, -this.camera.y);
+
+            this.drawStatusOfCharacters(t);
+
+            this.drawTopStatusTexts();
+
+            cx.restore(); // End camera - Drawing no longer in level coordinates
+        }
+    }
+
+    drawTrack(objectsToDraw: GameObject[]): void {
         cx.save();
 
         const viewArea = this.camera.getViewArea();
@@ -421,100 +481,11 @@ export class Level implements Area {
                 (element.type === TrackElementType.Raft ? 2 : 6);
 
             if (element.type === TrackElementType.Raft) cx.globalAlpha = 0.5;
+
             for (let i = 0; i < surfaces.length; i++) {
                 const surface = surfaces[i];
 
-                cx.strokeStyle = "rgba(255,255,255,0.4)";
-                cx.lineWidth = 0.1;
-                // Borders for other than rafts
-                if (element.type !== TrackElementType.Raft) {
-                    cx.strokeRect(
-                        surface.x,
-                        surface.y + 0.1,
-                        surface.width,
-                        surface.height,
-                    );
-                }
-
-                cx.save();
-                if (isSlope(surface)) {
-                    const f = surface.force;
-                    cx.fillStyle = `rgba(${220 + f * 50}, ${80 + f * 50}, ${60 + f * 50}, ${1 - f})`;
-                }
-
-                // Surface
-                cx.fillRect(
-                    surface.x,
-                    surface.y,
-                    surface.width,
-                    surface.height,
-                );
-                cx.restore();
-
-                // Borders for rafts
-                if (element.type === TrackElementType.Raft) {
-                    cx.strokeRect(
-                        surface.x,
-                        surface.y,
-                        surface.width,
-                        surface.height,
-                    );
-                }
-
-                if (
-                    element.type === TrackElementType.CheckPoint ||
-                    element.type === TrackElementType.Finish
-                ) {
-                    cx.fillStyle = "rgba(255, 255, 255, 0.2)";
-                    cx.fillRect(
-                        surface.x,
-                        surface.y + surface.height - 4,
-                        surface.width,
-                        4,
-                    );
-                }
-
-                if (isSlope(surface)) {
-                    // Texture with arrows pointing up
-                    cx.shadowOffsetY = 0;
-                    cx.font = "9px Arial";
-                    cx.textAlign = "center";
-                    cx.textBaseline = "middle";
-                    cx.fillStyle = "rgba(255, 255, 255, 0.1)";
-
-                    const spacing = element.width / (element.width / 10);
-
-                    for (let i = 1; i <= surface.width / 9 - 1; i++) {
-                        cx.fillText(
-                            "⇪",
-                            surface.x + i * spacing,
-                            surface.y + surface.height / 2,
-                        );
-                    }
-                }
-
-                if (
-                    element.type === TrackElementType.CheckPoint ||
-                    element.type === TrackElementType.Finish
-                ) {
-                    cx.shadowOffsetY = 0;
-                    cx.font = "9px Arial";
-                    cx.textAlign = "center";
-                    cx.textBaseline = "middle";
-                    cx.fillStyle = "rgba(255, 255, 255, 0.1)";
-
-                    const spacing = element.width / 10;
-
-                    for (let i = 1; i <= surface.width / 9 - 1; i++) {
-                        cx.fillText(
-                            element.type === TrackElementType.Finish
-                                ? "✪"
-                                : "☂",
-                            surface.x + i * spacing,
-                            surface.y + surface.height / 2.4,
-                        );
-                    }
-                }
+                this.drawSurface(element, surface);
             }
 
             cx.globalAlpha = 1;
@@ -523,9 +494,91 @@ export class Level implements Area {
         }
 
         cx.restore();
+    }
 
-        objectsToDraw.push(...this.characters);
+    drawSurface(element: TrackElement, surface: Area): void {
+        cx.strokeStyle = "rgba(255,255,255,0.4)";
+        cx.lineWidth = 0.1;
+        // Borders for other than rafts
+        if (element.type !== TrackElementType.Raft) {
+            cx.strokeRect(
+                surface.x,
+                surface.y + 0.1,
+                surface.width,
+                surface.height,
+            );
+        }
 
+        cx.save();
+        if (isSlope(surface)) {
+            const f = surface.force;
+            cx.fillStyle = `rgba(${220 + f * 50}, ${80 + f * 50}, ${60 + f * 50}, ${1 - f})`;
+        }
+
+        // Surface
+        cx.fillRect(surface.x, surface.y, surface.width, surface.height);
+        cx.restore();
+
+        // Borders for rafts
+        if (element.type === TrackElementType.Raft) {
+            cx.strokeRect(surface.x, surface.y, surface.width, surface.height);
+        }
+
+        if (
+            element.type === TrackElementType.CheckPoint ||
+            element.type === TrackElementType.Finish
+        ) {
+            cx.fillStyle = "rgba(255, 255, 255, 0.2)";
+            cx.fillRect(
+                surface.x,
+                surface.y + surface.height - 4,
+                surface.width,
+                4,
+            );
+        }
+
+        if (isSlope(surface)) {
+            // Texture with arrows pointing up
+            cx.shadowOffsetY = 0;
+            cx.font = "9px Arial";
+            cx.textAlign = "center";
+            cx.textBaseline = "middle";
+            cx.fillStyle = "rgba(255, 255, 255, 0.1)";
+
+            const spacing = element.width / (element.width / 10);
+
+            for (let i = 1; i <= surface.width / 9 - 1; i++) {
+                cx.fillText(
+                    "⇪",
+                    surface.x + i * spacing,
+                    surface.y + surface.height / 2,
+                );
+            }
+        }
+
+        if (
+            element.type === TrackElementType.CheckPoint ||
+            element.type === TrackElementType.Finish
+        ) {
+            cx.shadowOffsetY = 0;
+            cx.font = "9px Arial";
+            cx.textAlign = "center";
+            cx.textBaseline = "middle";
+            cx.fillStyle = "rgba(255, 255, 255, 0.1)";
+
+            const spacing = element.width / 10;
+
+            for (let i = 1; i <= surface.width / 9 - 1; i++) {
+                cx.fillText(
+                    element.type === TrackElementType.Finish ? "✪" : "☂",
+                    surface.x + i * spacing,
+                    surface.y + surface.height / 2.4,
+                );
+            }
+        }
+    }
+
+    drawObjects(t: number, dt: number, objectsToDraw: GameObject[]) {
         // Sort the objects so that objects in front get drawn after
         // objects behind them.
         objectsToDraw.sort((a, b) => a.y + a.height / 2 - (b.y + b.height / 2));
@@ -534,9 +587,9 @@ export class Level implements Area {
             const c = objectsToDraw[i];
             c.draw(t, dt);
         }
+    }
 
-        // Gradient lightning overlays
-        cx.restore();
+    drawGradient(): void {
         const gradient = cx.createRadialGradient(
             canvas.width / 2,
             canvas.height / 2,
@@ -557,135 +610,103 @@ export class Level implements Area {
         gradientL.addColorStop(1, "rgba(0, 0, 0, 0)");
         cx.fillStyle = gradientL;
         cx.fillRect(0, 0, canvas.width, canvas.height);
+    }
 
-        // Extract characters from objectsToDraw
-        const characters = objectsToDraw.filter(
-            (obj) => obj instanceof Character,
-        );
+    drawStatusOfCharacters(t: number) {
+        this.characters.forEach((char) => {
+            if (char.isVisible(t)) {
+                const text = `${char.rank}`;
+                cx.fillStyle =
+                    char.rank === 13
+                        ? "red"
+                        : char.eliminated
+                          ? "crimson"
+                          : char.rank > this.characters.length - 13
+                            ? "orange"
+                            : char.rank === 1
+                              ? "lightgreen"
+                              : char.ai
+                                ? "white"
+                                : "yellow";
 
-        if (this.state === State.RUNNING) {
-            // Separate finished and unfinished characters
-            const finishedCharacters = characters.filter(
-                (char) => char.finished,
-            );
-            const unfinishedCharacters = characters.filter(
-                (char) => !char.finished,
-            );
+                cx.font = !char.ai
+                    ? "1.4px Sans-serif"
+                    : char.eliminated || char.rank === 13
+                      ? "1.2px Sans-serif"
+                      : "1px Sans-serif";
 
-            // Sort finished characters based on their rank
-            finishedCharacters.sort((a, b) => a.rank - b.rank);
-
-            // Sort unfinished characters based on their Y coordinate
-            unfinishedCharacters.sort(
-                (a, b) => a.y + a.height / 2 - (b.y + b.height / 2),
-            );
-
-            // Merge finished and sorted unfinished characters
-            const sortedCharacters = [
-                ...finishedCharacters,
-                ...unfinishedCharacters,
-            ];
-
-            // Draw the order number and character name
-            cx.save();
-            cx.translate(canvas.width / 2, canvas.height / 2);
-            cx.scale(this.camera.zoom, this.camera.zoom);
-            cx.translate(-this.camera.x, -this.camera.y);
-
-            const eliminatedCharactersCount = characters
-                .filter((char) => char.eliminated)
-                .length.toString();
-
-            sortedCharacters.forEach((char, index) => {
-                char.rank = index + 1; // Update ranks of characters
-
-                if (char.isVisible(t)) {
-                    const text = `${char.rank}`;
-                    cx.fillStyle =
-                        char.rank === 13
-                            ? "red"
-                            : char.eliminated
-                              ? "crimson"
-                              : char.rank > characters.length - 13
-                                ? "orange"
-                                : char.rank === 1
-                                  ? "lightgreen"
-                                  : char.ai
-                                    ? "white"
-                                    : "yellow";
-
-                    cx.font = !char.ai
-                        ? "1.4px Sans-serif"
-                        : char.eliminated || char.rank === 13
-                          ? "1.2px Sans-serif"
-                          : "1px Sans-serif";
-
-                    if (!char.ai) {
-                        cx.save();
-                        cx.font = "4.0px Sans-serif";
-                        this.renderText(
-                            "▲",
-                            char.x,
-                            char.y - char.height * 3.25,
-                            char.width,
-                        );
-
-                        cx.restore();
-                    }
-
-                    if (char.eliminated) {
-                        this.drawCross(
-                            char.x - 0.25,
-                            char.y - char.height * 2.7,
-                            1,
-                        );
-                    }
+                if (!char.ai) {
+                    cx.save();
+                    cx.font = "4.0px Sans-serif";
                     this.renderText(
-                        char.eliminated ? "13" : text,
+                        "▲",
                         char.x,
-                        char.y - char.height * 2.5,
+                        char.y - char.height * 3.25,
                         char.width,
                     );
+
+                    cx.restore();
                 }
-            });
 
-            // Top status texts
-            cx.font = "4px Impact";
-            cx.fillStyle =
-                this.player.rank === 13
-                    ? "red"
-                    : this.player.eliminated
-                      ? "crimson"
-                      : this.player.rank > characters.length - 13
-                        ? "orange"
-                        : this.player.rank === 1
-                          ? "lightgreen"
-                          : "yellow";
+                if (char.eliminated) {
+                    this.drawCross(
+                        char.x - 0.25,
+                        char.y - char.height * 2.7,
+                        1,
+                    );
+                }
+                this.renderText(
+                    char.eliminated ? "13" : text,
+                    char.x,
+                    char.y - char.height * 2.5,
+                    char.width,
+                );
+            }
+        });
+    }
 
-            cx.fillText(
-                "▲ " + this.player.rank + " / " + characters.length,
-                -42,
-                this.camera.y - 30,
-            );
-            cx.fillStyle = "green";
-            cx.fillText(
-                "✪ " +
-                    finishedCharacters.length +
-                    " / " +
-                    (characters.length - 13) +
-                    " QUALIFIED",
-                -15,
-                this.camera.y - 30,
-            );
-            cx.fillStyle = "red";
-            this.drawCross(28, this.camera.y - 31.5, 3);
-            cx.fillText(
-                eliminatedCharactersCount + " / 13",
-                32,
-                this.camera.y - 30,
-            );
-        }
+    drawTopStatusTexts() {
+        const eliminatedCharactersCount = this.characters
+            .filter((char) => char.eliminated)
+            .length.toString();
 
-        cx.restore(); // End camera - Drawing no longer in level coordinates
+        const finishedCharactersCount = this.characters
+            .filter((char) => char.finished)
+            .length.toString();
+
+        cx.font = "4px Impact";
+        cx.fillStyle =
+            this.player.rank === 13
+                ? "red"
+                : this.player.eliminated
+                  ? "crimson"
+                  : this.player.rank > this.characters.length - 13
+                    ? "orange"
+                    : this.player.rank === 1
+                      ? "lightgreen"
+                      : "yellow";
+
+        cx.fillText(
+            "▲ " + this.player.rank + " / " + this.characters.length,
+            -42,
+            this.camera.y - 30,
+        );
+        cx.fillStyle = "green";
+        cx.fillText(
+            "✪ " +
+                finishedCharactersCount +
+                " / " +
+                (this.characters.length - 13) +
+                " QUALIFIED",
+            -15,
+            this.camera.y - 30,
+        );
+        cx.fillStyle = "red";
+        this.drawCross(28, this.camera.y - 31.5, 3);
+        cx.fillText(
+            eliminatedCharactersCount + " / 13",
+            32,
+            this.camera.y - 30,
+        );
     }
 }
