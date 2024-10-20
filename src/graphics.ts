@@ -193,14 +193,13 @@ export const createFabricTexture = () => {
         drawLine(0, i, offscreenCanvas.width, i, color);
     }
 
-    const pattern = offscreenCtx.createPattern(offscreenCanvas, "repeat");
-    return pattern;
+    return offscreenCtx.createPattern(offscreenCanvas, "repeat");
 };
 
 export const createPlateTexture = () => {
     const offscreenCanvas = document.createElement("canvas");
-    offscreenCanvas.width = 80;
-    offscreenCanvas.height = 80;
+    offscreenCanvas.width = 64;
+    offscreenCanvas.height = 64;
     const offscreenCtx = offscreenCanvas.getContext("2d");
     if (!offscreenCtx) return;
 
@@ -211,24 +210,34 @@ export const createPlateTexture = () => {
         offscreenCanvas.height,
     );
     const data = imageData.data;
-    for (let i = 0; i < data.length; i += 4) {
-        const noise = Math.random() * 50 - 25;
-        data[i] += noise;
-        data[i + 1] += noise;
-        data[i + 2] += noise;
-        data[i + 3] = 32; // Alpha (0 to 255)
+    const boxSize = 4; // Tile size
+    for (let y = 0; y < offscreenCanvas.height; y += boxSize) {
+        for (let x = 0; x < offscreenCanvas.width; x += boxSize) {
+            const noise = Math.random() * 64;
+            const alpha = Math.floor(Math.random() * 24); // Randowm alpha
+
+            for (let dy = 0; dy < boxSize; dy++) {
+                for (let dx = 0; dx < boxSize; dx++) {
+                    const index =
+                        ((y + dy) * offscreenCanvas.width + (x + dx)) * 4;
+                    data[index] = Math.min(
+                        255,
+                        Math.max(0, data[index] + noise),
+                    );
+                    data[index + 1] = Math.min(
+                        255,
+                        Math.max(0, data[index + 1] + noise),
+                    );
+                    data[index + 2] = Math.min(
+                        255,
+                        Math.max(0, data[index + 2] + noise),
+                    );
+                    data[index + 3] = alpha; // Alpha
+                }
+            }
+        }
     }
     offscreenCtx.putImageData(imageData, 0, 0);
 
-    offscreenCtx.strokeStyle = "#000000";
-    offscreenCtx.lineWidth = 0.05;
-    offscreenCtx.strokeRect(
-        0,
-        0,
-        offscreenCanvas.width,
-        offscreenCanvas.height,
-    );
-
-    const pattern = offscreenCtx.createPattern(offscreenCanvas, "repeat");
-    return pattern;
+    return offscreenCtx.createPattern(offscreenCanvas, "repeat");
 };
