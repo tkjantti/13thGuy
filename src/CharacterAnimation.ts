@@ -265,6 +265,17 @@ export function renderCharacter(
                 color,
                 pattern,
             );
+            if (direction === CharacterFacingDirection.Backward) {
+                const faceX = (w - faceWidth) / 2;
+                renderFace(
+                    cx,
+                    faceX,
+                    faceY,
+                    faceWidth,
+                    faceHeight,
+                    faceRounding,
+                );
+            }
             renderArmFacing(
                 cx,
                 ArmColor,
@@ -296,17 +307,6 @@ export function renderCharacter(
                 pattern,
             );
 
-            if (direction === CharacterFacingDirection.Backward) {
-                const faceX = (w - faceWidth) / 2;
-                renderFace(
-                    cx,
-                    faceX,
-                    faceY,
-                    faceWidth,
-                    faceHeight,
-                    faceRounding,
-                );
-            }
             break;
         }
         case CharacterFacingDirection.ForwardRight: {
