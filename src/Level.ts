@@ -177,6 +177,7 @@ export class Level implements Area {
             c.move();
         }
 
+        this.updateCharacterRanks();
         this.checkGameState();
     }
 
@@ -276,6 +277,35 @@ export class Level implements Area {
         const textMetrics = cx.measureText(text);
         const textX = x + (width - textMetrics.width) / 2;
         cx.fillText(text, textX, y);
+    }
+
+    private updateCharacterRanks(): void {
+        // Separate finished and unfinished characters
+        const finishedCharacters = this.characters.filter(
+            (char) => char.finished,
+        );
+        const unfinishedCharacters = this.characters.filter(
+            (char) => !char.finished,
+        );
+
+        // Sort finished characters based on their rank
+        finishedCharacters.sort((a, b) => a.rank - b.rank);
+
+        // Sort unfinished characters based on their Y coordinate
+        unfinishedCharacters.sort(
+            (a, b) => a.y + a.height / 2 - (b.y + b.height / 2),
+        );
+
+        // Merge finished and sorted unfinished characters
+        const sortedCharacters = [
+            ...finishedCharacters,
+            ...unfinishedCharacters,
+        ];
+
+        // Update ranks of characters
+        sortedCharacters.forEach((char, index) => {
+            char.rank = index + 1;
+        });
     }
 
     private checkGameState(): void {
@@ -408,48 +438,15 @@ export class Level implements Area {
 
         this.drawGradient();
 
-        // Extract characters from objectsToDraw
-        const characters = objectsToDraw.filter(
-            (obj) => obj instanceof Character,
-        );
-
         if (this.state === State.RUNNING) {
-            // Separate finished and unfinished characters
-            const finishedCharacters = characters.filter(
-                (char) => char.finished,
-            );
-            const unfinishedCharacters = characters.filter(
-                (char) => !char.finished,
-            );
-
-            // Sort finished characters based on their rank
-            finishedCharacters.sort((a, b) => a.rank - b.rank);
-
-            // Sort unfinished characters based on their Y coordinate
-            unfinishedCharacters.sort(
-                (a, b) => a.y + a.height / 2 - (b.y + b.height / 2),
-            );
-
-            // Merge finished and sorted unfinished characters
-            const sortedCharacters = [
-                ...finishedCharacters,
-                ...unfinishedCharacters,
-            ];
-
-            // Update ranks of characters
-            sortedCharacters.forEach((char, index) => {
-                char.rank = index + 1;
-            });
-
-            // Draw the order number and character name
             cx.save();
             cx.translate(canvas.width / 2, canvas.height / 2);
             cx.scale(this.camera.zoom, this.camera.zoom);
             cx.translate(-this.camera.x, -this.camera.y);
 
-            this.drawStatusOfCharacters(t, sortedCharacters);
+            this.drawStatusOfCharacters(t);
 
-            this.drawTopStatusTexts(characters, finishedCharacters);
+            this.drawTopStatusTexts();
         }
 
         cx.restore(); // End camera - Drawing no longer in level coordinates
@@ -615,8 +612,8 @@ export class Level implements Area {
         cx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    drawStatusOfCharacters(t: number, characters: readonly Character[]) {
-        characters.forEach((char) => {
+    drawStatusOfCharacters(t: number) {
+        this.characters.forEach((char) => {
             if (char.isVisible(t)) {
                 const text = `${char.rank}`;
                 cx.fillStyle =
@@ -624,7 +621,7 @@ export class Level implements Area {
                         ? "red"
                         : char.eliminated
                           ? "crimson"
-                          : char.rank > characters.length - 13
+                          : char.rank > this.characters.length - 13
                             ? "orange"
                             : char.rank === 1
                               ? "lightgreen"
@@ -668,12 +665,13 @@ export class Level implements Area {
         });
     }
 
-    drawTopStatusTexts(
-        characters: readonly Character[],
-        finishedCharacters: readonly Character[],
-    ) {
-        const eliminatedCharactersCount = characters
+    drawTopStatusTexts() {
+        const eliminatedCharactersCount = this.characters
             .filter((char) => char.eliminated)
+            .length.toString();
+
+        const finishedCharactersCount = this.characters
+            .filter((char) => char.finished)
             .length.toString();
 
         cx.font = "4px Impact";
@@ -682,23 +680,23 @@ export class Level implements Area {
                 ? "red"
                 : this.player.eliminated
                   ? "crimson"
-                  : this.player.rank > characters.length - 13
+                  : this.player.rank > this.characters.length - 13
                     ? "orange"
                     : this.player.rank === 1
                       ? "lightgreen"
                       : "yellow";
 
         cx.fillText(
-            "▲ " + this.player.rank + " / " + characters.length,
+            "▲ " + this.player.rank + " / " + this.characters.length,
             -42,
             this.camera.y - 30,
         );
         cx.fillStyle = "green";
         cx.fillText(
             "✪ " +
-                finishedCharacters.length +
+                finishedCharactersCount +
                 " / " +
-                (characters.length - 13) +
+                (this.characters.length - 13) +
                 " QUALIFIED",
             -15,
             this.camera.y - 30,
