@@ -199,10 +199,26 @@ export const createFabricTexture = () => {
 
 export const createPlateTexture = () => {
     const offscreenCanvas = document.createElement("canvas");
-    offscreenCanvas.width = 8;
-    offscreenCanvas.height = 8;
+    offscreenCanvas.width = 80;
+    offscreenCanvas.height = 80;
     const offscreenCtx = offscreenCanvas.getContext("2d");
     if (!offscreenCtx) return;
+
+    const imageData = offscreenCtx.getImageData(
+        0,
+        0,
+        offscreenCanvas.width,
+        offscreenCanvas.height,
+    );
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+        const noise = Math.random() * 50 - 25;
+        data[i] += noise;
+        data[i + 1] += noise;
+        data[i + 2] += noise;
+        data[i + 3] = 32; // Alpha (0 to 255)
+    }
+    offscreenCtx.putImageData(imageData, 0, 0);
 
     offscreenCtx.strokeStyle = "#000000";
     offscreenCtx.lineWidth = 0.05;
