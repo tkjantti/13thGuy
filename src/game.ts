@@ -5,6 +5,7 @@ import {
     renderText,
     canvas,
     cx,
+    createTexture,
 } from "./graphics";
 import {
     initializeKeyboard,
@@ -71,6 +72,8 @@ let gameState: GameState = GameState.Load;
 
 // For drawing start- and game over screens.
 let radius = 0;
+
+const pattern = createTexture();
 
 const setState = async (state: GameState) => {
     gameState = state;
@@ -319,6 +322,7 @@ const draw = (t: number, dt: number): void => {
                     t,
                     CharacterFacingDirection.Backward,
                     CharacterAnimation.Fall,
+                    pattern,
                 );
                 cx.globalAlpha = 0;
                 cx.restore();
@@ -387,6 +391,7 @@ const draw = (t: number, dt: number): void => {
                     level.characters.length > 14
                         ? CharacterAnimation.Walk
                         : CharacterAnimation.Celebrate,
+                    pattern,
                 );
                 cx.restore();
             }
@@ -436,6 +441,7 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
               ? CharacterFacingDirection.BackwardRight
               : CharacterFacingDirection.Backward,
         CharacterAnimation.Walk,
+        pattern,
     );
     cx.restore();
 
@@ -483,6 +489,7 @@ const drawInitialScreen = (noisy: boolean): void => {
         0,
         CharacterFacingDirection.Backward,
         CharacterAnimation.Stand,
+        pattern,
     );
     cx.restore();
     Logo();

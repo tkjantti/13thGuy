@@ -159,3 +159,41 @@ export const renderText = (
     );
     cx.restore();
 };
+
+export const createTexture = () => {
+    const offscreenCanvas = document.createElement("canvas");
+    offscreenCanvas.width = 4;
+    offscreenCanvas.height = 4;
+    const offscreenCtx = offscreenCanvas.getContext("2d");
+    if (!offscreenCtx) return;
+
+    // Function to draw a single line
+    function drawLine(
+        x1: number,
+        y1: number,
+        x2: number,
+        y2: number,
+        color: string | CanvasGradient | CanvasPattern,
+    ) {
+        if (!offscreenCtx) return;
+
+        offscreenCtx.strokeStyle = color;
+        offscreenCtx.beginPath();
+        offscreenCtx.moveTo(x1, y1);
+        offscreenCtx.lineTo(x2, y2);
+        offscreenCtx.stroke();
+    }
+
+    const color = "#00000010";
+
+    offscreenCtx.fillStyle = color;
+    offscreenCtx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+
+    for (let i = 0; i <= offscreenCanvas.width; i += 4) {
+        drawLine(i, 0, i, offscreenCanvas.height, color);
+        drawLine(0, i, offscreenCanvas.width, i, color);
+    }
+
+    const pattern = offscreenCtx.createPattern(offscreenCanvas, "repeat");
+    return pattern;
+};

@@ -65,6 +65,7 @@ export function renderCharacter(
     t: number,
     direction: CharacterFacingDirection,
     animation: CharacterAnimation,
+    pattern?: CanvasPattern | null,
 ): void {
     let period = 0;
     let leg1Angle = 0;
@@ -204,6 +205,8 @@ export function renderCharacter(
                     headDepth,
                     headHeight,
                     headRounding,
+                    color,
+                    pattern,
                 );
                 renderTorso(
                     cx,
@@ -212,6 +215,8 @@ export function renderCharacter(
                     torsoDepth,
                     torsoLength,
                     torsoRounding,
+                    color,
+                    pattern,
                 );
                 renderArmSideways(
                     cx,
@@ -257,6 +262,8 @@ export function renderCharacter(
                 headWidth,
                 headHeight,
                 headRounding,
+                color,
+                pattern,
             );
             renderArmFacing(
                 cx,
@@ -285,6 +292,8 @@ export function renderCharacter(
                 torsoWidth,
                 torsoLength,
                 torsoRounding,
+                color,
+                pattern,
             );
 
             if (direction === CharacterFacingDirection.Backward) {
@@ -341,6 +350,8 @@ export function renderCharacter(
                 headWidth,
                 headHeight,
                 headRounding,
+                color,
+                pattern,
             );
             renderTorso(
                 cx,
@@ -349,6 +360,8 @@ export function renderCharacter(
                 torsoWidth,
                 torsoLength,
                 torsoRounding,
+                color,
+                pattern,
             );
             renderArmFacing(
                 cx,
@@ -404,6 +417,8 @@ export function renderCharacter(
                 headWidth,
                 headHeight,
                 headRounding,
+                color,
+                pattern,
             );
             renderTorso(
                 cx,
@@ -412,6 +427,8 @@ export function renderCharacter(
                 torsoWidth,
                 torsoLength,
                 torsoRounding,
+                color,
+                pattern,
             );
             renderArmFacing(
                 cx,
@@ -458,10 +475,30 @@ function renderTorso(
     w: number,
     h: number,
     rounding: number,
+    color: string,
+    pattern?: CanvasPattern | null,
 ): void {
     cx.beginPath();
     cx.roundRect(x, y, w, h, rounding);
+    cx.fillStyle = color;
     cx.fill();
+
+    const gradient = cx.createRadialGradient(w, h, h / 8, w, h, w);
+    gradient.addColorStop(0, "rgba(255, 255, 255, 0.1)");
+    gradient.addColorStop(0.2, "rgba(255, 255, 255, 0.1)");
+    gradient.addColorStop(0.5, "rgba(0, 0, 0, 0.1)");
+    gradient.addColorStop(1, "rgba(0, 0, 0, 0.3)");
+    cx.fillStyle = gradient;
+    cx.fill();
+
+    if (pattern) {
+        cx.save();
+        cx.translate(x, y);
+        cx.scale(w / 80, h / 80);
+        cx.fillStyle = pattern;
+        cx.fill();
+        cx.restore();
+    }
 }
 
 function renderHead(
@@ -471,10 +508,30 @@ function renderHead(
     w: number,
     h: number,
     rounding: number,
+    color: string,
+    pattern?: CanvasPattern | null,
 ): void {
     cx.beginPath();
     cx.roundRect(x, y, w, h, rounding);
+    cx.fillStyle = color;
     cx.fill();
+
+    const gradient = cx.createRadialGradient(w, h, h / 8, w, h, w);
+    gradient.addColorStop(1, "rgba(255, 255, 255, 0.1)");
+    gradient.addColorStop(0.8, "rgba(255, 255, 255, 0.1)");
+    gradient.addColorStop(0.5, "rgba(0, 0, 0, 0.1)");
+    gradient.addColorStop(0, "rgba(0, 0, 0, 0.3)");
+    cx.fillStyle = gradient;
+    cx.fill();
+
+    if (pattern) {
+        cx.save();
+        cx.translate(x, y);
+        cx.scale(w / 80, h / 80);
+        cx.fillStyle = pattern;
+        cx.fill();
+        cx.restore();
+    }
 }
 
 function renderArmSideways(
