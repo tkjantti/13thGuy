@@ -468,6 +468,8 @@ function renderShadow(
     cx.restore();
 }
 
+const isFirefox = navigator.userAgent.toLowerCase().includes("firefox");
+
 function renderTorso(
     cx: CanvasRenderingContext2D,
     x: number,
@@ -483,21 +485,23 @@ function renderTorso(
     cx.fillStyle = color;
     cx.fill();
 
-    const gradient = cx.createRadialGradient(w, h, h / 8, w, h, w);
-    gradient.addColorStop(0, "rgba(255, 255, 255, 0.1)");
-    gradient.addColorStop(0.2, "rgba(255, 255, 255, 0.1)");
-    gradient.addColorStop(0.5, "rgba(0, 0, 0, 0.1)");
-    gradient.addColorStop(1, "rgba(0, 0, 0, 0.3)");
-    cx.fillStyle = gradient;
-    cx.fill();
-
-    if (pattern) {
-        cx.save();
-        cx.translate(x, y);
-        cx.scale(w / 80, h / 80);
-        cx.fillStyle = pattern;
+    if (!isFirefox) {
+        const gradient = cx.createRadialGradient(w, h, h / 8, w, h, w);
+        gradient.addColorStop(0, "rgba(255, 255, 255, 0.1)");
+        gradient.addColorStop(0.2, "rgba(255, 255, 255, 0.1)");
+        gradient.addColorStop(0.5, "rgba(0, 0, 0, 0.1)");
+        gradient.addColorStop(1, "rgba(0, 0, 0, 0.3)");
+        cx.fillStyle = gradient;
         cx.fill();
-        cx.restore();
+
+        if (pattern) {
+            cx.save();
+            cx.translate(x, y);
+            cx.scale(w / 80, h / 80);
+            cx.fillStyle = pattern;
+            cx.fill();
+            cx.restore();
+        }
     }
 }
 
@@ -516,21 +520,23 @@ function renderHead(
     cx.fillStyle = color;
     cx.fill();
 
-    const gradient = cx.createRadialGradient(w, h, h / 8, w, h, w);
-    gradient.addColorStop(1, "rgba(255, 255, 255, 0.1)");
-    gradient.addColorStop(0.8, "rgba(255, 255, 255, 0.1)");
-    gradient.addColorStop(0.5, "rgba(0, 0, 0, 0.1)");
-    gradient.addColorStop(0, "rgba(0, 0, 0, 0.3)");
-    cx.fillStyle = gradient;
-    cx.fill();
-
-    if (pattern) {
-        cx.save();
-        cx.translate(x, y);
-        cx.scale(w / 80, h / 80);
-        cx.fillStyle = pattern;
+    if (!isFirefox) {
+        const gradient = cx.createRadialGradient(w, h, h / 8, w, h, w);
+        gradient.addColorStop(1, "rgba(255, 255, 255, 0.1)");
+        gradient.addColorStop(0.8, "rgba(255, 255, 255, 0.1)");
+        gradient.addColorStop(0.5, "rgba(0, 0, 0, 0.1)");
+        gradient.addColorStop(0, "rgba(0, 0, 0, 0.3)");
+        cx.fillStyle = gradient;
         cx.fill();
-        cx.restore();
+
+        if (pattern) {
+            cx.save();
+            cx.translate(x, y);
+            cx.scale(w / 80, h / 80);
+            cx.fillStyle = pattern;
+            cx.fill();
+            cx.restore();
+        }
     }
 }
 
