@@ -85,7 +85,7 @@ function shuffleArray<T>(array: T[]) {
 }
 export class Level implements Area {
     private camera: Camera = new Camera(this, canvas);
-
+    private platePattern: CanvasPattern | null | undefined;
     private track: Track;
 
     public characters: Character[] = [];
@@ -104,7 +104,10 @@ export class Level implements Area {
         playerWidthOffset: number,
         playerHeightOffset: number,
         chars: Character[] | undefined,
+        platePattern: CanvasPattern | null | undefined,
     ) {
+        this.platePattern = platePattern;
+
         this.track = new Track(trackTemplate, TRACK_START_Y);
 
         this.x = 0 - this.track.width / 2 - BANK_WIDTH;
@@ -522,22 +525,7 @@ export class Level implements Area {
         // Borders for rafts
         if (element.type === TrackElementType.Raft) {
             cx.strokeRect(surface.x, surface.y, surface.width, surface.height);
-        }
-
-        if (
-            element.type === TrackElementType.CheckPoint ||
-            element.type === TrackElementType.Finish
-        ) {
-            cx.fillStyle = "rgba(255, 255, 255, 0.2)";
-            cx.fillRect(
-                surface.x,
-                surface.y + surface.height - 4,
-                surface.width,
-                4,
-            );
-        }
-
-        if (isSlope(surface)) {
+        } else if (isSlope(surface)) {
             // Texture with arrows pointing up
             cx.shadowOffsetY = 0;
             cx.font = "9px Arial";
@@ -554,12 +542,17 @@ export class Level implements Area {
                     surface.y + surface.height / 2,
                 );
             }
-        }
-
-        if (
+        } else if (
             element.type === TrackElementType.CheckPoint ||
             element.type === TrackElementType.Finish
         ) {
+            cx.fillStyle = "rgba(255, 255, 255, 0.2)";
+            cx.fillRect(
+                surface.x,
+                surface.y + surface.height - 4,
+                surface.width,
+                4,
+            );
             cx.shadowOffsetY = 0;
             cx.font = "9px Arial";
             cx.textAlign = "center";
@@ -575,6 +568,12 @@ export class Level implements Area {
                     surface.y + surface.height / 2.4,
                 );
             }
+        }
+
+        if (this.platePattern) {
+            cx.fillStyle = this.platePattern;
+            cx.fillRect(surface.x, surface.y, surface.width, surface.height);
+            cx.fillStyle = element.color;
         }
     }
 

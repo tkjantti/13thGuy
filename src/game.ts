@@ -5,6 +5,8 @@ import {
     renderText,
     canvas,
     cx,
+    createFabricTexture,
+    createPlateTexture,
 } from "./graphics";
 import {
     initializeKeyboard,
@@ -72,6 +74,9 @@ let gameState: GameState = GameState.Load;
 // For drawing start- and game over screens.
 let radius = 0;
 
+const pattern = createFabricTexture();
+const platePattern = createPlateTexture();
+
 const setState = async (state: GameState) => {
     gameState = state;
 
@@ -88,6 +93,7 @@ const setState = async (state: GameState) => {
                     randomWidhOffset,
                     randomHeighOffset,
                     level.characters,
+                    platePattern,
                 );
             } else {
                 level = new Level(
@@ -95,6 +101,7 @@ const setState = async (state: GameState) => {
                     randomWidhOffset,
                     randomHeighOffset,
                     undefined,
+                    platePattern,
                 );
             }
             raceNumber++;
@@ -319,6 +326,7 @@ const draw = (t: number, dt: number): void => {
                     t,
                     CharacterFacingDirection.Backward,
                     CharacterAnimation.Fall,
+                    pattern,
                 );
                 cx.globalAlpha = 0;
                 cx.restore();
@@ -381,12 +389,13 @@ const draw = (t: number, dt: number): void => {
                     t,
                     radius < canvas.width / 6
                         ? CharacterFacingDirection.Right
-                        : level.characters.length > 14 || t % 3600 > 1800
+                        : level.characters.length <= 14 || t % 3600 > 1800
                           ? CharacterFacingDirection.Backward
                           : CharacterFacingDirection.BackwardRight,
                     level.characters.length > 14
                         ? CharacterAnimation.Walk
                         : CharacterAnimation.Celebrate,
+                    pattern,
                 );
                 cx.restore();
             }
@@ -436,6 +445,7 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
               ? CharacterFacingDirection.BackwardRight
               : CharacterFacingDirection.Backward,
         CharacterAnimation.Walk,
+        pattern,
     );
     cx.restore();
 
@@ -483,6 +493,7 @@ const drawInitialScreen = (noisy: boolean): void => {
         0,
         CharacterFacingDirection.Backward,
         CharacterAnimation.Stand,
+        pattern,
     );
     cx.restore();
     Logo();

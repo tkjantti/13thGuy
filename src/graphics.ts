@@ -159,3 +159,85 @@ export const renderText = (
     );
     cx.restore();
 };
+
+export const createFabricTexture = () => {
+    const offscreenCanvas = document.createElement("canvas");
+    offscreenCanvas.width = 4;
+    offscreenCanvas.height = 4;
+    const offscreenCtx = offscreenCanvas.getContext("2d");
+    if (!offscreenCtx) return;
+
+    function drawLine(
+        x1: number,
+        y1: number,
+        x2: number,
+        y2: number,
+        color: string | CanvasGradient | CanvasPattern,
+    ) {
+        if (!offscreenCtx) return;
+
+        offscreenCtx.strokeStyle = color;
+        offscreenCtx.beginPath();
+        offscreenCtx.moveTo(x1, y1);
+        offscreenCtx.lineTo(x2, y2);
+        offscreenCtx.stroke();
+    }
+
+    const color = "#00000010";
+
+    offscreenCtx.fillStyle = color;
+    offscreenCtx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+
+    for (let i = 0; i <= offscreenCanvas.width; i += 4) {
+        drawLine(i, 0, i, offscreenCanvas.height, color);
+        drawLine(0, i, offscreenCanvas.width, i, color);
+    }
+
+    return offscreenCtx.createPattern(offscreenCanvas, "repeat");
+};
+
+export const createPlateTexture = () => {
+    const offscreenCanvas = document.createElement("canvas");
+    offscreenCanvas.width = 64;
+    offscreenCanvas.height = 64;
+    const offscreenCtx = offscreenCanvas.getContext("2d");
+    if (!offscreenCtx) return;
+
+    const imageData = offscreenCtx.getImageData(
+        0,
+        0,
+        offscreenCanvas.width,
+        offscreenCanvas.height,
+    );
+    const data = imageData.data;
+    const boxSize = 4; // Tile size
+    for (let y = 0; y < offscreenCanvas.height; y += boxSize) {
+        for (let x = 0; x < offscreenCanvas.width; x += boxSize) {
+            const noise = Math.random() * 64;
+            const alpha = Math.floor(Math.random() * 24); // Randowm alpha
+
+            for (let dy = 0; dy < boxSize; dy++) {
+                for (let dx = 0; dx < boxSize; dx++) {
+                    const index =
+                        ((y + dy) * offscreenCanvas.width + (x + dx)) * 4;
+                    data[index] = Math.min(
+                        255,
+                        Math.max(0, data[index] + noise),
+                    );
+                    data[index + 1] = Math.min(
+                        255,
+                        Math.max(0, data[index + 1] + noise),
+                    );
+                    data[index + 2] = Math.min(
+                        255,
+                        Math.max(0, data[index + 2] + noise),
+                    );
+                    data[index + 3] = alpha; // Alpha
+                }
+            }
+        }
+    }
+    offscreenCtx.putImageData(imageData, 0, 0);
+
+    return offscreenCtx.createPattern(offscreenCanvas, "repeat");
+};
