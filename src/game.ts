@@ -130,6 +130,7 @@ const setState = async (state: GameState) => {
                 setState(GameState.Ready);
             } else {
                 await waitForEnter();
+                clearCharacterGradients();
                 startRace();
             }
             break;
@@ -272,7 +273,7 @@ const draw = (t: number, dt: number): void => {
                     );
                 } else if (radius < maxRadius / 2) {
                     renderText("Set...", 64, "Impact", 1);
-                    clearCharacterGradients(); // Clear memory used gradients of characters
+                    clearCharacterGradients();
                 } else {
                     renderText("Ready...", 64, "Impact", 1);
                 }
