@@ -32,7 +32,7 @@ import {
 import {
     CharacterAnimation,
     CharacterFacingDirection,
-    clearCharacterGradients,
+    clearCharacterGradientCache,
     renderCharacter,
 } from "./CharacterAnimation";
 import { playerColor } from "./Character";
@@ -130,7 +130,7 @@ const setState = async (state: GameState) => {
                 setState(GameState.Ready);
             } else {
                 await waitForEnter();
-                clearCharacterGradients();
+                clearCharacterGradientCache();
                 startRace();
             }
             break;
@@ -273,7 +273,6 @@ const draw = (t: number, dt: number): void => {
                     );
                 } else if (radius < maxRadius / 2) {
                     renderText("Set...", 64, "Impact", 1);
-                    clearCharacterGradients();
                 } else {
                     renderText("Ready...", 64, "Impact", 1);
                 }
@@ -449,6 +448,7 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
               : CharacterFacingDirection.Backward,
         CharacterAnimation.Walk,
         pattern,
+        wait,
     );
     cx.restore();
 

@@ -66,6 +66,7 @@ export function renderCharacter(
     direction: CharacterFacingDirection,
     animation: CharacterAnimation,
     pattern?: CanvasPattern | null,
+    noCache?: boolean,
 ): void {
     let period = 0;
     let leg1Angle = 0;
@@ -207,6 +208,7 @@ export function renderCharacter(
                     headRounding,
                     color,
                     pattern,
+                    noCache,
                 );
                 renderTorso(
                     cx,
@@ -217,6 +219,7 @@ export function renderCharacter(
                     torsoRounding,
                     color,
                     pattern,
+                    noCache,
                 );
                 renderArmSideways(
                     cx,
@@ -264,6 +267,7 @@ export function renderCharacter(
                 headRounding,
                 color,
                 pattern,
+                noCache,
             );
             if (direction === CharacterFacingDirection.Backward) {
                 const faceX = (w - faceWidth) / 2;
@@ -305,6 +309,7 @@ export function renderCharacter(
                 torsoRounding,
                 color,
                 pattern,
+                noCache,
             );
 
             break;
@@ -352,6 +357,7 @@ export function renderCharacter(
                 headRounding,
                 color,
                 pattern,
+                noCache,
             );
             renderTorso(
                 cx,
@@ -362,6 +368,7 @@ export function renderCharacter(
                 torsoRounding,
                 color,
                 pattern,
+                noCache,
             );
             renderArmFacing(
                 cx,
@@ -419,6 +426,7 @@ export function renderCharacter(
                 headRounding,
                 color,
                 pattern,
+                noCache,
             );
             renderTorso(
                 cx,
@@ -429,6 +437,7 @@ export function renderCharacter(
                 torsoRounding,
                 color,
                 pattern,
+                noCache,
             );
             renderArmFacing(
                 cx,
@@ -479,9 +488,10 @@ function getCharacterGradient(
     key: GradientKey,
     w: number,
     h: number,
+    noCache: boolean,
 ): CanvasGradient {
     const gradientKey = `${key}-${w}-${h}`;
-    if (!gradients[gradientKey]) {
+    if (noCache || !gradients[gradientKey]) {
         const gradient = cx.createRadialGradient(w, h, h / 8, w, h, w);
         if (key === "torso") {
             gradient.addColorStop(0, "rgba(255, 255, 255, 0.1)");
@@ -494,13 +504,15 @@ function getCharacterGradient(
             gradient.addColorStop(0.8, "rgba(255, 255, 255, 0.1)");
             gradient.addColorStop(1, "rgba(255, 255, 255, 0.1)");
         }
+        if (noCache) return gradient; // Skip caching
+
         gradients[gradientKey] = gradient;
     }
 
     return gradients[gradientKey];
 }
 
-export function clearCharacterGradients(): void {
+export function clearCharacterGradientCache(): void {
     for (const key in gradients) {
         delete gradients[key];
     }
@@ -515,13 +527,14 @@ function renderTorso(
     rounding: number,
     color: string,
     pattern?: CanvasPattern | null,
+    noCache?: boolean,
 ): void {
     cx.beginPath();
     cx.roundRect(x, y, w, h, rounding);
     cx.fillStyle = color;
     cx.fill();
 
-    const gradient = getCharacterGradient(cx, "torso", w, h);
+    const gradient = getCharacterGradient(cx, "torso", w, h, noCache || false);
     cx.fillStyle = gradient;
     cx.fill();
 
@@ -544,13 +557,14 @@ function renderHead(
     rounding: number,
     color: string,
     pattern?: CanvasPattern | null,
+    noCache?: boolean,
 ): void {
     cx.beginPath();
     cx.roundRect(x, y, w, h, rounding);
     cx.fillStyle = color;
     cx.fill();
 
-    const gradient = getCharacterGradient(cx, "head", w, h);
+    const gradient = getCharacterGradient(cx, "head", w, h, noCache || false);
     cx.fillStyle = gradient;
     cx.fill();
 
