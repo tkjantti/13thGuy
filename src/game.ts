@@ -32,6 +32,7 @@ import {
 import {
     CharacterAnimation,
     CharacterFacingDirection,
+    clearCharacterGradients,
     renderCharacter,
 } from "./CharacterAnimation";
 import { playerColor } from "./Character";
@@ -271,6 +272,7 @@ const draw = (t: number, dt: number): void => {
                     );
                 } else if (radius < maxRadius / 2) {
                     renderText("Set...", 64, "Impact", 1);
+                    clearCharacterGradients(); // Clear memory used gradients of characters
                 } else {
                     renderText("Ready...", 64, "Impact", 1);
                 }
