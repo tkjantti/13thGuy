@@ -322,6 +322,12 @@ export class Level implements Area {
             const c = this.characters[ci];
 
             const checkpointIndex = this.track.findLatestCheckpoint(c.y);
+            const range = this.track.getBetween(c.y, c.y + c.height);
+
+            // Falling, do not do anything
+            if (c.fallStartTime != null || !this.track.isOnPlatform(range, c))
+                return;
+
             if (checkpointIndex > c.latestCheckpointIndex) {
                 c.latestCheckpointIndex = checkpointIndex;
                 //  13th character will be eliminated if it falls or is 13th in checkpoint
