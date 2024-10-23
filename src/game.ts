@@ -32,6 +32,7 @@ import {
 import {
     CharacterAnimation,
     CharacterFacingDirection,
+    clearCharacterGradientCache,
     renderCharacter,
 } from "./CharacterAnimation";
 import { playerColor } from "./Character";
@@ -129,6 +130,7 @@ const setState = async (state: GameState) => {
                 setState(GameState.Ready);
             } else {
                 await waitForEnter();
+                clearCharacterGradientCache();
                 startRace();
             }
             break;
@@ -446,6 +448,7 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
               : CharacterFacingDirection.Backward,
         CharacterAnimation.Walk,
         pattern,
+        wait,
     );
     cx.restore();
 

@@ -97,10 +97,12 @@ export const applyCRTEffect = (noisy = true): void => {
     }
 };
 
-export const applyGradient = () => {
+let gradient: CanvasGradient;
+
+const createGradient = () => {
     const width = canvas.width;
     const height = canvas.height;
-    const gradient = cx.createRadialGradient(
+    gradient = cx.createRadialGradient(
         width / 2,
         height / 2,
         0, // Inner circle
@@ -110,9 +112,14 @@ export const applyGradient = () => {
     );
     gradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
     gradient.addColorStop(1, "rgba(0, 0, 0, 0.5)");
+};
 
+export const applyGradient = () => {
+    if (!gradient) {
+        createGradient();
+    }
     cx.fillStyle = gradient;
-    cx.fillRect(0, 0, width, height);
+    cx.fillRect(0, 0, canvas.width, canvas.height);
 };
 
 // Faster than using .filter
