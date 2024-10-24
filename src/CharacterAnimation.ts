@@ -525,14 +525,7 @@ function getCharacterGradient(
 ): CanvasGradient {
     const gradientKey = `${key}-${w}-${h}`;
     if (noCache || !gradients[gradientKey]) {
-        const gradient = cx.createRadialGradient(
-            w / 2,
-            h / 2,
-            h / 8,
-            w / 2,
-            h / 2,
-            w,
-        );
+        const gradient = cx.createRadialGradient(w, h, h / 8, w, h, w);
         if (key === "torso") {
             gradient.addColorStop(
                 0,
