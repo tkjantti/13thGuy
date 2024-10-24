@@ -489,7 +489,7 @@ function renderShadow(
 
 type HeadOrTorsoKey = "TORSO" | "HEAD";
 
-const gradients: Record<string, CanvasGradient> = {};
+const gradients: Record<string, CanvasPattern | null | undefined> = {};
 
 function blendColors(
     baseColor: string,
@@ -530,7 +530,7 @@ function getCharacterGradient(
     w: number,
     h: number,
     noCache: boolean,
-): CanvasGradient {
+): CanvasPattern | null | undefined {
     const HeadOrTorsoKey = `${key}-${w}-${h}`;
     if (noCache || !gradients[HeadOrTorsoKey]) {
         const gradient = cx.createRadialGradient(w, h, h / 8, w, h, w);
@@ -569,9 +569,14 @@ function getCharacterGradient(
                 blendColors(baseColor, "rgb(255, 255, 255)", 0.1),
             );
         }
-        if (noCache) return gradient; // Skip caching
+        if (noCache) return createGradientPattern(cx, gradient, w * 2, h * 2);
 
-        gradients[HeadOrTorsoKey] = gradient;
+        gradients[HeadOrTorsoKey] = createGradientPattern(
+            cx,
+            gradient,
+            w * 2,
+            h * 4,
+        );
     }
 
     return gradients[HeadOrTorsoKey];
@@ -581,6 +586,25 @@ export function clearCharacterGradientCache(): void {
     for (const key in gradients) {
         delete gradients[key];
     }
+}
+
+function createGradientPattern(
+    cx: CanvasRenderingContext2D,
+    gradient: CanvasGradient,
+    w: number,
+    h: number,
+) {
+    const offscreenCanvas = document.createElement("canvas");
+    offscreenCanvas.width = w;
+    offscreenCanvas.height = h;
+    const offscreenCtx = offscreenCanvas.getContext("2d");
+
+    if (!offscreenCtx) return;
+
+    offscreenCtx.fillStyle = gradient;
+    offscreenCtx.fillRect(0, 0, w, h);
+
+    return cx.createPattern(offscreenCanvas, "no-repeat");
 }
 
 function renderHeadOrTorso(
@@ -605,7 +629,8 @@ function renderHeadOrTorso(
         h,
         noCache || false,
     );
-    cx.fillStyle = gradient;
+
+    cx.fillStyle = gradient || "black";
     cx.fill();
 
     if (pattern) {
