@@ -39,6 +39,7 @@ import { Track } from "./Track";
 import { isZero, normalize, Vector, ZERO_VECTOR } from "./Vector";
 
 export const FALL_TIME: number = 500;
+export const DROP_TIME: number = 1000;
 
 const colors: string[] = [
     "yellow",
@@ -113,6 +114,7 @@ export class Character implements GameObject {
     velocity: Vector = ZERO_VECTOR;
 
     fallStartTime: number | undefined;
+    dropStartTime: number | undefined;
 
     latestCheckpointIndex: number = 0;
 
@@ -186,13 +188,14 @@ export class Character implements GameObject {
         this.y += this.velocity.y * 8;
     }
 
-    drop(position: Vector): void {
+    drop(t: number, position: Vector): void {
         this.x = position.x;
         this.y = position.y;
         this.direction = ZERO_VECTOR;
         this.latestDirection = { x: 0, y: -1 };
         this.velocity = ZERO_VECTOR;
         this.fallStartTime = undefined;
+        this.dropStartTime = t;
         this.ai?.reset();
     }
 
@@ -249,6 +252,8 @@ export class Character implements GameObject {
             cx.translate(this.width / 2, renderHeight / 2);
             cx.scale(sizeRatio, sizeRatio);
             cx.translate(-this.width / 2, -renderHeight / 2);
+        } else if (this.dropStartTime && t - this.dropStartTime < DROP_TIME) {
+            cx.globalAlpha = easeInQuad((t - this.dropStartTime) / DROP_TIME);
         }
 
         const animationTime =
