@@ -326,7 +326,7 @@ export class Level implements Area {
 
             // Falling, do not do anything
             if (c.fallStartTime != null || !this.track.isOnPlatform(range, c))
-                return;
+                continue;
 
             if (checkpointIndex > c.latestCheckpointIndex) {
                 c.latestCheckpointIndex = checkpointIndex;
@@ -335,7 +335,7 @@ export class Level implements Area {
                     c.eliminated = true;
                     c.stop();
                     if (!c.ai) this.state = State.GAME_OVER;
-                    return;
+                    continue;
                 }
             }
 
