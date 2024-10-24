@@ -199,7 +199,8 @@ export function renderCharacter(
                     legLength,
                     leg2Angle,
                 );
-                renderHead(
+                renderHeadOrTorso(
+                    "HEAD",
                     cx,
                     0.3 * w,
                     headHeight / 4,
@@ -210,7 +211,8 @@ export function renderCharacter(
                     pattern,
                     noCache,
                 );
-                renderTorso(
+                renderHeadOrTorso(
+                    "TORSO",
                     cx,
                     (w - torsoDepth) / 2,
                     0.3 * h,
@@ -258,7 +260,8 @@ export function renderCharacter(
             );
             // Render head before arms so that celebration animation looks good
             // when shown in the backward direction.
-            renderHead(
+            renderHeadOrTorso(
+                "HEAD",
                 cx,
                 (w - headWidth) / 2,
                 headHeight / 4,
@@ -300,7 +303,8 @@ export function renderCharacter(
                 HorizontalDirection.Right,
                 arm2Angle,
             );
-            renderTorso(
+            renderHeadOrTorso(
+                "TORSO",
                 cx,
                 0.2 * w,
                 0.3 * h,
@@ -348,7 +352,8 @@ export function renderCharacter(
                 arm2Angle,
                 arm2Angle / 2,
             );
-            renderHead(
+            renderHeadOrTorso(
+                "HEAD",
                 cx,
                 (w - headWidth) / 2,
                 headHeight / 4,
@@ -359,7 +364,8 @@ export function renderCharacter(
                 pattern,
                 noCache,
             );
-            renderTorso(
+            renderHeadOrTorso(
+                "TORSO",
                 cx,
                 (w - torsoWidth) / 2,
                 0.3 * h,
@@ -417,7 +423,8 @@ export function renderCharacter(
                 arm2Angle,
                 arm2Angle / 2,
             );
-            renderHead(
+            renderHeadOrTorso(
+                "HEAD",
                 cx,
                 (w - headWidth) / 2,
                 headHeight / 4,
@@ -428,7 +435,8 @@ export function renderCharacter(
                 pattern,
                 noCache,
             );
-            renderTorso(
+            renderHeadOrTorso(
+                "TORSO",
                 cx,
                 (w - torsoWidth) / 2,
                 0.3 * h,
@@ -479,7 +487,7 @@ function renderShadow(
 
 // Caching of character gradients
 
-type GradientKey = "torso" | "head";
+type HeadOrTorsoKey = "TORSO" | "HEAD";
 
 const gradients: Record<string, CanvasGradient> = {};
 
@@ -518,15 +526,15 @@ function parseColor(color: string): { r: number; g: number; b: number } {
 function getCharacterGradient(
     cx: CanvasRenderingContext2D,
     baseColor: string,
-    key: GradientKey,
+    key: HeadOrTorsoKey,
     w: number,
     h: number,
     noCache: boolean,
 ): CanvasGradient {
-    const gradientKey = `${key}-${w}-${h}`;
-    if (noCache || !gradients[gradientKey]) {
+    const HeadOrTorsoKey = `${key}-${w}-${h}`;
+    if (noCache || !gradients[HeadOrTorsoKey]) {
         const gradient = cx.createRadialGradient(w, h, h / 8, w, h, w);
-        if (key === "torso") {
+        if (key === "TORSO") {
             gradient.addColorStop(
                 0,
                 blendColors(baseColor, "rgb(255, 255, 255)", 0.1),
@@ -543,7 +551,7 @@ function getCharacterGradient(
                 1,
                 blendColors(baseColor, "rgb(0, 0, 0)", 0.3),
             );
-        } else if (key === "head") {
+        } else if (key === "HEAD") {
             gradient.addColorStop(
                 0,
                 blendColors(baseColor, "rgb(0, 0, 0)", 0.3),
@@ -563,10 +571,10 @@ function getCharacterGradient(
         }
         if (noCache) return gradient; // Skip caching
 
-        gradients[gradientKey] = gradient;
+        gradients[HeadOrTorsoKey] = gradient;
     }
 
-    return gradients[gradientKey];
+    return gradients[HeadOrTorsoKey];
 }
 
 export function clearCharacterGradientCache(): void {
@@ -575,7 +583,8 @@ export function clearCharacterGradientCache(): void {
     }
 }
 
-function renderTorso(
+function renderHeadOrTorso(
+    headOrTorso: HeadOrTorsoKey,
     cx: CanvasRenderingContext2D,
     x: number,
     y: number,
@@ -591,41 +600,7 @@ function renderTorso(
     const gradient = getCharacterGradient(
         cx,
         color,
-        "torso",
-        w,
-        h,
-        noCache || false,
-    );
-    cx.fillStyle = gradient;
-    cx.fill();
-
-    if (pattern) {
-        cx.save();
-        cx.translate(x, y);
-        cx.scale(w / 80, h / 80);
-        cx.fillStyle = pattern;
-        cx.fill();
-        cx.restore();
-    }
-}
-
-function renderHead(
-    cx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    w: number,
-    h: number,
-    rounding: number,
-    color: string,
-    pattern?: CanvasPattern | null,
-    noCache?: boolean,
-): void {
-    cx.beginPath();
-    cx.roundRect(x, y, w, h, rounding);
-    const gradient = getCharacterGradient(
-        cx,
-        color,
-        "head",
+        headOrTorso,
         w,
         h,
         noCache || false,
