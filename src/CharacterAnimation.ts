@@ -483,8 +483,41 @@ type GradientKey = "torso" | "head";
 
 const gradients: Record<string, CanvasGradient> = {};
 
+function blendColors(
+    baseColor: string,
+    overlayColor: string,
+    overlayAlpha: number,
+): string {
+    const base = parseColor(baseColor);
+    const overlay = parseColor(overlayColor);
+
+    const r = Math.round(
+        (1 - overlayAlpha) * base.r + overlayAlpha * overlay.r,
+    );
+    const g = Math.round(
+        (1 - overlayAlpha) * base.g + overlayAlpha * overlay.g,
+    );
+    const b = Math.round(
+        (1 - overlayAlpha) * base.b + overlayAlpha * overlay.b,
+    );
+
+    return `rgb(${r}, ${g}, ${b})`;
+}
+
+function parseColor(color: string): { r: number; g: number; b: number } {
+    const result = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(color);
+    return result
+        ? {
+              r: parseInt(result[1]),
+              g: parseInt(result[2]),
+              b: parseInt(result[3]),
+          }
+        : { r: 0, g: 0, b: 0 };
+}
+
 function getCharacterGradient(
     cx: CanvasRenderingContext2D,
+    baseColor: string,
     key: GradientKey,
     w: number,
     h: number,
@@ -492,17 +525,48 @@ function getCharacterGradient(
 ): CanvasGradient {
     const gradientKey = `${key}-${w}-${h}`;
     if (noCache || !gradients[gradientKey]) {
-        const gradient = cx.createRadialGradient(w, h, h / 8, w, h, w);
+        const gradient = cx.createRadialGradient(
+            w / 2,
+            h / 2,
+            h / 8,
+            w / 2,
+            h / 2,
+            w,
+        );
         if (key === "torso") {
-            gradient.addColorStop(0, "rgba(255, 255, 255, 0.1)");
-            gradient.addColorStop(0.2, "rgba(255, 255, 255, 0.1)");
-            gradient.addColorStop(0.5, "rgba(0, 0, 0, 0.1)");
-            gradient.addColorStop(1, "rgba(0, 0, 0, 0.3)");
+            gradient.addColorStop(
+                0,
+                blendColors(baseColor, "rgb(255, 255, 255)", 0.1),
+            );
+            gradient.addColorStop(
+                0.2,
+                blendColors(baseColor, "rgb(255, 255, 255)", 0.1),
+            );
+            gradient.addColorStop(
+                0.5,
+                blendColors(baseColor, "rgb(0, 0, 0)", 0.1),
+            );
+            gradient.addColorStop(
+                1,
+                blendColors(baseColor, "rgb(0, 0, 0)", 0.3),
+            );
         } else if (key === "head") {
-            gradient.addColorStop(0, "rgba(0, 0, 0, 0.3)");
-            gradient.addColorStop(0.5, "rgba(0, 0, 0, 0.1)");
-            gradient.addColorStop(0.8, "rgba(255, 255, 255, 0.1)");
-            gradient.addColorStop(1, "rgba(255, 255, 255, 0.1)");
+            gradient.addColorStop(
+                0,
+                blendColors(baseColor, "rgb(0, 0, 0)", 0.3),
+            );
+            gradient.addColorStop(
+                0.5,
+                blendColors(baseColor, "rgb(0, 0, 0)", 0.1),
+            );
+            gradient.addColorStop(
+                0.8,
+                blendColors(baseColor, "rgb(255, 255, 255)", 0.1),
+            );
+            gradient.addColorStop(
+                1,
+                blendColors(baseColor, "rgb(255, 255, 255)", 0.1),
+            );
         }
         if (noCache) return gradient; // Skip caching
 
@@ -531,10 +595,14 @@ function renderTorso(
 ): void {
     cx.beginPath();
     cx.roundRect(x, y, w, h, rounding);
-    cx.fillStyle = color;
-    cx.fill();
-
-    const gradient = getCharacterGradient(cx, "torso", w, h, noCache || false);
+    const gradient = getCharacterGradient(
+        cx,
+        color,
+        "torso",
+        w,
+        h,
+        noCache || false,
+    );
     cx.fillStyle = gradient;
     cx.fill();
 
@@ -561,10 +629,14 @@ function renderHead(
 ): void {
     cx.beginPath();
     cx.roundRect(x, y, w, h, rounding);
-    cx.fillStyle = color;
-    cx.fill();
-
-    const gradient = getCharacterGradient(cx, "head", w, h, noCache || false);
+    const gradient = getCharacterGradient(
+        cx,
+        color,
+        "head",
+        w,
+        h,
+        noCache || false,
+    );
     cx.fillStyle = gradient;
     cx.fill();
 
