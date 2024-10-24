@@ -210,7 +210,7 @@ export class Level implements Area {
                 // Can't move when falling.
                 const fallTime = t - c.fallStartTime;
                 if (fallTime > FALL_TIME + CAMERA_CHECKPOINT_MOVEMENT_TIME) {
-                    this.dropToLatestCheckpoint(c);
+                    this.dropToLatestCheckpoint(t, c);
                 }
             } else if (
                 c.fallStartTime == null &&
@@ -378,7 +378,7 @@ export class Level implements Area {
         }
     }
 
-    private dropToLatestCheckpoint(c: Character): void {
+    private dropToLatestCheckpoint(t: number, c: Character): void {
         const checkpoint = this.track.getCheckpoint(c.latestCheckpointIndex);
 
         const dropPosition: Area = {
@@ -404,7 +404,7 @@ export class Level implements Area {
             return;
         }
 
-        c.drop(dropPosition);
+        c.drop(t, dropPosition);
 
         this.playWithVolumeByDistance(SFX_TELEPORT, c.y);
 
