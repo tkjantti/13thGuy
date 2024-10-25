@@ -244,14 +244,18 @@ export class Character implements GameObject {
         }
 
         if (this.fallStartTime != null) {
-            // Draw smaller as the character falls down.
-            const sizeRatio = Math.max(
+            const progress = Math.max(
                 1 - easeInQuad((t - this.fallStartTime) / FALL_TIME),
                 0,
             );
+
+            // Draw smaller as the character falls down.
             cx.translate(this.width / 2, renderHeight / 2);
-            cx.scale(sizeRatio, sizeRatio);
+            cx.scale(progress, progress);
             cx.translate(-this.width / 2, -renderHeight / 2);
+
+            // Fade away
+            cx.globalAlpha = easeInQuad(progress);
         } else if (this.dropStartTime && t - this.dropStartTime < DROP_TIME) {
             cx.globalAlpha = easeInQuad((t - this.dropStartTime) / DROP_TIME);
         }
