@@ -140,11 +140,15 @@ const setState = async (state: GameState) => {
 const gameLoop = (t: number): void => {
     requestAnimationFrame(gameLoop);
 
-    const dt = Math.min(t - lastTime, MAX_FRAME);
-    lastTime = t;
+    const deltaTime = t - lastTime;
 
-    update(t, dt);
-    draw(t, dt);
+    if (deltaTime >= TIME_STEP) {
+        const cappedDeltaTime = Math.min(deltaTime, MAX_FRAME);
+        lastTime = t - (deltaTime % TIME_STEP);
+
+        update(t, cappedDeltaTime);
+        draw(t, cappedDeltaTime);
+    }
 };
 
 const update = (t: number, dt: number): void => {
