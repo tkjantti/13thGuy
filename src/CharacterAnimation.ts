@@ -536,7 +536,7 @@ function getCharacterGradient(
     h: number,
     noCache: boolean,
 ): CanvasGradient | CanvasPattern | null | undefined {
-    const HeadOrTorsoKey = `${key}-${w}-${h}`;
+    const HeadOrTorsoKey = `${key}-${baseColor}-${w}-${h}`;
     if (noCache || !gradients[HeadOrTorsoKey]) {
         const gradient = cx.createRadialGradient(w, h, h / 8, w, h, w);
         if (key === "TORSO") {

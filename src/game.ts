@@ -322,7 +322,7 @@ const draw = (t: number, dt: number): void => {
                 cx.translate(canvas.width / 8, radius * 2 - canvas.height);
                 renderCharacter(
                     cx,
-                    "gray",
+                    "rgb(128, 128, 128)",
                     (canvas.height / 6) * randomWidhOffset,
                     (canvas.height / 2) * randomHeighOffset,
                     t,
