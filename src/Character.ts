@@ -258,7 +258,7 @@ export class Character implements GameObject {
 
         renderCharacter(
             cx,
-            this.eliminated ? "rgb(128,128,128)" : this.color,
+            this.eliminated ? "gray" : this.color,
             this.width,
             renderHeight,
             animationTime,

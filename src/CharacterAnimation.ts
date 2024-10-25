@@ -163,6 +163,8 @@ export function renderCharacter(
     cx.lineJoin = "round";
     cx.lineCap = "round";
 
+    if (color === "gray") cx.globalAlpha = 0.7; // Eliminated color, use opacity to character
+
     switch (direction) {
         case CharacterFacingDirection.Right:
             {
@@ -634,16 +636,18 @@ function renderHeadOrTorso(
 ): void {
     cx.beginPath();
     cx.roundRect(x, y, w, h, rounding);
-    const gradient = getCharacterGradient(
-        cx,
-        color,
-        headOrTorso,
-        w,
-        h,
-        noCache || false,
-    );
+    if (color !== "gray") {
+        const gradient = getCharacterGradient(
+            cx,
+            color,
+            headOrTorso,
+            w,
+            h,
+            noCache || false,
+        );
 
-    cx.fillStyle = gradient || "black";
+        cx.fillStyle = gradient || "black";
+    }
     cx.fill();
 
     if (pattern) {
