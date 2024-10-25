@@ -489,7 +489,10 @@ function renderShadow(
 
 type HeadOrTorsoKey = "TORSO" | "HEAD";
 
-const gradients: Record<string, CanvasPattern | null | undefined> = {};
+const gradients: Record<
+    string,
+    CanvasGradient | CanvasPattern | null | undefined
+> = {};
 
 function blendColors(
     baseColor: string,
@@ -523,6 +526,8 @@ function parseColor(color: string): { r: number; g: number; b: number } {
         : { r: 0, g: 0, b: 0 };
 }
 
+const isFirefox = navigator.userAgent.toLowerCase().includes("firefox");
+
 function getCharacterGradient(
     cx: CanvasRenderingContext2D,
     baseColor: string,
@@ -530,7 +535,7 @@ function getCharacterGradient(
     w: number,
     h: number,
     noCache: boolean,
-): CanvasPattern | null | undefined {
+): CanvasGradient | CanvasPattern | null | undefined {
     const HeadOrTorsoKey = `${key}-${w}-${h}`;
     if (noCache || !gradients[HeadOrTorsoKey]) {
         const gradient = cx.createRadialGradient(w, h, h / 8, w, h, w);
@@ -569,14 +574,22 @@ function getCharacterGradient(
                 blendColors(baseColor, "rgb(255, 255, 255)", 0.1),
             );
         }
-        if (noCache) return createGradientPattern(cx, gradient, w * 2, h * 2);
 
-        gradients[HeadOrTorsoKey] = createGradientPattern(
-            cx,
-            gradient,
-            w * 2,
-            h * 4,
-        );
+        // Firefox is slow with gradients so use patterns instead
+        if (isFirefox) {
+            if (noCache)
+                return createGradientPattern(cx, gradient, w * 2, h * 2);
+
+            gradients[HeadOrTorsoKey] = createGradientPattern(
+                cx,
+                gradient,
+                w * 2,
+                h * 4,
+            );
+        } else {
+            if (noCache) return gradient;
+            gradients[HeadOrTorsoKey] = gradient;
+        }
     }
 
     return gradients[HeadOrTorsoKey];
