@@ -42,47 +42,47 @@ export const FALL_TIME: number = 500;
 export const DROP_TIME: number = 1000;
 
 const colors: string[] = [
-    "yellow",
-    "red",
-    "green",
-    "blue",
-    "orange",
-    "tomato",
-    "pink",
-    "slateblue",
-    "violet",
-    "dodgerblue",
-    "cyan",
-    "magenta",
-    "lightgreen",
-    "lightgray",
-    "turquoise",
-    "deepskyblue",
-    "lightblue",
-    "lightcoral",
-    "springgreen",
-    "fuchsia",
-    "crimson",
-    "lavender",
-    "coral",
-    "teal",
-    "indigo",
-    "salmon",
-    "chartreuse",
-    "goldenrod",
-    "lightpink",
-    "chocolate",
-    "indianred",
-    "olive",
-    "orangered",
-    "skyblue",
-    "mediumturquoise",
-    "sienna",
-    "lime",
-    "navy",
-    "wheat",
-    "steelblue",
-    "white",
+    "rgb(255, 255, 0)", // yellow
+    "rgb(255, 0, 0)", // red
+    "rgb(0, 128, 0)", // green
+    "rgb(0, 0, 255)", // blue
+    "rgb(255, 165, 0)", // orange
+    "rgb(255, 99, 71)", // tomato
+    "rgb(255, 192, 203)", // pink
+    "rgb(106, 90, 205)", // slateblue
+    "rgb(238, 130, 238)", // violet
+    "rgb(30, 144, 255)", // dodgerblue
+    "rgb(0, 255, 255)", // cyan
+    "rgb(255, 0, 255)", // magenta
+    "rgb(144, 238, 144)", // lightgreen
+    "rgb(211, 211, 211)", // lightgray
+    "rgb(64, 224, 208)", // turquoise
+    "rgb(0, 191, 255)", // deepskyblue
+    "rgb(173, 216, 230)", // lightblue
+    "rgb(240, 128, 128)", // lightcoral
+    "rgb(0, 255, 127)", // springgreen
+    "rgb(255, 0, 255)", // fuchsia
+    "rgb(220, 20, 60)", // crimson
+    "rgb(230, 230, 250)", // lavender
+    "rgb(255, 127, 80)", // coral
+    "rgb(0, 128, 128)", // teal
+    "rgb(75, 0, 130)", // indigo
+    "rgb(250, 128, 114)", // salmon
+    "rgb(127, 255, 0)", // chartreuse
+    "rgb(218, 165, 32)", // goldenrod
+    "rgb(255, 182, 193)", // lightpink
+    "rgb(210, 105, 30)", // chocolate
+    "rgb(205, 92, 92)", // indianred
+    "rgb(128, 128, 0)", // olive
+    "rgb(255, 69, 0)", // orangered
+    "rgb(135, 206, 235)", // skyblue
+    "rgb(72, 209, 204)", // mediumturquoise
+    "rgb(160, 82, 45)", // sienna
+    "rgb(0, 255, 0)", // lime
+    "rgb(0, 0, 128)", // navy
+    "rgb(245, 222, 179)", // wheat
+    "rgb(70, 130, 180)", // steelblue
+    "rgb(255, 255, 255)", // white
 ];
 
 export const playerColor = colors[0];
@@ -267,7 +267,7 @@ export class Character implements GameObject {
 
         renderCharacter(
             cx,
-            this.eliminated ? "rgba(128,128,128,0.8" : this.color,
+            this.eliminated ? "gray" : this.color,
             this.width,
             renderHeight,
             animationTime,

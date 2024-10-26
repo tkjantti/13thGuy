@@ -66,6 +66,7 @@ export function renderCharacter(
     direction: CharacterFacingDirection,
     animation: CharacterAnimation,
     pattern?: CanvasPattern | null,
+    noCache?: boolean,
 ): void {
     let period = 0;
     let leg1Angle = 0;
@@ -162,6 +163,8 @@ export function renderCharacter(
     cx.lineJoin = "round";
     cx.lineCap = "round";
 
+    if (color === "gray") cx.globalAlpha = 0.7; // Eliminated color, use opacity to character
+
     switch (direction) {
         case CharacterFacingDirection.Right:
             {
@@ -198,7 +201,8 @@ export function renderCharacter(
                     legLength,
                     leg2Angle,
                 );
-                renderHead(
+                renderHeadOrTorso(
+                    "HEAD",
                     cx,
                     0.3 * w,
                     headHeight / 4,
@@ -207,8 +211,10 @@ export function renderCharacter(
                     headRounding,
                     color,
                     pattern,
+                    noCache,
                 );
-                renderTorso(
+                renderHeadOrTorso(
+                    "TORSO",
                     cx,
                     (w - torsoDepth) / 2,
                     0.3 * h,
@@ -217,6 +223,7 @@ export function renderCharacter(
                     torsoRounding,
                     color,
                     pattern,
+                    noCache,
                 );
                 renderArmSideways(
                     cx,
@@ -255,7 +262,8 @@ export function renderCharacter(
             );
             // Render head before arms so that celebration animation looks good
             // when shown in the backward direction.
-            renderHead(
+            renderHeadOrTorso(
+                "HEAD",
                 cx,
                 (w - headWidth) / 2,
                 headHeight / 4,
@@ -264,6 +272,7 @@ export function renderCharacter(
                 headRounding,
                 color,
                 pattern,
+                noCache,
             );
             if (direction === CharacterFacingDirection.Backward) {
                 const faceX = (w - faceWidth) / 2;
@@ -296,7 +305,8 @@ export function renderCharacter(
                 HorizontalDirection.Right,
                 arm2Angle,
             );
-            renderTorso(
+            renderHeadOrTorso(
+                "TORSO",
                 cx,
                 0.2 * w,
                 0.3 * h,
@@ -305,6 +315,7 @@ export function renderCharacter(
                 torsoRounding,
                 color,
                 pattern,
+                noCache,
             );
 
             break;
@@ -343,7 +354,8 @@ export function renderCharacter(
                 arm2Angle,
                 arm2Angle / 2,
             );
-            renderHead(
+            renderHeadOrTorso(
+                "HEAD",
                 cx,
                 (w - headWidth) / 2,
                 headHeight / 4,
@@ -352,8 +364,10 @@ export function renderCharacter(
                 headRounding,
                 color,
                 pattern,
+                noCache,
             );
-            renderTorso(
+            renderHeadOrTorso(
+                "TORSO",
                 cx,
                 (w - torsoWidth) / 2,
                 0.3 * h,
@@ -362,6 +376,7 @@ export function renderCharacter(
                 torsoRounding,
                 color,
                 pattern,
+                noCache,
             );
             renderArmFacing(
                 cx,
@@ -410,7 +425,8 @@ export function renderCharacter(
                 arm2Angle,
                 arm2Angle / 2,
             );
-            renderHead(
+            renderHeadOrTorso(
+                "HEAD",
                 cx,
                 (w - headWidth) / 2,
                 headHeight / 4,
@@ -419,8 +435,10 @@ export function renderCharacter(
                 headRounding,
                 color,
                 pattern,
+                noCache,
             );
-            renderTorso(
+            renderHeadOrTorso(
+                "TORSO",
                 cx,
                 (w - torsoWidth) / 2,
                 0.3 * h,
@@ -429,6 +447,7 @@ export function renderCharacter(
                 torsoRounding,
                 color,
                 pattern,
+                noCache,
             );
             renderArmFacing(
                 cx,
@@ -468,44 +487,143 @@ function renderShadow(
     cx.restore();
 }
 
+// Caching of character gradients
+
+type HeadOrTorsoKey = "TORSO" | "HEAD";
+
+const gradients: Record<
+    string,
+    CanvasGradient | CanvasPattern | null | undefined
+> = {};
+
+function blendColors(
+    baseColor: string,
+    overlayColor: string,
+    overlayAlpha: number,
+): string {
+    const base = parseColor(baseColor);
+    const overlay = parseColor(overlayColor);
+
+    const r = Math.round(
+        (1 - overlayAlpha) * base.r + overlayAlpha * overlay.r,
+    );
+    const g = Math.round(
+        (1 - overlayAlpha) * base.g + overlayAlpha * overlay.g,
+    );
+    const b = Math.round(
+        (1 - overlayAlpha) * base.b + overlayAlpha * overlay.b,
+    );
+
+    return `rgb(${r}, ${g}, ${b})`;
+}
+
+function parseColor(color: string): { r: number; g: number; b: number } {
+    const result = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(color);
+    return result
+        ? {
+              r: parseInt(result[1]),
+              g: parseInt(result[2]),
+              b: parseInt(result[3]),
+          }
+        : { r: 0, g: 0, b: 0 };
+}
+
 const isFirefox = navigator.userAgent.toLowerCase().includes("firefox");
 
-function renderTorso(
+function getCharacterGradient(
     cx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
+    baseColor: string,
+    key: HeadOrTorsoKey,
     w: number,
     h: number,
-    rounding: number,
-    color: string,
-    pattern?: CanvasPattern | null,
-): void {
-    cx.beginPath();
-    cx.roundRect(x, y, w, h, rounding);
-    cx.fillStyle = color;
-    cx.fill();
-
-    if (!isFirefox) {
+    noCache: boolean,
+): CanvasGradient | CanvasPattern | null | undefined {
+    const HeadOrTorsoKey = `${key}-${baseColor}-${w}-${h}`;
+    if (noCache || !gradients[HeadOrTorsoKey]) {
         const gradient = cx.createRadialGradient(w, h, h / 8, w, h, w);
-        gradient.addColorStop(0, "rgba(255, 255, 255, 0.1)");
-        gradient.addColorStop(0.2, "rgba(255, 255, 255, 0.1)");
-        gradient.addColorStop(0.5, "rgba(0, 0, 0, 0.1)");
-        gradient.addColorStop(1, "rgba(0, 0, 0, 0.3)");
-        cx.fillStyle = gradient;
-        cx.fill();
-
-        if (pattern) {
-            cx.save();
-            cx.translate(x, y);
-            cx.scale(w / 80, h / 80);
-            cx.fillStyle = pattern;
-            cx.fill();
-            cx.restore();
+        if (key === "TORSO") {
+            gradient.addColorStop(
+                0,
+                blendColors(baseColor, "rgb(255, 255, 255)", 0.1),
+            );
+            gradient.addColorStop(
+                0.2,
+                blendColors(baseColor, "rgb(255, 255, 255)", 0.1),
+            );
+            gradient.addColorStop(
+                0.5,
+                blendColors(baseColor, "rgb(0, 0, 0)", 0.1),
+            );
+            gradient.addColorStop(
+                1,
+                blendColors(baseColor, "rgb(0, 0, 0)", 0.3),
+            );
+        } else if (key === "HEAD") {
+            gradient.addColorStop(
+                0,
+                blendColors(baseColor, "rgb(0, 0, 0)", 0.3),
+            );
+            gradient.addColorStop(
+                0.5,
+                blendColors(baseColor, "rgb(0, 0, 0)", 0.1),
+            );
+            gradient.addColorStop(
+                0.8,
+                blendColors(baseColor, "rgb(255, 255, 255)", 0.1),
+            );
+            gradient.addColorStop(
+                1,
+                blendColors(baseColor, "rgb(255, 255, 255)", 0.1),
+            );
         }
+
+        // Firefox is slow with gradients so use patterns instead
+        if (isFirefox) {
+            if (noCache)
+                return createGradientPattern(cx, gradient, w * 2, h * 2);
+
+            gradients[HeadOrTorsoKey] = createGradientPattern(
+                cx,
+                gradient,
+                w * 2,
+                h * 4,
+            );
+        } else {
+            if (noCache) return gradient;
+            gradients[HeadOrTorsoKey] = gradient;
+        }
+    }
+
+    return gradients[HeadOrTorsoKey];
+}
+
+export function clearCharacterGradientCache(): void {
+    for (const key in gradients) {
+        delete gradients[key];
     }
 }
 
-function renderHead(
+function createGradientPattern(
+    cx: CanvasRenderingContext2D,
+    gradient: CanvasGradient,
+    w: number,
+    h: number,
+) {
+    const offscreenCanvas = document.createElement("canvas");
+    offscreenCanvas.width = w;
+    offscreenCanvas.height = h;
+    const offscreenCtx = offscreenCanvas.getContext("2d");
+
+    if (!offscreenCtx) return;
+
+    offscreenCtx.fillStyle = gradient;
+    offscreenCtx.fillRect(0, 0, w, h);
+
+    return cx.createPattern(offscreenCanvas, "no-repeat");
+}
+
+function renderHeadOrTorso(
+    headOrTorso: HeadOrTorsoKey,
     cx: CanvasRenderingContext2D,
     x: number,
     y: number,
@@ -514,29 +632,31 @@ function renderHead(
     rounding: number,
     color: string,
     pattern?: CanvasPattern | null,
+    noCache?: boolean,
 ): void {
     cx.beginPath();
     cx.roundRect(x, y, w, h, rounding);
-    cx.fillStyle = color;
+    if (color !== "gray") {
+        const gradient = getCharacterGradient(
+            cx,
+            color,
+            headOrTorso,
+            w,
+            h,
+            noCache || false,
+        );
+
+        cx.fillStyle = gradient || "black";
+    }
     cx.fill();
 
-    if (!isFirefox) {
-        const gradient = cx.createRadialGradient(w, h, h / 8, w, h, w);
-        gradient.addColorStop(1, "rgba(255, 255, 255, 0.1)");
-        gradient.addColorStop(0.8, "rgba(255, 255, 255, 0.1)");
-        gradient.addColorStop(0.5, "rgba(0, 0, 0, 0.1)");
-        gradient.addColorStop(0, "rgba(0, 0, 0, 0.3)");
-        cx.fillStyle = gradient;
+    if (pattern) {
+        cx.save();
+        cx.translate(x, y);
+        cx.scale(w / 80, h / 80);
+        cx.fillStyle = pattern;
         cx.fill();
-
-        if (pattern) {
-            cx.save();
-            cx.translate(x, y);
-            cx.scale(w / 80, h / 80);
-            cx.fillStyle = pattern;
-            cx.fill();
-            cx.restore();
-        }
+        cx.restore();
     }
 }
 
