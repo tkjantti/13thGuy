@@ -137,25 +137,9 @@ export function renderCharacter(
 
     const armLength = 0.3 * h;
     const legLength = 0.25 * h;
-    const torsoLength = 0.4 * h;
 
     const limbWidth = 0.2 * w;
     const armWidth = 0.1 * w;
-
-    const headHeight = 0.25 * h;
-    const headDepth = 0.5 * w;
-    const headWidth = 0.45 * w;
-    const headRounding = 0.2 * w;
-    const torsoRounding = 0.2 * w;
-
-    const faceMargin = 0.15 * w; // How much face is smaller than head
-    const faceRounding = 0.6 * headRounding;
-    const faceWidth = headWidth - faceMargin;
-    const faceHeight = headHeight - faceMargin * 1.75;
-    const faceY = headHeight - faceHeight;
-
-    const torsoWidth = 0.6 * w;
-    const torsoDepth = 0.5 * w;
 
     cx.fillStyle = color;
     cx.lineWidth = limbWidth;
@@ -163,7 +147,7 @@ export function renderCharacter(
     cx.lineJoin = "round";
     cx.lineCap = "round";
 
-    if (color === "gray") cx.globalAlpha = 0.7; // Eliminated color, use opacity to character
+    if (color === "eliminated") cx.globalAlpha = 0.7;
 
     switch (direction) {
         case CharacterFacingDirection.Right:
@@ -201,30 +185,8 @@ export function renderCharacter(
                     legLength,
                     leg2Angle,
                 );
-                renderHead(
-                    direction,
-                    cx,
-                    w,
-                    headHeight,
-                    headDepth,
-                    headHeight,
-                    headRounding,
-                    color,
-                    pattern,
-                    noCache,
-                );
-                renderTorso(
-                    direction,
-                    cx,
-                    w,
-                    h,
-                    torsoDepth,
-                    torsoLength,
-                    torsoRounding,
-                    color,
-                    pattern,
-                    noCache,
-                );
+                renderHead(direction, cx, w, h, color, pattern, noCache);
+                renderTorso(direction, cx, w, h, color, pattern, noCache);
                 renderArmSideways(
                     cx,
                     ArmColor,
@@ -262,29 +224,7 @@ export function renderCharacter(
             );
             // Render head before arms so that celebration animation looks good
             // when shown in the backward direction.
-            renderHead(
-                direction,
-                cx,
-                w,
-                headHeight,
-                headWidth,
-                headHeight,
-                headRounding,
-                color,
-                pattern,
-                noCache,
-            );
-            if (direction === CharacterFacingDirection.Backward) {
-                const faceX = (w - faceWidth) / 2;
-                renderFace(
-                    cx,
-                    faceX,
-                    faceY,
-                    faceWidth,
-                    faceHeight,
-                    faceRounding,
-                );
-            }
+            renderHead(direction, cx, w, h, color, pattern, noCache);
             renderArmFacing(
                 cx,
                 ArmColor,
@@ -305,18 +245,7 @@ export function renderCharacter(
                 HorizontalDirection.Right,
                 arm2Angle,
             );
-            renderTorso(
-                direction,
-                cx,
-                w,
-                h,
-                torsoWidth,
-                torsoLength,
-                torsoRounding,
-                color,
-                pattern,
-                noCache,
-            );
+            renderTorso(direction, cx, w, h, color, pattern, noCache);
 
             break;
         }
@@ -354,30 +283,8 @@ export function renderCharacter(
                 arm2Angle,
                 arm2Angle / 2,
             );
-            renderHead(
-                direction,
-                cx,
-                w,
-                headHeight,
-                headDepth,
-                headHeight,
-                headRounding,
-                color,
-                pattern,
-                noCache,
-            );
-            renderTorso(
-                direction,
-                cx,
-                w,
-                h,
-                torsoWidth,
-                torsoLength,
-                torsoRounding,
-                color,
-                pattern,
-                noCache,
-            );
+            renderHead(direction, cx, w, h, color, pattern, noCache);
+            renderTorso(direction, cx, w, h, color, pattern, noCache);
             renderArmFacing(
                 cx,
                 ArmColor,
@@ -425,30 +332,8 @@ export function renderCharacter(
                 arm2Angle,
                 arm2Angle / 2,
             );
-            renderHead(
-                direction,
-                cx,
-                w,
-                headHeight,
-                headWidth,
-                headHeight,
-                headRounding,
-                color,
-                pattern,
-                noCache,
-            );
-            renderTorso(
-                direction,
-                cx,
-                w,
-                h,
-                torsoWidth,
-                torsoLength,
-                torsoRounding,
-                color,
-                pattern,
-                noCache,
-            );
+            renderHead(direction, cx, w, h, color, pattern, noCache);
+            renderTorso(direction, cx, w, h, color, pattern, noCache);
             renderArmFacing(
                 cx,
                 ArmColor,
@@ -461,8 +346,6 @@ export function renderCharacter(
                 arm2Angle / 2,
             );
 
-            const faceX = (w - faceWidth) / 2 + (headWidth - faceWidth) / 2;
-            renderFace(cx, faceX, faceY, faceWidth, faceHeight, faceRounding);
             break;
         }
         default:
@@ -518,6 +401,8 @@ function blendColors(
 }
 
 function parseColor(color: string): { r: number; g: number; b: number } {
+    if (color === "eliminated") return { r: 128, g: 128, b: 128 }; // Elimated color
+
     const result = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(color);
     return result
         ? {
@@ -622,44 +507,17 @@ function createGradientPattern(
     return cx.createPattern(offscreenCanvas, "no-repeat");
 }
 
-function renderTorso(
-    direction: CharacterFacingDirection,
+function renderPattern(
     cx: CanvasRenderingContext2D,
+    pattern: CanvasPattern | null | undefined,
     x: number,
     y: number,
     w: number,
     h: number,
-    rounding: number,
-    color: string,
-    pattern?: CanvasPattern | null,
-    noCache?: boolean,
 ): void {
-    const locationX =
-        direction === CharacterFacingDirection.Forward ||
-        CharacterFacingDirection.Backward
-            ? 0.2 * x
-            : 0.5 * (x - w);
-    const locationY = 0.3 * y;
-
-    cx.beginPath();
-    cx.roundRect(locationX, locationY, w, h, rounding);
-    if (color !== "gray") {
-        const gradient = getCharacterGradient(
-            cx,
-            color,
-            "TORSO",
-            w,
-            h,
-            noCache || false,
-        );
-
-        cx.fillStyle = gradient || "black";
-    }
-    cx.fill();
-
     if (pattern) {
         cx.save();
-        cx.translate(locationX, locationY);
+        cx.translate(x, y);
         cx.scale(w / 80, h / 80);
         cx.fillStyle = pattern;
         cx.fill();
@@ -670,43 +528,76 @@ function renderTorso(
 function renderHead(
     direction: CharacterFacingDirection,
     cx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
     w: number,
     h: number,
-    rounding: number,
     color: string,
     pattern?: CanvasPattern | null,
-    noCache?: boolean,
+    noCache: boolean = false,
 ): void {
-    const locationX =
-        direction === CharacterFacingDirection.Right ? 0.2 * x : 0.5 * (x - w);
-    const locationY = 0.25 * y;
+    const headRounding = 0.2 * w;
+    const renderWidth =
+        direction === CharacterFacingDirection.Right ? 0.5 * w : 0.45 * w;
+    const renderHeight = 0.25 * h;
+    const x =
+        direction === CharacterFacingDirection.Right
+            ? 0.28 * w
+            : 0.5 * (w - renderWidth);
+    const y = 0.06 * h;
 
     cx.beginPath();
-    cx.roundRect(locationX, locationY, w, h, rounding);
-    if (color !== "gray") {
-        const gradient = getCharacterGradient(
-            cx,
-            color,
-            "HEAD",
-            w,
-            h,
-            noCache || false,
-        );
+    cx.roundRect(x, y, renderWidth, renderHeight, headRounding);
 
-        cx.fillStyle = gradient || "black";
-    }
+    const gradient = getCharacterGradient(
+        cx,
+        color,
+        "HEAD",
+        renderWidth,
+        renderHeight,
+        noCache,
+    );
+    cx.fillStyle = gradient || "black";
     cx.fill();
 
-    if (pattern) {
-        cx.save();
-        cx.translate(locationX, locationY);
-        cx.scale(w / 80, h / 80);
-        cx.fillStyle = pattern;
-        cx.fill();
-        cx.restore();
-    }
+    renderPattern(cx, pattern, x, y, renderWidth, renderHeight);
+
+    renderFace(cx, direction, w, renderWidth, renderHeight, headRounding);
+}
+
+function renderTorso(
+    direction: CharacterFacingDirection,
+    cx: CanvasRenderingContext2D,
+    w: number,
+    h: number,
+    color: string,
+    pattern?: CanvasPattern | null,
+    noCache: boolean = false,
+): void {
+    const renderHeight = 0.4 * h;
+    const torsoRounding = 0.2 * w;
+    const renderWidth =
+        direction === CharacterFacingDirection.Right ? 0.5 * w : 0.6 * w;
+    const x =
+        direction === CharacterFacingDirection.Forward ||
+        direction === CharacterFacingDirection.Backward
+            ? 0.2 * w
+            : 0.5 * (w - renderWidth);
+    const y = 0.3 * h;
+
+    cx.beginPath();
+    cx.roundRect(x, y, renderWidth, renderHeight, torsoRounding);
+
+    const gradient = getCharacterGradient(
+        cx,
+        color,
+        "TORSO",
+        renderWidth,
+        renderHeight,
+        noCache,
+    );
+    cx.fillStyle = gradient || "black";
+    cx.fill();
+
+    renderPattern(cx, pattern, x, y, renderWidth, renderHeight);
 }
 
 function renderArmSideways(
@@ -805,37 +696,54 @@ function renderLegFacing(
 
 function renderFace(
     cx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
+    direction: CharacterFacingDirection,
     w: number,
-    h: number,
-    rounding: number,
+    headWidth: number,
+    headHeight: number,
+    headRounding: number,
 ): void {
+    // Only render when character is looking at the viewer
+    if (
+        direction !== CharacterFacingDirection.Backward &&
+        direction !== CharacterFacingDirection.BackwardRight
+    )
+        return;
+
+    const faceMargin = 0.15 * w; // How much face is smaller than head
+    const faceRounding = 0.6 * headRounding;
+    const faceWidth = headWidth - faceMargin;
+    const faceHeight = headHeight - faceMargin * 1.75;
+    const faceY = headHeight - faceHeight;
+    const faceX =
+        direction === CharacterFacingDirection.Backward
+            ? (w - faceWidth) / 2
+            : (w - faceWidth) / 2 + (headWidth - faceWidth) / 2;
+
     cx.save();
-    cx.translate(x, y);
+    cx.translate(faceX, faceY);
 
     cx.shadowColor = "rgba(0, 0, 0, 0.5)";
 
     // Face
     cx.fillStyle = faceColor;
-    cx.shadowOffsetY = -h / 10;
-    const faceX = 0;
-    const faceY = 0;
+    cx.shadowOffsetY = -faceHeight / 10;
+    const faceX0 = 0;
+    const faceY0 = 0;
 
     cx.beginPath();
-    cx.roundRect(faceX, faceY, w, h, rounding);
+    cx.roundRect(faceX0, faceY0, faceWidth, faceHeight, faceRounding);
     cx.fill();
     cx.closePath();
 
     cx.shadowOffsetY = 0;
 
     // Eyes
-    const eyeRadius = 0.06 * w;
-    const eyeXOffset = w / 4;
-    const eyeYOffset = h / 3;
-    const leftEyeX = faceX + eyeXOffset;
-    const rightEyeX = faceX + w - eyeXOffset;
-    const eyeY = faceY + eyeYOffset;
+    const eyeRadius = 0.06 * faceWidth;
+    const eyeXOffset = faceWidth / 4;
+    const eyeYOffset = faceHeight / 3;
+    const leftEyeX = faceX0 + eyeXOffset;
+    const rightEyeX = faceX0 + faceWidth - eyeXOffset;
+    const eyeY = faceY0 + eyeYOffset;
 
     cx.fillStyle = eyeColor;
     cx.beginPath();
@@ -845,9 +753,9 @@ function renderFace(
     cx.closePath();
 
     // Pupils
-    const pupilRadius = 0.025 * w;
-    const pupilXOffset = 0.01 * w;
-    const pupilYOffset = 0.01 * h;
+    const pupilRadius = 0.025 * faceWidth;
+    const pupilXOffset = 0.01 * faceWidth;
+    const pupilYOffset = 0.01 * faceHeight;
 
     cx.fillStyle = pupilColor;
     cx.beginPath();
@@ -869,10 +777,10 @@ function renderFace(
     cx.closePath();
 
     // Nose
-    const noseWidth = 0.15 * w;
-    const noseHeight = 0.2 * h;
-    const noseX = faceX + (w - noseWidth) / 1.75;
-    const noseY = faceY + (h - noseHeight) / 1.5;
+    const noseWidth = 0.15 * faceWidth;
+    const noseHeight = 0.2 * faceHeight;
+    const noseX = faceX0 + (faceWidth - noseWidth) / 1.75;
+    const noseY = faceY0 + (faceHeight - noseHeight) / 1.5;
 
     cx.fillStyle = noseColor;
     cx.beginPath();
