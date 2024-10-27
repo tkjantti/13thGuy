@@ -201,11 +201,11 @@ export function renderCharacter(
                     legLength,
                     leg2Angle,
                 );
-                renderHeadOrTorso(
-                    "HEAD",
+                renderHead(
+                    direction,
                     cx,
-                    0.3 * w,
-                    headHeight / 4,
+                    w,
+                    headHeight,
                     headDepth,
                     headHeight,
                     headRounding,
@@ -213,11 +213,11 @@ export function renderCharacter(
                     pattern,
                     noCache,
                 );
-                renderHeadOrTorso(
-                    "TORSO",
+                renderTorso(
+                    direction,
                     cx,
-                    (w - torsoDepth) / 2,
-                    0.3 * h,
+                    w,
+                    h,
                     torsoDepth,
                     torsoLength,
                     torsoRounding,
@@ -262,11 +262,11 @@ export function renderCharacter(
             );
             // Render head before arms so that celebration animation looks good
             // when shown in the backward direction.
-            renderHeadOrTorso(
-                "HEAD",
+            renderHead(
+                direction,
                 cx,
-                (w - headWidth) / 2,
-                headHeight / 4,
+                w,
+                headHeight,
                 headWidth,
                 headHeight,
                 headRounding,
@@ -305,11 +305,11 @@ export function renderCharacter(
                 HorizontalDirection.Right,
                 arm2Angle,
             );
-            renderHeadOrTorso(
-                "TORSO",
+            renderTorso(
+                direction,
                 cx,
-                0.2 * w,
-                0.3 * h,
+                w,
+                h,
                 torsoWidth,
                 torsoLength,
                 torsoRounding,
@@ -354,23 +354,23 @@ export function renderCharacter(
                 arm2Angle,
                 arm2Angle / 2,
             );
-            renderHeadOrTorso(
-                "HEAD",
+            renderHead(
+                direction,
                 cx,
-                (w - headWidth) / 2,
-                headHeight / 4,
-                headWidth,
+                w,
+                headHeight,
+                headDepth,
                 headHeight,
                 headRounding,
                 color,
                 pattern,
                 noCache,
             );
-            renderHeadOrTorso(
-                "TORSO",
+            renderTorso(
+                direction,
                 cx,
-                (w - torsoWidth) / 2,
-                0.3 * h,
+                w,
+                h,
                 torsoWidth,
                 torsoLength,
                 torsoRounding,
@@ -425,11 +425,11 @@ export function renderCharacter(
                 arm2Angle,
                 arm2Angle / 2,
             );
-            renderHeadOrTorso(
-                "HEAD",
+            renderHead(
+                direction,
                 cx,
-                (w - headWidth) / 2,
-                headHeight / 4,
+                w,
+                headHeight,
                 headWidth,
                 headHeight,
                 headRounding,
@@ -437,11 +437,11 @@ export function renderCharacter(
                 pattern,
                 noCache,
             );
-            renderHeadOrTorso(
-                "TORSO",
+            renderTorso(
+                direction,
                 cx,
-                (w - torsoWidth) / 2,
-                0.3 * h,
+                w,
+                h,
                 torsoWidth,
                 torsoLength,
                 torsoRounding,
@@ -622,8 +622,8 @@ function createGradientPattern(
     return cx.createPattern(offscreenCanvas, "no-repeat");
 }
 
-function renderHeadOrTorso(
-    headOrTorso: HeadOrTorsoKey,
+function renderTorso(
+    direction: CharacterFacingDirection,
     cx: CanvasRenderingContext2D,
     x: number,
     y: number,
@@ -634,13 +634,20 @@ function renderHeadOrTorso(
     pattern?: CanvasPattern | null,
     noCache?: boolean,
 ): void {
+    const locationX =
+        direction === CharacterFacingDirection.Forward ||
+        CharacterFacingDirection.Backward
+            ? 0.2 * x
+            : 0.5 * (x - w);
+    const locationY = 0.3 * y;
+
     cx.beginPath();
-    cx.roundRect(x, y, w, h, rounding);
+    cx.roundRect(locationX, locationY, w, h, rounding);
     if (color !== "gray") {
         const gradient = getCharacterGradient(
             cx,
             color,
-            headOrTorso,
+            "TORSO",
             w,
             h,
             noCache || false,
@@ -652,7 +659,49 @@ function renderHeadOrTorso(
 
     if (pattern) {
         cx.save();
-        cx.translate(x, y);
+        cx.translate(locationX, locationY);
+        cx.scale(w / 80, h / 80);
+        cx.fillStyle = pattern;
+        cx.fill();
+        cx.restore();
+    }
+}
+
+function renderHead(
+    direction: CharacterFacingDirection,
+    cx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    rounding: number,
+    color: string,
+    pattern?: CanvasPattern | null,
+    noCache?: boolean,
+): void {
+    const locationX =
+        direction === CharacterFacingDirection.Right ? 0.2 * x : 0.5 * (x - w);
+    const locationY = 0.25 * y;
+
+    cx.beginPath();
+    cx.roundRect(locationX, locationY, w, h, rounding);
+    if (color !== "gray") {
+        const gradient = getCharacterGradient(
+            cx,
+            color,
+            "HEAD",
+            w,
+            h,
+            noCache || false,
+        );
+
+        cx.fillStyle = gradient || "black";
+    }
+    cx.fill();
+
+    if (pattern) {
+        cx.save();
+        cx.translate(locationX, locationY);
         cx.scale(w / 80, h / 80);
         cx.fillStyle = pattern;
         cx.fill();
