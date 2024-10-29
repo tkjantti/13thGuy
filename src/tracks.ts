@@ -25,8 +25,6 @@
 import { random } from "./random";
 import { TT } from "./TrackElement";
 
-const randomizer = random(1);
-
 const simpleTrack1: readonly TT[] = [
     TT.FullWidthWithObstacles,
     TT.FullWidth,
@@ -59,15 +57,18 @@ const simpleTrack3: readonly TT[] = [
     TT.FullWidth,
 ];
 
-export const simpleTrack: readonly TT[] = [
-    TT.Checkpoint,
-    ...(randomizer < 0.5 ? simpleTrack1 : simpleTrack2),
-    TT.Checkpoint,
-    ...(randomizer < 0.5 ? simpleTrack2 : simpleTrack1),
-    TT.Checkpoint,
-    ...simpleTrack3,
-    TT.Finish,
-];
+export function getFirstTrack(): readonly TT[] {
+    const randomizer = random(1);
+    return [
+        TT.Checkpoint,
+        ...(randomizer < 0.5 ? simpleTrack1 : simpleTrack2),
+        TT.Checkpoint,
+        ...(randomizer < 0.5 ? simpleTrack2 : simpleTrack1),
+        TT.Checkpoint,
+        ...simpleTrack3,
+        TT.Finish,
+    ];
+}
 
 const secondTrack1: readonly TT[] = [
     TT.FullWidth,
@@ -111,13 +112,16 @@ const secondTrack2: readonly TT[] = [
     TT.Chasm,
 ];
 
-export const secondTrack: readonly TT[] = [
-    TT.Checkpoint,
-    ...(randomizer < 0.5 ? secondTrack1 : secondTrack2),
-    TT.Checkpoint,
-    ...(randomizer < 0.5 ? secondTrack2 : secondTrack1),
-    TT.Finish,
-];
+export function getSecondTrack(): readonly TT[] {
+    const randomizer = random(1);
+    return [
+        TT.Checkpoint,
+        ...(randomizer < 0.5 ? secondTrack1 : secondTrack2),
+        TT.Checkpoint,
+        ...(randomizer < 0.5 ? secondTrack2 : secondTrack1),
+        TT.Finish,
+    ];
+}
 
 const thirdTrack1: readonly TT[] = [
     TT.FullWidth,
@@ -185,14 +189,17 @@ const thirdTrack4: readonly TT[] = [
     TT.Chasm,
 ];
 
-export const thirdTrack: readonly TT[] = [
-    TT.Checkpoint,
-    ...(randomizer < 0.5 ? thirdTrack1 : thirdTrack2),
-    TT.Checkpoint,
-    ...(randomizer < 0.5 ? thirdTrack2 : thirdTrack1),
-    TT.Checkpoint,
-    ...(randomizer < 0.5 ? thirdTrack3 : thirdTrack4),
-    TT.Checkpoint,
-    ...(randomizer < 0.5 ? thirdTrack4 : thirdTrack3),
-    TT.Finish,
-];
+export function getThirdTrack(): readonly TT[] {
+    const randomizer = random(1);
+    return [
+        TT.Checkpoint,
+        ...(randomizer < 0.5 ? thirdTrack1 : thirdTrack2),
+        TT.Checkpoint,
+        ...(randomizer < 0.5 ? thirdTrack2 : thirdTrack1),
+        TT.Checkpoint,
+        ...(randomizer < 0.5 ? thirdTrack3 : thirdTrack4),
+        TT.Checkpoint,
+        ...(randomizer < 0.5 ? thirdTrack4 : thirdTrack3),
+        TT.Finish,
+    ];
+}
