@@ -15,7 +15,7 @@ import {
     waitForEnter,
 } from "./keyboard";
 import { Level, State } from "./Level";
-import { thirdTrack, secondTrack, simpleTrack } from "./tracks";
+import { getFirstTrack, getSecondTrack, getThirdTrack } from "./tracks";
 
 import {
     initialize,
@@ -88,7 +88,8 @@ const setState = async (state: GameState) => {
             break;
         case GameState.Ready:
             if (raceNumber > 1 && !level.player.eliminated) {
-                const track = raceNumber === 3 ? thirdTrack : secondTrack;
+                const track =
+                    raceNumber === 3 ? getThirdTrack() : getSecondTrack();
                 level = new Level(
                     track,
                     randomWidhOffset,
@@ -98,7 +99,7 @@ const setState = async (state: GameState) => {
                 );
             } else {
                 level = new Level(
-                    simpleTrack,
+                    getFirstTrack(),
                     randomWidhOffset,
                     randomHeighOffset,
                     undefined,
