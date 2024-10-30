@@ -74,6 +74,7 @@ let gameState: GameState = GameState.Load;
 
 // For drawing start- and game over screens.
 let radius = 0;
+let radiusDecrementFor5seconds = 0;
 
 const pattern = createFabricTexture();
 const platePattern = createPlateTexture();
@@ -82,6 +83,7 @@ const setState = async (state: GameState) => {
     gameState = state;
 
     maxRadius = 1280 * 2; // Always same size to make animations last the same time (max canvas * 2)
+    radiusDecrementFor5seconds = maxRadius / 60 / 5;
 
     switch (state) {
         case GameState.Start:
@@ -283,7 +285,7 @@ const draw = (t: number, dt: number): void => {
                 }
 
                 if (radius > 0) {
-                    radius -= 8.533; // Counting should match, 5 seconds (1280 * 2 / 60 / 5 = 8.533)
+                    radius -= radiusDecrementFor5seconds; // Counting should match music
                 }
             }
             applyGradient();
