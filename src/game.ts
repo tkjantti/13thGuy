@@ -283,7 +283,7 @@ const draw = (t: number, dt: number): void => {
                 }
 
                 if (radius > 0) {
-                    radius -= dt / 2.55; // Counting should match the music
+                    radius -= 8.533; // Counting should match, 5 seconds (1280 * 2 / 60 / 5 = 8.533)
                 }
             }
             applyGradient();
