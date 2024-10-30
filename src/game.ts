@@ -285,7 +285,7 @@ const draw = (t: number, dt: number): void => {
                 }
 
                 if (radius > 0) {
-                    radius -= radiusDecrementFor5seconds; // Counting should match music
+                    radius -= radiusDecrementFor5seconds; // Counting should match the music
                 }
             }
             applyGradient();
