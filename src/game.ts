@@ -72,9 +72,14 @@ enum GameState {
 
 let gameState: GameState = GameState.Load;
 
+// Hold the time of drawing for functions where the t variable is not
+// available.
+let drawTime: number = 0;
+
 // For drawing start- and game over screens.
+const READY_CIRCLE_DURATION = 5000;
 let radius = 0;
-let radiusDecrementFor5seconds = 0;
+let readyCircleStartTime = 0;
 
 const pattern = createFabricTexture();
 const platePattern = createPlateTexture();
@@ -83,7 +88,6 @@ const setState = async (state: GameState) => {
     gameState = state;
 
     maxRadius = 1280 * 2; // Always same size to make animations last the same time (max canvas * 2)
-    radiusDecrementFor5seconds = maxRadius / 60 / 5;
 
     switch (state) {
         case GameState.Start:
@@ -110,6 +114,7 @@ const setState = async (state: GameState) => {
             }
             raceNumber++;
             radius = maxRadius;
+            readyCircleStartTime = drawTime;
             playTune(SFX_RACE);
             break;
 
@@ -194,6 +199,7 @@ const RenderWaitForKey = (text = "Press ENTER to continue", y = 100) => {
 };
 
 const draw = (t: number, dt: number): void => {
+    drawTime = t;
     cx.save();
     cx.fillStyle = "rgb(0, 0, 20)";
     cx.fillRect(0, 0, canvas.width, canvas.height);
@@ -285,7 +291,9 @@ const draw = (t: number, dt: number): void => {
                 }
 
                 if (radius > 0) {
-                    radius -= radiusDecrementFor5seconds; // Counting should match the music
+                    const progress =
+                        (t - readyCircleStartTime) / READY_CIRCLE_DURATION;
+                    radius = (1 - progress) * maxRadius;
                 }
             }
             applyGradient();
