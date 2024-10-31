@@ -31,6 +31,8 @@ import {
     finishSfx,
     gameoverSfx,
     teleportSfx,
+    countSfx,
+    goSfx
 } from "./sfxData.js";
 
 import { zzfx } from "./sfxPlayer.js"
@@ -45,6 +47,8 @@ export const SFX_KB = "keyboard";
 export const SFX_FINISHED = "finished";
 export const SFX_GAMEOVER = "gameover";
 export const SFX_RESTART = "restart";
+export const SFX_COUNT = "count";
+export const SFX_GO = "go";
 
 const startTune = document.createElement("audio");
 const raceTune = document.createElement("audio");
@@ -194,6 +198,14 @@ export const playTune = (tune, vol) => {
         }
         case SFX_TELEPORT: {
             zzfx(vol,...teleportSfx);
+            break;
+        }
+        case SFX_COUNT: {
+            zzfx(0.5, ...countSfx);
+            break;
+        }
+        case SFX_GO: {
+            zzfx(0.5,...goSfx);
             break;
         }
     }
