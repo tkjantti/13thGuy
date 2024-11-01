@@ -25,6 +25,8 @@ import {
     SFX_FINISHED,
     SFX_GAMEOVER,
     SFX_RESTART,
+    SFX_COUNT,
+    SFX_GO,
     // Ignore lint errors from JS import
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -84,6 +86,8 @@ let readyCircleStartTime = 0;
 const pattern = createFabricTexture();
 const platePattern = createPlateTexture();
 
+let counted = 0;
+
 const setState = async (state: GameState) => {
     gameState = state;
 
@@ -93,6 +97,7 @@ const setState = async (state: GameState) => {
         case GameState.Start:
             break;
         case GameState.Ready:
+            counted = 0;
             if (raceNumber > 1 && !level.player.eliminated) {
                 const track =
                     raceNumber === 3 ? getThirdTrack() : getSecondTrack();
@@ -169,6 +174,19 @@ const update = (t: number, dt: number): void => {
                 setState(GameState.GameOver);
             } else if (level.state === State.FINISHED) {
                 setState(GameState.GameFinished);
+            }
+            break;
+        }
+        case GameState.Ready: {
+            if (counted === 2 && radius < maxRadius / 4) {
+                playTune(SFX_GO);
+                counted++;
+            } else if (counted === 1 && radius < maxRadius / 2) {
+                playTune(SFX_COUNT);
+                counted++;
+            } else if (counted === 0 && radius < maxRadius) {
+                playTune(SFX_COUNT);
+                counted++;
             }
             break;
         }

@@ -12,6 +12,8 @@ export const kbSfx = [2,,12,,,0.008,,1.2,23,-7,,,0.05,0.4,,,0.15,0.82,0.03,0.28,
 export const teleportSfx = [1,,85,.08,.1,.01,1,4,,-11,1,.07,,.1,101,,.05,.68,.4,.12,1];
 export const finishSfx = [.01,,523.2511,.1,3,3,4,0,,,2250,,.04,,10,.01,,.82,1,,30];
 export const hitSfx = [2,,185,,,,3,1.6,-7,,,,,,,.2,.19,.1,,.38,985]
+export const countSfx = [1.5,,688,.02,.01,.007,1,2.6,,,,,.01,,85,,.01,.85,.03,.11,-818]
+export const goSfx = [1.5,,1376,.02,.01,.007,1,2.6,,,,,.01,,85,,.01,.85,.8,.11,-818]
 
 export const gameoverSfx = {
     songData: [
@@ -103,7 +105,6 @@ export const gameoverSfx = {
     endPattern: 1, // End pattern
     numChannels: 1, // Number of channels
 };
-
 
 // Song data
 export const song1 = {
