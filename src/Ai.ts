@@ -27,30 +27,10 @@ import { GameObject } from "./GameObject";
 import { CHARACTER_MAX_RUN_SPEED } from "./physics";
 import { random } from "./random";
 import { Block, Track } from "./Track";
-import {
-    BLOCK_COUNT,
-    BLOCK_HEIGHT,
-    BLOCK_WIDTH,
-    BlockType,
-} from "./TrackElement";
+import { BLOCK_COUNT, BLOCK_WIDTH, BlockType } from "./TrackElement";
 import { normalize, Vector, ZERO_VECTOR } from "./Vector";
 
-function isWalkableToSomeExtent(t: BlockType): boolean {
-    return (
-        t === BlockType.Free || t === BlockType.Obstacle || t === BlockType.Raft
-    );
-}
-
-/*
- * Margin to keep ai from going too close to the edge so that it
- * wouldn't fall too easily.
- * If too much, then ai may have trouble going around obstacles.
- */
-const Y_MARGIN = 0.3 * BLOCK_HEIGHT;
-
 const FORWARD: Vector = { x: 0, y: -1 };
-const LEFT: Vector = { x: -1, y: 0 };
-const RIGHT: Vector = { x: 1, y: 0 };
 const DIAGONAL_LEFT: Vector = normalize({ x: -1, y: -1 });
 const DIAGONAL_RIGHT: Vector = normalize({ x: 1, y: -1 });
 
@@ -71,7 +51,7 @@ export class Ai {
      */
     private horizontalMargin: number = 0;
 
-    target: Block | null = null;
+    currentTarget: Block | null = null;
 
     constructor(host: GameObject, track: Track) {
         this.host = host;
@@ -79,134 +59,206 @@ export class Ai {
     }
 
     reset(): void {
-        this.target = null;
+        this.currentTarget = null;
     }
 
     getMovement(_: number, dt: number): Vector {
         const pos: Vector = getCenter(this.host);
         const currentBlock = this.track.getBlockAt(pos);
 
-        if (this.target == null) {
+        const currentBlockType = this.track.getBlockType(
+            currentBlock.row,
+            currentBlock.col,
+        );
+
+        let movement = this.goByRaft(currentBlock, currentBlockType);
+        if (movement) {
+            return movement;
+        }
+
+        if (this.currentTarget == null || this.hasReached(this.currentTarget)) {
             const nextTarget = this.findNextTarget(currentBlock);
 
             if (nextTarget == null) {
                 return ZERO_VECTOR;
             }
 
-            this.target = nextTarget;
-            return ZERO_VECTOR;
+            this.currentTarget = nextTarget;
         }
 
-        const isLessThanHalfwayInCurrentBlock: boolean =
-            this.host.y > currentBlock.y + currentBlock.height / 2;
-        const isAtTheEndOfCurrentBlock: boolean =
-            this.host.y <= currentBlock.y + Y_MARGIN;
-
-        const isLeftFromTarget: boolean =
-            this.host.x < this.target.x + this.horizontalMargin;
-        const isRightFromTarget: boolean =
-            this.target.x + this.target.width - this.horizontalMargin <=
-            this.host.x + this.host.width;
-
-        const isBehindTarget: boolean =
-            this.host.y > this.target.y + this.target.height;
-        const hasReachedTarget: boolean =
-            this.host.y + this.host.height < this.target.y + this.target.height;
-        const isBehindEndOfTarget: boolean =
-            this.host.y > this.target.y + Y_MARGIN;
-
-        const currentBlockType = this.track.getBlockType(
-            currentBlock.row,
-            currentBlock.col,
+        movement = this.goRoundObstacles(
+            this.currentTarget,
+            currentBlock,
+            currentBlockType,
         );
+        if (movement) {
+            return movement;
+        }
 
-        if (hasReachedTarget && currentBlockType !== BlockType.Raft) {
-            const oldTarget = this.target;
-            const nextTarget = this.findNextTarget(oldTarget);
+        return this.moveOnTrack(this.currentTarget, currentBlock, dt);
+    }
 
-            if (nextTarget == null) {
-                return ZERO_VECTOR;
-            }
+    private goByRaft(
+        currentBlock: Block,
+        currentBlockType: BlockType,
+    ): Vector | null {
+        if (
+            this.track.getBlockType(currentBlock.row + 1, currentBlock.col) ===
+                BlockType.Raft &&
+            (this.host.y > currentBlock.y + 1.5 * this.host.height ||
+                this.track.isFree(currentBlock.row + 1, currentBlock.col))
+        ) {
+            // Step into the raft
+            return FORWARD;
+        }
 
-            this.target = nextTarget;
+        if (
+            this.host.y <= currentBlock.y + 1.5 * this.host.height &&
+            this.track.getBlockType(currentBlock.row + 1, currentBlock.col) ===
+                BlockType.Raft &&
+            !this.track.isFree(currentBlock.row + 1, currentBlock.col)
+        ) {
+            // Wait for the raft to arrive
             return ZERO_VECTOR;
         }
 
         if (
-            isLeftFromTarget &&
-            isBehindTarget &&
-            isLessThanHalfwayInCurrentBlock &&
-            this.track.isFree(currentBlock.row, currentBlock.col + 1)
+            (currentBlockType === BlockType.Raft ||
+                currentBlockType === BlockType.Empty) &&
+            !this.track.isFree(currentBlock.row + 1, currentBlock.col)
         ) {
-            return DIAGONAL_RIGHT;
-        } else if (
-            isRightFromTarget &&
-            isBehindTarget &&
-            isLessThanHalfwayInCurrentBlock &&
-            this.track.isFree(currentBlock.row, currentBlock.col - 1)
-        ) {
-            return DIAGONAL_LEFT;
-        } else if (
-            isLeftFromTarget &&
-            isAtTheEndOfCurrentBlock &&
-            isWalkableToSomeExtent(
-                this.track.getBlockType(currentBlock.row, currentBlock.col + 1),
-            )
-        ) {
-            return RIGHT;
-        } else if (
-            isRightFromTarget &&
-            isAtTheEndOfCurrentBlock &&
-            isWalkableToSomeExtent(
-                this.track.getBlockType(currentBlock.row, currentBlock.col - 1),
-            )
-        ) {
-            return LEFT;
-        } else if (isBehindTarget) {
-            if (
-                currentBlockType === BlockType.Empty &&
-                !this.track.isFree(currentBlock.row, currentBlock.col)
-            ) {
-                // Waiting for a raft to reach destination
-                return ZERO_VECTOR;
-            }
-
-            return this.isClearAhead(currentBlock) ||
-                !this.goingFullSpeedAlready(dt)
-                ? FORWARD
-                : ZERO_VECTOR;
-        } else if (isBehindEndOfTarget) {
-            if (!this.track.isFree(this.target.row, this.target.col)) {
-                // Waiting for a raft to arrive
-                return ZERO_VECTOR;
-            }
-
-            return this.isClearAhead(currentBlock) ||
-                !this.goingFullSpeedAlready(dt)
-                ? FORWARD
-                : ZERO_VECTOR;
-        } else {
-            this.target = null;
+            // Waiting for the raft to reach destination
             return ZERO_VECTOR;
         }
+
+        if (
+            (currentBlockType === BlockType.Raft ||
+                currentBlockType === BlockType.Empty) &&
+            this.track.isFree(currentBlock.row, currentBlock.col) &&
+            this.track.isFree(currentBlock.row + 1, currentBlock.col)
+        ) {
+            // Step out of the raft
+            return FORWARD;
+        }
+
+        return null;
     }
 
-    private isClearAhead(currentBlock: Block): boolean {
+    private goRoundObstacles(
+        target: Block,
+        currentBlock: Block,
+        currentBlockType: BlockType,
+    ): Vector | null {
+        if (currentBlockType === BlockType.Obstacle) {
+            if (
+                currentBlock.y + currentBlock.height / 2 <
+                this.host.y + this.host.height / 2
+            ) {
+                // Behind the obstacle
+                if (target.col < currentBlock.col) {
+                    return DIAGONAL_LEFT;
+                } else {
+                    return DIAGONAL_RIGHT;
+                }
+            }
+        } else if (
+            target.col < currentBlock.col &&
+            this.track.getBlockType(currentBlock.row, currentBlock.col - 1) ===
+                BlockType.Obstacle
+        ) {
+            if (this.host.y > currentBlock.y + 3 * this.host.height) {
+                return FORWARD;
+            } else {
+                return DIAGONAL_LEFT;
+            }
+        } else if (
+            currentBlock.col < target.col &&
+            this.track.getBlockType(currentBlock.row, currentBlock.col + 1) ===
+                BlockType.Obstacle
+        ) {
+            if (this.host.y > currentBlock.y + 3 * this.host.height) {
+                return FORWARD;
+            } else {
+                return DIAGONAL_RIGHT;
+            }
+        }
+
+        return null;
+    }
+
+    private moveOnTrack(
+        target: Block,
+        currentBlock: Block,
+        dt: number,
+    ): Vector {
+        const isLeftFromTarget: boolean =
+            this.host.x < target.x + this.horizontalMargin;
+        const isRightFromTarget: boolean =
+            target.x + target.width - this.horizontalMargin <=
+            this.host.x + this.host.width;
+
+        let verticalMovement = 0;
+        let horizontalMovement = 0;
+
+        if (
+            this.host.velocity.y < -(CHARACTER_MAX_RUN_SPEED * dt) * 1.1 &&
+            this.lookVisibilityAhead(currentBlock) <= 0
+        ) {
+            // Slow down
+            verticalMovement = 1;
+        } else if (
+            this.track.getBlockType(currentBlock.row + 1, currentBlock.col) ===
+                BlockType.Empty &&
+            this.host.y + this.host.height / 2 <
+                currentBlock.y + currentBlock.height / 2
+        ) {
+            // A chasm ahead, don't move forward
+            verticalMovement = 0;
+        } else {
+            // Full steam ahead
+            verticalMovement = -1;
+        }
+
+        if (
+            isLeftFromTarget &&
+            this.track.getBlockType(currentBlock.row, currentBlock.col + 1) ===
+                BlockType.Free
+        ) {
+            horizontalMovement = 1;
+        } else if (
+            isRightFromTarget &&
+            this.track.getBlockType(currentBlock.row, currentBlock.col - 1) ===
+                BlockType.Free
+        ) {
+            horizontalMovement = -1;
+        }
+
+        return {
+            x: horizontalMovement,
+            y: verticalMovement,
+        };
+    }
+
+    private hasReached(block: Block): boolean {
+        return this.host.y + this.host.height < block.y + block.height;
+    }
+
+    private lookVisibilityAhead(currentBlock: Block): number {
+        let count = 0;
+
         for (
             let row = currentBlock.row + 1;
             row <= currentBlock.row + VISIBILITY_BLOCK_COUNT;
             row++
         ) {
             if (!this.track.isFree(row, currentBlock.col)) {
-                return false;
+                break;
             }
+
+            count++;
         }
 
-        return true;
-    }
-
-    private goingFullSpeedAlready(dt: number): boolean {
-        return Math.abs(this.host.velocity.y) > CHARACTER_MAX_RUN_SPEED * dt;
+        return count;
     }
 
     private findNextTarget(currentBlock: Block): Block | null {
