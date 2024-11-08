@@ -81,6 +81,28 @@ export enum BlockType {
     Raft,
 }
 
+export interface Block extends Area {
+    type: BlockType;
+    row: number;
+    col: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+export function getEmptyBlock(row: number, col: number, y: number): Block {
+    return {
+        type: BlockType.Empty,
+        row,
+        col,
+        x: LEFTMOST_EDGE + col * BLOCK_WIDTH,
+        y,
+        width: BLOCK_WIDTH,
+        height: ELEMENT_HEIGHT,
+    };
+}
+
 export interface Raft extends Area {
     yDirection: number;
     dockStartTime: number;
@@ -101,16 +123,17 @@ export function isSlope(surface: Area): surface is Slope {
 // An element is one horizontal slice of the track. A track is
 // composed by laying down several elements one after the other.
 export class TrackElement {
+    readonly row: number;
     readonly y: number;
     readonly type: TrackElementType;
     readonly surfaces: readonly Area[];
+    readonly objects: readonly GameObject[];
     readonly width: number;
     readonly height: number;
     readonly minX: number;
     readonly maxX: number;
 
-    readonly blocks: boolean[] = new Array(BLOCK_COUNT);
-    readonly objects: readonly GameObject[];
+    readonly blocks: Block[] = new Array(BLOCK_COUNT);
 
     get color(): string {
         switch (this.type) {
@@ -126,11 +149,13 @@ export class TrackElement {
     }
 
     constructor(
+        row: number,
         y: number,
         type: TrackElementType,
         surfaces: readonly Area[],
         objects: readonly GameObject[],
     ) {
+        this.row = row;
         this.y = y;
         this.type = type;
         this.surfaces = surfaces;
@@ -139,30 +164,44 @@ export class TrackElement {
         this.maxX = Math.max(...this.surfaces.map((s) => s.x + s.width));
         this.width = this.maxX - this.minX;
         this.height = ELEMENT_HEIGHT;
-        this.calculateBlocks();
-    }
-
-    calculateBlocks(): void {
-        const margin = BLOCK_WIDTH * 0.1;
-
-        for (let i = 0; i < BLOCK_COUNT; i++) {
-            const x = LEFTMOST_EDGE + i * BLOCK_WIDTH;
-            const block: Area = {
-                x: x + margin,
-                y: this.y + margin,
-                width: BLOCK_WIDTH - 2 * margin,
-                height: ELEMENT_HEIGHT - 2 * margin,
+        for (let col = 0; col < BLOCK_COUNT; col++) {
+            this.blocks[col] = {
+                type: this.getBlockType(col),
+                row,
+                col,
+                x: LEFTMOST_EDGE + col * BLOCK_WIDTH,
+                y: this.y,
+                width: BLOCK_WIDTH,
+                height: ELEMENT_HEIGHT,
             };
-
-            const isVacant: boolean =
-                this.surfaces.some((s) => includes(s, block)) &&
-                !this.objects.some((o) => overlap(o, block));
-
-            this.blocks[i] = isVacant;
         }
     }
 
-    getBlockType(col: number): BlockType {
+    getBlock(col: number): Block {
+        if (col < 0 || BLOCK_COUNT <= col) {
+            return getEmptyBlock(this.row, col, this.y);
+        }
+        return this.blocks[col];
+    }
+
+    isFree(col: number, y?: number): boolean {
+        const margin = BLOCK_WIDTH * 0.1;
+        const x = LEFTMOST_EDGE + col * BLOCK_WIDTH;
+        const yReference = y != null ? y : this.y;
+        const blockArea: Area = {
+            x: x + margin,
+            y: yReference + margin,
+            width: BLOCK_WIDTH - 2 * margin,
+            height: BLOCK_HEIGHT - 2 * margin,
+        };
+
+        return (
+            this.surfaces.some((s) => includes(s, blockArea)) &&
+            !this.objects.some((o) => overlap(o, blockArea))
+        );
+    }
+
+    private getBlockType(col: number): BlockType {
         const margin = BLOCK_WIDTH * 0.1;
 
         const x = LEFTMOST_EDGE + col * BLOCK_WIDTH + margin;
@@ -186,24 +225,7 @@ export class TrackElement {
             return BlockType.Obstacle;
         }
 
-        return this.blocks[col] ? BlockType.Free : BlockType.Empty;
-    }
-
-    isFree(y: number, col: number): boolean {
-        const margin = BLOCK_WIDTH * 0.1;
-
-        const x = LEFTMOST_EDGE + col * BLOCK_WIDTH;
-        const block: Area = {
-            x: x + margin,
-            y: y + margin,
-            width: BLOCK_WIDTH - 2 * margin,
-            height: ELEMENT_HEIGHT - 2 * margin,
-        };
-
-        return (
-            this.surfaces.some((s) => includes(s, block)) &&
-            !this.objects.some((o) => overlap(o, block))
-        );
+        return this.isFree(col) ? BlockType.Free : BlockType.Empty;
     }
 }
 
@@ -212,6 +234,7 @@ export function createTrack(
     startY: number,
 ): TrackElement[] {
     return templates.map((t, i) => {
+        const row = i;
         const y = startY - ELEMENT_HEIGHT * (i + 1);
         const centerY = y + ELEMENT_HEIGHT / 2;
 
@@ -606,6 +629,6 @@ export function createTrack(
                 break;
         }
 
-        return new TrackElement(y, eType, surfaces, objects);
+        return new TrackElement(row, y, eType, surfaces, objects);
     });
 }

@@ -26,8 +26,8 @@ import { getCenter } from "./Area";
 import { GameObject } from "./GameObject";
 import { CHARACTER_MAX_RUN_SPEED } from "./physics";
 import { random } from "./random";
-import { Block, Track } from "./Track";
-import { BLOCK_COUNT, BLOCK_WIDTH, BlockType } from "./TrackElement";
+import { Track } from "./Track";
+import { Block, BLOCK_COUNT, BLOCK_WIDTH, BlockType } from "./TrackElement";
 import { normalize, Vector, ZERO_VECTOR } from "./Vector";
 
 const FORWARD: Vector = { x: 0, y: -1 };
@@ -66,12 +66,7 @@ export class Ai {
         const pos: Vector = getCenter(this.host);
         const currentBlock = this.track.getBlockAt(pos);
 
-        const currentBlockType = this.track.getBlockType(
-            currentBlock.row,
-            currentBlock.col,
-        );
-
-        let movement = this.goByRaft(currentBlock, currentBlockType);
+        let movement = this.goByRaft(currentBlock);
         if (movement) {
             return movement;
         }
@@ -86,11 +81,7 @@ export class Ai {
             this.currentTarget = nextTarget;
         }
 
-        movement = this.goRoundObstacles(
-            this.currentTarget,
-            currentBlock,
-            currentBlockType,
-        );
+        movement = this.goRoundObstacles(this.currentTarget, currentBlock);
         if (movement) {
             return movement;
         }
@@ -98,12 +89,9 @@ export class Ai {
         return this.moveOnTrack(this.currentTarget, currentBlock, dt);
     }
 
-    private goByRaft(
-        currentBlock: Block,
-        currentBlockType: BlockType,
-    ): Vector | null {
+    private goByRaft(currentBlock: Block): Vector | null {
         if (
-            this.track.getBlockType(currentBlock.row + 1, currentBlock.col) ===
+            this.track.getBlock(currentBlock.row + 1, currentBlock.col).type ===
                 BlockType.Raft &&
             (this.host.y > currentBlock.y + 1.5 * this.host.height ||
                 this.track.isFree(currentBlock.row + 1, currentBlock.col))
@@ -114,7 +102,7 @@ export class Ai {
 
         if (
             this.host.y <= currentBlock.y + 1.5 * this.host.height &&
-            this.track.getBlockType(currentBlock.row + 1, currentBlock.col) ===
+            this.track.getBlock(currentBlock.row + 1, currentBlock.col).type ===
                 BlockType.Raft &&
             !this.track.isFree(currentBlock.row + 1, currentBlock.col)
         ) {
@@ -123,8 +111,8 @@ export class Ai {
         }
 
         if (
-            (currentBlockType === BlockType.Raft ||
-                currentBlockType === BlockType.Empty) &&
+            (currentBlock.type === BlockType.Raft ||
+                currentBlock.type === BlockType.Empty) &&
             !this.track.isFree(currentBlock.row + 1, currentBlock.col)
         ) {
             // Waiting for the raft to reach destination
@@ -132,8 +120,8 @@ export class Ai {
         }
 
         if (
-            (currentBlockType === BlockType.Raft ||
-                currentBlockType === BlockType.Empty) &&
+            (currentBlock.type === BlockType.Raft ||
+                currentBlock.type === BlockType.Empty) &&
             this.track.isFree(currentBlock.row, currentBlock.col) &&
             this.track.isFree(currentBlock.row + 1, currentBlock.col)
         ) {
@@ -147,9 +135,8 @@ export class Ai {
     private goRoundObstacles(
         target: Block,
         currentBlock: Block,
-        currentBlockType: BlockType,
     ): Vector | null {
-        if (currentBlockType === BlockType.Obstacle) {
+        if (currentBlock.type === BlockType.Obstacle) {
             if (
                 currentBlock.y + currentBlock.height / 2 <
                 this.host.y + this.host.height / 2
@@ -163,7 +150,7 @@ export class Ai {
             }
         } else if (
             target.col < currentBlock.col &&
-            this.track.getBlockType(currentBlock.row, currentBlock.col - 1) ===
+            this.track.getBlock(currentBlock.row, currentBlock.col - 1).type ===
                 BlockType.Obstacle
         ) {
             if (this.host.y > currentBlock.y + 3 * this.host.height) {
@@ -173,7 +160,7 @@ export class Ai {
             }
         } else if (
             currentBlock.col < target.col &&
-            this.track.getBlockType(currentBlock.row, currentBlock.col + 1) ===
+            this.track.getBlock(currentBlock.row, currentBlock.col + 1).type ===
                 BlockType.Obstacle
         ) {
             if (this.host.y > currentBlock.y + 3 * this.host.height) {
@@ -207,7 +194,7 @@ export class Ai {
             // Slow down
             verticalMovement = 1;
         } else if (
-            this.track.getBlockType(currentBlock.row + 1, currentBlock.col) ===
+            this.track.getBlock(currentBlock.row + 1, currentBlock.col).type ===
                 BlockType.Empty &&
             this.host.y + this.host.height / 2 <
                 currentBlock.y + currentBlock.height / 2
@@ -221,13 +208,13 @@ export class Ai {
 
         if (
             isLeftFromTarget &&
-            this.track.getBlockType(currentBlock.row, currentBlock.col + 1) ===
+            this.track.getBlock(currentBlock.row, currentBlock.col + 1).type ===
                 BlockType.Free
         ) {
             horizontalMovement = 1;
         } else if (
             isRightFromTarget &&
-            this.track.getBlockType(currentBlock.row, currentBlock.col - 1) ===
+            this.track.getBlock(currentBlock.row, currentBlock.col - 1).type ===
                 BlockType.Free
         ) {
             horizontalMovement = -1;
@@ -267,9 +254,12 @@ export class Ai {
             const row = currentBlock.row + 1;
             const col = currentBlock.col + diff;
 
-            const blockType = this.track.getBlockType(row, col);
+            const block = this.track.getBlock(row, col);
 
-            if (blockType === BlockType.Free || blockType === BlockType.Raft) {
+            if (
+                block.type === BlockType.Free ||
+                block.type === BlockType.Raft
+            ) {
                 this.horizontalMargin = random(0.2) * BLOCK_WIDTH;
                 return this.track.getBlock(row, col);
             }
