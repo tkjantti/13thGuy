@@ -228,21 +228,24 @@ export class Ai {
     private getCurrentBlock(): Block {
         const pos: Vector = getCenter(this.host);
 
-        const block = this.track.getBlockAt(pos);
+        let block = this.track.getBlockAt(pos);
 
-        // Check if the player is a little bit over the edge and
-        // adjust the current block to what it "should" be.
+        // Check if the player is a little bit over the edge in y
+        // direction and adjust the block to what it "should" be.
+        if (
+            block.type === BlockType.Empty &&
+            block.y + block.height - this.host.height < pos.y
+        ) {
+            block = this.track.getBlock(block.row - 1, block.col);
+        }
+
+        // In the same way, check if over the edge in the x direction
+        // and adjust the block accordingly.
         if (block.type === BlockType.Empty) {
-            if (block.y + block.height - this.host.height < pos.y) {
-                return this.track.getBlock(block.row - 1, block.col);
-            }
-
             if (block.x + block.width - this.host.width < pos.x) {
-                return this.track.getBlock(block.row, block.col + 1);
-            }
-
-            if (pos.x < block.x + this.host.width) {
-                return this.track.getBlock(block.row, block.col - 1);
+                block = this.track.getBlock(block.row, block.col + 1);
+            } else if (pos.x < block.x + this.host.width) {
+                block = this.track.getBlock(block.row, block.col - 1);
             }
         }
 
