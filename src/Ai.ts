@@ -63,8 +63,7 @@ export class Ai {
     }
 
     getMovement(_: number, dt: number): Vector {
-        const pos: Vector = getCenter(this.host);
-        const currentBlock = this.track.getBlockAt(pos);
+        const currentBlock = this.getCurrentBlock();
 
         let movement = this.goByRaft(currentBlock);
         if (movement) {
@@ -224,6 +223,30 @@ export class Ai {
             x: horizontalMovement,
             y: verticalMovement,
         };
+    }
+
+    private getCurrentBlock(): Block {
+        const pos: Vector = getCenter(this.host);
+
+        const block = this.track.getBlockAt(pos);
+
+        // Check if the player is a little bit over the edge and
+        // adjust the current block to what it "should" be.
+        if (block.type === BlockType.Empty) {
+            if (block.y + block.height - this.host.height < pos.y) {
+                return this.track.getBlock(block.row - 1, block.col);
+            }
+
+            if (block.x + block.width - this.host.width < pos.x) {
+                return this.track.getBlock(block.row, block.col + 1);
+            }
+
+            if (pos.x < block.x + this.host.width) {
+                return this.track.getBlock(block.row, block.col - 1);
+            }
+        }
+
+        return block;
     }
 
     private hasReached(block: Block): boolean {
