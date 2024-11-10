@@ -90,6 +90,7 @@ export class Ai {
 
     private goByRaft(currentBlock: Block): Vector | null {
         if (
+            currentBlock.type !== BlockType.Raft &&
             this.track.getBlock(currentBlock.row + 1, currentBlock.col).type ===
                 BlockType.Raft &&
             (this.host.y > currentBlock.y + 1.5 * this.host.height ||
@@ -110,8 +111,7 @@ export class Ai {
         }
 
         if (
-            (currentBlock.type === BlockType.Raft ||
-                currentBlock.type === BlockType.Empty) &&
+            currentBlock.type === BlockType.Raft &&
             !this.track.isFree(currentBlock.row + 1, currentBlock.col)
         ) {
             // Waiting for the raft to reach destination
@@ -119,8 +119,7 @@ export class Ai {
         }
 
         if (
-            (currentBlock.type === BlockType.Raft ||
-                currentBlock.type === BlockType.Empty) &&
+            currentBlock.type === BlockType.Raft &&
             this.track.isFree(currentBlock.row, currentBlock.col) &&
             this.track.isFree(currentBlock.row + 1, currentBlock.col)
         ) {
