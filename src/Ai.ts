@@ -185,7 +185,10 @@ export class Ai {
         let verticalMovement = 0;
         let horizontalMovement = 0;
 
-        if (
+        if (this.host.y + this.host.height / 2 < currentBlock.y) {
+            // Back off if going over the edge
+            verticalMovement = 1;
+        } else if (
             this.host.velocity.y < -(CHARACTER_MAX_RUN_SPEED * dt) * 1.1 &&
             this.lookVisibilityAhead(currentBlock) <= 0
         ) {
