@@ -34,11 +34,6 @@ const FORWARD: Vector = { x: 0, y: -1 };
 const DIAGONAL_LEFT: Vector = normalize({ x: -1, y: -1 });
 const DIAGONAL_RIGHT: Vector = normalize({ x: 1, y: -1 });
 
-/*
- * How many blocks to see forward for going full speed.
- */
-const VISIBILITY_BLOCK_COUNT = 3;
-
 export class Ai {
     private host: GameObject;
     private track: Track;
@@ -190,7 +185,8 @@ export class Ai {
             verticalMovement = 1;
         } else if (
             this.host.velocity.y < -(CHARACTER_MAX_RUN_SPEED * dt) * 1.1 &&
-            this.lookVisibilityAhead(currentBlock) <= 0
+            this.track.getBlock(currentBlock.row + 1, currentBlock.col).type !==
+                BlockType.Free
         ) {
             // Slow down
             verticalMovement = 1;
@@ -258,38 +254,61 @@ export class Ai {
         return this.host.y + this.host.height < block.y + block.height;
     }
 
-    private lookVisibilityAhead(currentBlock: Block): number {
-        let count = 0;
+    private findNextTarget(currentBlock: Block): Block | null {
+        const target = this.findNearestBlock(
+            currentBlock.row + 1,
+            currentBlock.col,
+        );
 
-        for (
-            let row = currentBlock.row + 1;
-            row <= currentBlock.row + VISIBILITY_BLOCK_COUNT;
-            row++
-        ) {
-            if (!this.track.isFree(row, currentBlock.col)) {
-                break;
-            }
-
-            count++;
+        if (target == null || target.col !== currentBlock.col) {
+            return target;
         }
 
-        return count;
+        const blockFurtherAway = this.findNearestBlock(
+            target.row + 1,
+            target.col,
+        );
+
+        if (blockFurtherAway == null) {
+            return target;
+        }
+
+        if (blockFurtherAway.col < target.col) {
+            const adjustedTarget = this.track.getBlock(
+                target.row,
+                target.col - 1,
+            );
+            if (adjustedTarget.type === BlockType.Free) {
+                return adjustedTarget;
+            }
+        }
+
+        if (target.col < blockFurtherAway.col) {
+            const adjustedTarget = this.track.getBlock(
+                target.row,
+                target.col + 1,
+            );
+            if (adjustedTarget.type === BlockType.Free) {
+                return adjustedTarget;
+            }
+        }
+
+        return target;
     }
 
-    private findNextTarget(currentBlock: Block): Block | null {
+    private findNearestBlock(row: number, col: number): Block | null {
         for (let i = 0; i < BLOCK_COUNT - 1; i++) {
             const diff = (random() < 0.5 ? -1 : 1) * i;
-            const row = currentBlock.row + 1;
-            const col = currentBlock.col + diff;
+            const actualCol = col + diff;
 
-            const block = this.track.getBlock(row, col);
+            const block = this.track.getBlock(row, actualCol);
 
             if (
                 block.type === BlockType.Free ||
                 block.type === BlockType.Raft
             ) {
                 this.horizontalMargin = random(0.2) * BLOCK_WIDTH;
-                return this.track.getBlock(row, col);
+                return this.track.getBlock(row, actualCol);
             }
         }
 
