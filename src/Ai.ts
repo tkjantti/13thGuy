@@ -34,6 +34,13 @@ const FORWARD: Vector = { x: 0, y: -1 };
 const DIAGONAL_LEFT: Vector = normalize({ x: -1, y: -1 });
 const DIAGONAL_RIGHT: Vector = normalize({ x: 1, y: -1 });
 
+/*
+ * How many blocks the AI can see ahead.
+ */
+const VISIBILITY_BLOCK_COUNT = 3;
+
+const SLOWDOWN_TIME = 500;
+
 export class Ai {
     private host: GameObject;
     private track: Track;
@@ -46,6 +53,12 @@ export class Ai {
      */
     private horizontalMargin: number = 0;
 
+    /*
+     * Remember the latest time when slowing down so that the character
+     * would not flicker between going and not going.
+     */
+    private lastSlowdownTime: number = -SLOWDOWN_TIME;
+
     currentTarget: Block | null = null;
 
     constructor(host: GameObject, track: Track) {
@@ -57,7 +70,7 @@ export class Ai {
         this.currentTarget = null;
     }
 
-    getMovement(_: number, dt: number): Vector {
+    getMovement(t: number, dt: number): Vector {
         const currentBlock = this.getCurrentBlock();
 
         let movement = this.goByRaft(currentBlock);
@@ -80,7 +93,7 @@ export class Ai {
             return movement;
         }
 
-        return this.moveOnTrack(this.currentTarget, currentBlock, dt);
+        return this.moveOnTrack(this.currentTarget, currentBlock, t, dt);
     }
 
     private goByRaft(currentBlock: Block): Vector | null {
@@ -169,6 +182,7 @@ export class Ai {
     private moveOnTrack(
         target: Block,
         currentBlock: Block,
+        t: number,
         dt: number,
     ): Vector {
         const isLeftFromTarget: boolean =
@@ -191,6 +205,15 @@ export class Ai {
             // Slow down
             verticalMovement = 1;
         } else if (
+            this.host.velocity.y < -(CHARACTER_MAX_RUN_SPEED * dt) * 5 &&
+            !this.isClearAhead(currentBlock)
+        ) {
+            // Stop progressing if going too fast already
+            verticalMovement = 0;
+            if (SLOWDOWN_TIME < t - this.lastSlowdownTime) {
+                this.lastSlowdownTime = t;
+            }
+        } else if (
             this.track.getBlock(currentBlock.row + 1, currentBlock.col).type ===
                 BlockType.Empty &&
             this.host.y + this.host.height / 2 <
@@ -198,7 +221,7 @@ export class Ai {
         ) {
             // A chasm ahead, don't move forward
             verticalMovement = 0;
-        } else {
+        } else if (SLOWDOWN_TIME < t - this.lastSlowdownTime) {
             // Full steam ahead
             verticalMovement = -1;
         }
@@ -294,6 +317,23 @@ export class Ai {
         }
 
         return target;
+    }
+
+    private isClearAhead(currentBlock: Block): boolean {
+        for (
+            let row = currentBlock.row + 1;
+            row <= currentBlock.row + VISIBILITY_BLOCK_COUNT;
+            row++
+        ) {
+            if (
+                this.track.getBlock(row, currentBlock.col).type !==
+                BlockType.Free
+            ) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private findNearestBlock(row: number, col: number): Block | null {
