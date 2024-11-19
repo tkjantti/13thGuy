@@ -39,7 +39,7 @@ const DIAGONAL_RIGHT: Vector = normalize({ x: 1, y: -1 });
  */
 const VISIBILITY_BLOCK_COUNT = 3;
 
-const SLOWDOWN_TIME = 500;
+const SLOWDOWN_TIME = 1000;
 
 export class Ai {
     private host: GameObject;
@@ -73,7 +73,7 @@ export class Ai {
     getMovement(t: number, dt: number): Vector {
         const currentBlock = this.getCurrentBlock();
 
-        let movement = this.goByRaft(currentBlock);
+        let movement = this.goByRaft(currentBlock, t, dt);
         if (movement) {
             return movement;
         }
@@ -88,7 +88,12 @@ export class Ai {
             this.currentTarget = nextTarget;
         }
 
-        movement = this.goRoundObstacles(this.currentTarget, currentBlock);
+        movement = this.goRoundObstacles(
+            this.currentTarget,
+            currentBlock,
+            t,
+            dt,
+        );
         if (movement) {
             return movement;
         }
@@ -96,7 +101,11 @@ export class Ai {
         return this.moveOnTrack(this.currentTarget, currentBlock, t, dt);
     }
 
-    private goByRaft(currentBlock: Block): Vector | null {
+    private goByRaft(
+        currentBlock: Block,
+        t: number,
+        dt: number,
+    ): Vector | null {
         if (
             currentBlock.type !== BlockType.Raft &&
             this.track.getBlock(currentBlock.row + 1, currentBlock.col).type ===
@@ -105,7 +114,10 @@ export class Ai {
                 this.track.isFree(currentBlock.row + 1, currentBlock.col))
         ) {
             // Step into the raft
-            return FORWARD;
+            return {
+                x: 0,
+                y: this.moveAhead(currentBlock, t, dt),
+            };
         }
 
         if (
@@ -141,6 +153,8 @@ export class Ai {
     private goRoundObstacles(
         target: Block,
         currentBlock: Block,
+        t: number,
+        dt: number,
     ): Vector | null {
         if (currentBlock.type === BlockType.Obstacle) {
             if (
@@ -160,7 +174,8 @@ export class Ai {
                 BlockType.Obstacle
         ) {
             if (this.host.y > currentBlock.y + 3 * this.host.height) {
-                return FORWARD;
+                const vertical = this.moveAhead(currentBlock, t, dt);
+                return { x: 0, y: vertical };
             } else {
                 return DIAGONAL_LEFT;
             }
@@ -170,7 +185,8 @@ export class Ai {
                 BlockType.Obstacle
         ) {
             if (this.host.y > currentBlock.y + 3 * this.host.height) {
-                return FORWARD;
+                const vertical = this.moveAhead(currentBlock, t, dt);
+                return { x: 0, y: vertical };
             } else {
                 return DIAGONAL_RIGHT;
             }
@@ -197,23 +213,12 @@ export class Ai {
         if (this.host.y + this.host.height / 2 < currentBlock.y) {
             // Back off if going over the edge
             verticalMovement = 1;
-        } else if (
-            this.host.velocity.y < -(CHARACTER_MAX_RUN_SPEED * dt) * 1.1 &&
-            this.track.getBlock(currentBlock.row + 1, currentBlock.col).type !==
-                BlockType.Free
-        ) {
-            // Slow down
-            verticalMovement = 1;
-        } else if (
-            this.host.velocity.y < -(CHARACTER_MAX_RUN_SPEED * dt) * 5 &&
-            !this.isClearAhead(currentBlock)
-        ) {
-            // Stop progressing if going too fast already
-            verticalMovement = 0;
-            if (SLOWDOWN_TIME < t - this.lastSlowdownTime) {
-                this.lastSlowdownTime = t;
-            }
-        } else if (
+        } else {
+            verticalMovement = this.moveAhead(currentBlock, t, dt);
+        }
+
+        if (
+            verticalMovement < 0 &&
             this.track.getBlock(currentBlock.row + 1, currentBlock.col).type ===
                 BlockType.Empty &&
             this.host.y + this.host.height / 2 <
@@ -221,9 +226,6 @@ export class Ai {
         ) {
             // A chasm ahead, don't move forward
             verticalMovement = 0;
-        } else if (SLOWDOWN_TIME < t - this.lastSlowdownTime) {
-            // Full steam ahead
-            verticalMovement = -1;
         }
 
         if (
@@ -244,6 +246,32 @@ export class Ai {
             x: horizontalMovement,
             y: verticalMovement,
         };
+    }
+
+    private moveAhead(currentBlock: Block, t: number, dt: number): number {
+        if (
+            this.host.velocity.y < -(CHARACTER_MAX_RUN_SPEED * dt) * 2 &&
+            this.track.getBlock(currentBlock.row + 1, currentBlock.col).type !==
+                BlockType.Free
+        ) {
+            // Slow down
+            return 1;
+        } else if (
+            this.host.velocity.y < -(CHARACTER_MAX_RUN_SPEED * dt) * 5 &&
+            !this.isClearAhead(currentBlock)
+        ) {
+            // Stop progressing for a little while if going too fast already
+            if (SLOWDOWN_TIME < t - this.lastSlowdownTime) {
+                this.lastSlowdownTime = t;
+            }
+
+            return 0;
+        } else if (SLOWDOWN_TIME < t - this.lastSlowdownTime) {
+            // Full steam ahead
+            return -1;
+        }
+
+        return 0;
     }
 
     private getCurrentBlock(): Block {
