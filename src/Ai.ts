@@ -210,7 +210,11 @@ export class Ai {
         let verticalMovement = 0;
         let horizontalMovement = 0;
 
-        if (this.host.y + this.host.height / 2 < currentBlock.y) {
+        if (
+            this.track.getBlock(currentBlock.row + 1, currentBlock.col).type ===
+                BlockType.Empty &&
+            this.host.y + this.host.height / 2 < currentBlock.y
+        ) {
             // Back off if going over the edge
             verticalMovement = 1;
         } else {
