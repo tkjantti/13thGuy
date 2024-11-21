@@ -134,8 +134,21 @@ export class Ai {
             currentBlock.type === BlockType.Raft &&
             !this.track.isFree(currentBlock.row + 1, currentBlock.col)
         ) {
+            // Stay off from the edges horizontally
+            let horizontal = 0;
+            if (this.host.x < currentBlock.x + this.host.width) {
+                horizontal = 1;
+            } else if (
+                currentBlock.x + currentBlock.width - 2 * this.host.width <
+                this.host.x
+            ) {
+                horizontal = -1;
+            }
+
             // Waiting for the raft to reach destination
-            return ZERO_VECTOR;
+            const vertical = 0;
+
+            return { x: horizontal, y: vertical };
         }
 
         if (
