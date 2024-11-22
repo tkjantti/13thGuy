@@ -298,8 +298,10 @@ export class Ai {
 
         // Check if the player is a little bit over the edge in y
         // direction and adjust the block to what it "should" be.
+        // Works nicely with the raft logic when about to step into
+        // a raft.
         if (
-            block.type === BlockType.Empty &&
+            (block.type === BlockType.Empty || block.type === BlockType.Raft) &&
             block.y + block.height - this.host.height < pos.y
         ) {
             block = this.track.getBlock(block.row - 1, block.col);
