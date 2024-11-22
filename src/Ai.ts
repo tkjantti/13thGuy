@@ -72,8 +72,12 @@ export class Ai {
 
     getMovement(t: number, dt: number): Vector {
         const currentBlock = this.getCurrentBlock();
+        const nextBlock = this.track.getBlock(
+            currentBlock.row + 1,
+            currentBlock.col,
+        );
 
-        let movement = this.goByRaft(currentBlock, t, dt);
+        let movement = this.goByRaft(currentBlock, nextBlock, t, dt);
         if (movement) {
             return movement;
         }
@@ -91,6 +95,7 @@ export class Ai {
         movement = this.goRoundObstacles(
             this.currentTarget,
             currentBlock,
+            nextBlock,
             t,
             dt,
         );
@@ -98,32 +103,37 @@ export class Ai {
             return movement;
         }
 
-        return this.moveOnTrack(this.currentTarget, currentBlock, t, dt);
+        return this.moveOnTrack(
+            this.currentTarget,
+            currentBlock,
+            nextBlock,
+            t,
+            dt,
+        );
     }
 
     private goByRaft(
         currentBlock: Block,
+        nextBlock: Block,
         t: number,
         dt: number,
     ): Vector | null {
         if (
             currentBlock.type !== BlockType.Raft &&
-            this.track.getBlock(currentBlock.row + 1, currentBlock.col).type ===
-                BlockType.Raft &&
+            nextBlock.type === BlockType.Raft &&
             (this.host.y > currentBlock.y + 1.5 * this.host.height ||
                 this.track.isFree(currentBlock.row + 1, currentBlock.col))
         ) {
             // Step into the raft
             return {
                 x: 0,
-                y: this.moveAhead(currentBlock, t, dt),
+                y: this.moveAhead(currentBlock, nextBlock, t, dt),
             };
         }
 
         if (
+            nextBlock.type === BlockType.Raft &&
             this.host.y <= currentBlock.y + 1.5 * this.host.height &&
-            this.track.getBlock(currentBlock.row + 1, currentBlock.col).type ===
-                BlockType.Raft &&
             !this.track.isFree(currentBlock.row + 1, currentBlock.col)
         ) {
             // Wait for the raft to arrive
@@ -166,6 +176,7 @@ export class Ai {
     private goRoundObstacles(
         target: Block,
         currentBlock: Block,
+        nextBlock: Block,
         t: number,
         dt: number,
     ): Vector | null {
@@ -187,7 +198,7 @@ export class Ai {
                 BlockType.Obstacle
         ) {
             if (this.host.y > currentBlock.y + 3 * this.host.height) {
-                const vertical = this.moveAhead(currentBlock, t, dt);
+                const vertical = this.moveAhead(currentBlock, nextBlock, t, dt);
                 return { x: 0, y: vertical };
             } else {
                 return DIAGONAL_LEFT;
@@ -198,7 +209,7 @@ export class Ai {
                 BlockType.Obstacle
         ) {
             if (this.host.y > currentBlock.y + 3 * this.host.height) {
-                const vertical = this.moveAhead(currentBlock, t, dt);
+                const vertical = this.moveAhead(currentBlock, nextBlock, t, dt);
                 return { x: 0, y: vertical };
             } else {
                 return DIAGONAL_RIGHT;
@@ -211,6 +222,7 @@ export class Ai {
     private moveOnTrack(
         target: Block,
         currentBlock: Block,
+        nextBlock: Block,
         t: number,
         dt: number,
     ): Vector {
@@ -224,20 +236,18 @@ export class Ai {
         let horizontalMovement = 0;
 
         if (
-            this.track.getBlock(currentBlock.row + 1, currentBlock.col).type ===
-                BlockType.Empty &&
+            nextBlock.type === BlockType.Empty &&
             this.host.y + this.host.height / 2 < currentBlock.y
         ) {
             // Back off if going over the edge
             verticalMovement = 1;
         } else {
-            verticalMovement = this.moveAhead(currentBlock, t, dt);
+            verticalMovement = this.moveAhead(currentBlock, nextBlock, t, dt);
         }
 
         if (
             verticalMovement < 0 &&
-            this.track.getBlock(currentBlock.row + 1, currentBlock.col).type ===
-                BlockType.Empty &&
+            nextBlock.type === BlockType.Empty &&
             this.host.y + this.host.height / 2 <
                 currentBlock.y + currentBlock.height / 2
         ) {
@@ -265,11 +275,15 @@ export class Ai {
         };
     }
 
-    private moveAhead(currentBlock: Block, t: number, dt: number): number {
+    private moveAhead(
+        currentBlock: Block,
+        nextBlock: Block,
+        t: number,
+        dt: number,
+    ): number {
         if (
-            this.host.velocity.y < -(CHARACTER_MAX_RUN_SPEED * dt) * 2 &&
-            this.track.getBlock(currentBlock.row + 1, currentBlock.col).type !==
-                BlockType.Free
+            nextBlock.type !== BlockType.Free &&
+            this.host.velocity.y < -(CHARACTER_MAX_RUN_SPEED * dt) * 2
         ) {
             // Slow down
             return 1;
