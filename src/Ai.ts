@@ -62,7 +62,7 @@ export class Ai {
      */
     private lastSlowdownTime: number = -SLOWDOWN_TIME;
 
-    currentTarget: Block | null = null;
+    target: Block | null = null;
 
     constructor(host: GameObject, track: Track) {
         this.host = host;
@@ -70,7 +70,7 @@ export class Ai {
     }
 
     reset(): void {
-        this.currentTarget = null;
+        this.target = null;
     }
 
     getMovement(t: number, dt: number): Vector {
@@ -80,38 +80,18 @@ export class Ai {
             currentBlock.col,
         );
 
-        let movement = this.goByRaft(currentBlock, nextBlock, t, dt);
+        const movement = this.goByRaft(currentBlock, nextBlock, t, dt);
         if (movement) {
             return movement;
         }
 
-        if (this.currentTarget == null || this.hasReached(this.currentTarget)) {
-            const nextTarget = this.findNextTarget(currentBlock);
-
-            if (nextTarget == null) {
-                return ZERO_VECTOR;
-            }
-
-            this.currentTarget = nextTarget;
+        if (this.target == null || this.hasReached(this.target)) {
+            this.target = this.findNextTarget(currentBlock);
         }
 
-        movement = this.goRoundObstacles(
-            this.currentTarget,
-            currentBlock,
-            nextBlock,
-            t,
-            dt,
-        );
-        if (movement) {
-            return movement;
-        }
-
-        return this.moveOnTrack(
-            this.currentTarget,
-            currentBlock,
-            nextBlock,
-            t,
-            dt,
+        return (
+            this.goRoundObstacles(currentBlock, nextBlock, t, dt) ||
+            this.moveOnTrack(currentBlock, nextBlock, t, dt)
         );
     }
 
@@ -177,26 +157,29 @@ export class Ai {
     }
 
     private goRoundObstacles(
-        target: Block,
         currentBlock: Block,
         nextBlock: Block,
         t: number,
         dt: number,
     ): Vector | null {
+        if (this.target == null) {
+            return ZERO_VECTOR;
+        }
+
         if (currentBlock.type === BlockType.Obstacle) {
             if (
                 currentBlock.y + currentBlock.height / 2 <
                 this.host.y + this.host.height / 2
             ) {
                 // Behind the obstacle
-                if (target.col < currentBlock.col) {
+                if (this.target.col < currentBlock.col) {
                     return DIAGONAL_LEFT;
                 } else {
                     return DIAGONAL_RIGHT;
                 }
             }
         } else if (
-            target.col < currentBlock.col &&
+            this.target.col < currentBlock.col &&
             this.track.getBlock(currentBlock.row, currentBlock.col - 1).type ===
                 BlockType.Obstacle
         ) {
@@ -207,7 +190,7 @@ export class Ai {
                 return DIAGONAL_LEFT;
             }
         } else if (
-            currentBlock.col < target.col &&
+            currentBlock.col < this.target.col &&
             this.track.getBlock(currentBlock.row, currentBlock.col + 1).type ===
                 BlockType.Obstacle
         ) {
@@ -223,16 +206,19 @@ export class Ai {
     }
 
     private moveOnTrack(
-        target: Block,
         currentBlock: Block,
         nextBlock: Block,
         t: number,
         dt: number,
     ): Vector {
+        if (this.target == null) {
+            return ZERO_VECTOR;
+        }
+
         const isLeftFromTarget: boolean =
-            this.host.x < target.x + this.horizontalMargin;
+            this.host.x < this.target.x + this.horizontalMargin;
         const isRightFromTarget: boolean =
-            target.x + target.width - this.horizontalMargin <=
+            this.target.x + this.target.width - this.horizontalMargin <=
             this.host.x + this.host.width;
 
         let verticalMovement = 0;
@@ -341,45 +327,45 @@ export class Ai {
     }
 
     private findNextTarget(currentBlock: Block): Block | null {
-        const target = this.findNearestBlock(
+        const nextTarget = this.findNearestBlock(
             currentBlock.row + 1,
             currentBlock.col,
         );
 
-        if (target == null || target.col !== currentBlock.col) {
-            return target;
+        if (nextTarget == null || nextTarget.col !== currentBlock.col) {
+            return nextTarget;
         }
 
         const blockFurtherAway = this.findNearestBlock(
-            target.row + 1,
-            target.col,
+            nextTarget.row + 1,
+            nextTarget.col,
         );
 
         if (blockFurtherAway == null) {
-            return target;
+            return nextTarget;
         }
 
-        if (blockFurtherAway.col < target.col) {
+        if (blockFurtherAway.col < nextTarget.col) {
             const adjustedTarget = this.track.getBlock(
-                target.row,
-                target.col - 1,
+                nextTarget.row,
+                nextTarget.col - 1,
             );
             if (adjustedTarget.type === BlockType.Free) {
                 return adjustedTarget;
             }
         }
 
-        if (target.col < blockFurtherAway.col) {
+        if (nextTarget.col < blockFurtherAway.col) {
             const adjustedTarget = this.track.getBlock(
-                target.row,
-                target.col + 1,
+                nextTarget.row,
+                nextTarget.col + 1,
             );
             if (adjustedTarget.type === BlockType.Free) {
                 return adjustedTarget;
             }
         }
 
-        return target;
+        return nextTarget;
     }
 
     private isClearAhead(currentBlock: Block): boolean {
