@@ -30,9 +30,12 @@ import { Track } from "./Track";
 import { Block, BLOCK_COUNT, BLOCK_WIDTH, BlockType } from "./TrackElement";
 import { normalize, Vector, ZERO_VECTOR } from "./Vector";
 
-const FORWARD: Vector = { x: 0, y: -1 };
-const DIAGONAL_LEFT: Vector = normalize({ x: -1, y: -1 });
-const DIAGONAL_RIGHT: Vector = normalize({ x: 1, y: -1 });
+const VERTICAL_FORWARD = -1;
+const VERTICAL_BACKWARD = 1;
+
+const FORWARD: Vector = { x: 0, y: VERTICAL_FORWARD };
+const DIAGONAL_LEFT: Vector = normalize({ x: -1, y: VERTICAL_FORWARD });
+const DIAGONAL_RIGHT: Vector = normalize({ x: 1, y: VERTICAL_FORWARD });
 
 /*
  * How many blocks the AI can see ahead.
@@ -240,7 +243,7 @@ export class Ai {
             this.host.y + this.host.height / 2 < currentBlock.y
         ) {
             // Back off if going over the edge
-            verticalMovement = 1;
+            verticalMovement = VERTICAL_BACKWARD;
         } else {
             verticalMovement = this.moveAhead(currentBlock, nextBlock, t, dt);
         }
@@ -286,7 +289,7 @@ export class Ai {
             this.host.velocity.y < -(CHARACTER_MAX_RUN_SPEED * dt) * 2
         ) {
             // Slow down
-            return 1;
+            return VERTICAL_BACKWARD;
         } else if (
             this.host.velocity.y < -(CHARACTER_MAX_RUN_SPEED * dt) * 5 &&
             !this.isClearAhead(currentBlock)
@@ -298,8 +301,7 @@ export class Ai {
 
             return 0;
         } else if (SLOWDOWN_TIME < t - this.lastSlowdownTime) {
-            // Full steam ahead
-            return -1;
+            return VERTICAL_FORWARD;
         }
 
         return 0;
