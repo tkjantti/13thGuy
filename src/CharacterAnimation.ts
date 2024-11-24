@@ -83,15 +83,15 @@ export function renderCharacter(
 
     switch (animation) {
         case CharacterAnimation.Walk:
-            period = rightDirection ? 400 : verticalDirection ? 300 : 250;
-            bouncing = easeInOutSine(triangle(period / 2, t / 2)) * 0.015 * h;
+            period = rightDirection ? 800 : verticalDirection ? 600 : 500;
+            bouncing = easeInOutSine(triangle(period / 2, t / 2)) * 0.02 * h;
             leg1Angle = arm2Angle =
-                -Math.PI / 8 +
-                easeInOutQuad(triangle(period, t)) * (Math.PI / 4);
+                -Math.PI / 6 +
+                easeInOutQuad(triangle(period, t)) * (Math.PI / 3);
 
             leg2Angle = arm1Angle =
-                -Math.PI / 8 +
-                easeInOutQuad(triangle(period, t + period / 2)) * (Math.PI / 4);
+                -Math.PI / 6 +
+                easeInOutQuad(triangle(period, t + period / 2)) * (Math.PI / 3);
             break;
         case CharacterAnimation.Celebrate: {
             period = 1500;
