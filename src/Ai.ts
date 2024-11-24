@@ -215,14 +215,7 @@ export class Ai {
             return ZERO_VECTOR;
         }
 
-        const isLeftFromTarget: boolean =
-            this.host.x < this.target.x + this.horizontalMargin;
-        const isRightFromTarget: boolean =
-            this.target.x + this.target.width - this.horizontalMargin <=
-            this.host.x + this.host.width;
-
         let verticalMovement = 0;
-        let horizontalMovement = 0;
 
         if (
             nextBlock.type === BlockType.Empty &&
@@ -243,6 +236,14 @@ export class Ai {
             // A chasm ahead, don't move forward
             verticalMovement = 0;
         }
+
+        let horizontalMovement = 0;
+
+        const isLeftFromTarget: boolean =
+            this.host.x < this.target.x + this.horizontalMargin;
+        const isRightFromTarget: boolean =
+            this.target.x + this.target.width - this.horizontalMargin <=
+            this.host.x + this.host.width;
 
         if (
             isLeftFromTarget &&
