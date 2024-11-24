@@ -37,6 +37,7 @@ import {
     TrackElementType,
     TT,
 } from "./TrackElement";
+import { Map } from "./Map";
 import { add, Vector } from "./Vector";
 
 const RAFT_SPEED = 0.005;
@@ -52,7 +53,7 @@ interface Checkpoint {
     y: number;
 }
 
-export class Track {
+export class Track implements Map {
     private elements: TrackElement[];
     private startY: number;
     private checkpoints: Checkpoint[];

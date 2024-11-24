@@ -26,8 +26,8 @@ import { getCenter } from "./Area";
 import { GameObject } from "./GameObject";
 import { CHARACTER_MAX_RUN_SPEED } from "./physics";
 import { random } from "./random";
-import { Track } from "./Track";
 import { Block, BLOCK_COUNT, BLOCK_WIDTH, BlockType } from "./TrackElement";
+import { Map } from "./Map";
 import { normalize, Vector, ZERO_VECTOR } from "./Vector";
 
 const VERTICAL_FORWARD = -1;
@@ -46,7 +46,7 @@ const SLOWDOWN_TIME = 1000;
 
 export class Ai {
     private host: GameObject;
-    private track: Track;
+    private track: Map;
 
     /*
      * Randomized every now and then. Not useful for an individual
@@ -64,7 +64,7 @@ export class Ai {
 
     target: Block | null = null;
 
-    constructor(host: GameObject, track: Track) {
+    constructor(host: GameObject, track: Map) {
         this.host = host;
         this.track = track;
     }
