@@ -34,6 +34,8 @@ const VERTICAL_FORWARD = -1;
 const VERTICAL_BACKWARD = 1;
 
 const FORWARD: Vector = { x: 0, y: VERTICAL_FORWARD };
+const LEFT: Vector = { x: -1, y: 0 };
+const RIGHT: Vector = { x: 1, y: 0 };
 const DIAGONAL_LEFT: Vector = normalize({ x: -1, y: VERTICAL_FORWARD });
 const DIAGONAL_RIGHT: Vector = normalize({ x: 1, y: VERTICAL_FORWARD });
 
@@ -184,10 +186,16 @@ export class Ai {
                 BlockType.Obstacle
         ) {
             if (this.host.y > currentBlock.y + 3 * this.host.height) {
+                // go past the obstacle
                 const vertical = this.moveAhead(currentBlock, nextBlock, t, dt);
                 return { x: 0, y: vertical };
+            } else if (nextBlock.type === BlockType.Empty) {
+                // go past the obstacle horizontally
+                return LEFT;
             } else {
-                return DIAGONAL_LEFT;
+                // go past the obstacle diagonally
+                const vertical = this.moveAhead(currentBlock, nextBlock, t, dt);
+                return { x: -1, y: vertical };
             }
         } else if (
             currentBlock.col < this.target.col &&
@@ -195,10 +203,16 @@ export class Ai {
                 BlockType.Obstacle
         ) {
             if (this.host.y > currentBlock.y + 3 * this.host.height) {
+                // go past the obstacle
                 const vertical = this.moveAhead(currentBlock, nextBlock, t, dt);
                 return { x: 0, y: vertical };
+            } else if (nextBlock.type === BlockType.Empty) {
+                // go past the obstacle horizontally
+                return RIGHT;
             } else {
-                return DIAGONAL_RIGHT;
+                // go past the obstacle diagonally
+                const vertical = this.moveAhead(currentBlock, nextBlock, t, dt);
+                return { x: 1, y: vertical };
             }
         }
 
