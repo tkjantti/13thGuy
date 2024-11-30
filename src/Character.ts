@@ -147,7 +147,7 @@ export class Character implements GameObject {
         }
     }
 
-    getMovement(t: number, dt: number): Vector {
+    getMovement(t: number): Vector {
         if (!this.ai) {
             // Player
             const keys = getKeys();
@@ -170,7 +170,7 @@ export class Character implements GameObject {
             });
         }
 
-        return this.ai.getMovement(t, dt);
+        return this.ai.getMovement(t);
     }
 
     move(): void {

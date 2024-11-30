@@ -75,14 +75,14 @@ export class Ai {
         this.target = null;
     }
 
-    getMovement(t: number, dt: number): Vector {
+    getMovement(t: number): Vector {
         const currentBlock = this.getCurrentBlock();
         const nextBlock = this.track.getBlock(
             currentBlock.row + 1,
             currentBlock.col,
         );
 
-        const movement = this.goByRaft(currentBlock, nextBlock, t, dt);
+        const movement = this.goByRaft(currentBlock, nextBlock, t);
         if (movement) {
             return movement;
         }
@@ -92,8 +92,8 @@ export class Ai {
         }
 
         return (
-            this.goRoundObstacles(currentBlock, nextBlock, t, dt) ||
-            this.moveOnTrack(currentBlock, nextBlock, t, dt)
+            this.goRoundObstacles(currentBlock, nextBlock, t) ||
+            this.moveOnTrack(currentBlock, nextBlock, t)
         );
     }
 
@@ -101,7 +101,6 @@ export class Ai {
         currentBlock: Block,
         nextBlock: Block,
         t: number,
-        dt: number,
     ): Vector | null {
         if (
             currentBlock.type !== BlockType.Raft &&
@@ -112,7 +111,7 @@ export class Ai {
             // Step into the raft
             return {
                 x: 0,
-                y: this.moveAhead(currentBlock, nextBlock, t, dt),
+                y: this.moveAhead(currentBlock, nextBlock, t),
             };
         }
 
@@ -162,7 +161,6 @@ export class Ai {
         currentBlock: Block,
         nextBlock: Block,
         t: number,
-        dt: number,
     ): Vector | null {
         if (this.target == null) {
             return ZERO_VECTOR;
@@ -187,14 +185,14 @@ export class Ai {
         ) {
             if (this.host.y > currentBlock.y + 3 * this.host.height) {
                 // go past the obstacle
-                const vertical = this.moveAhead(currentBlock, nextBlock, t, dt);
+                const vertical = this.moveAhead(currentBlock, nextBlock, t);
                 return { x: 0, y: vertical };
             } else if (nextBlock.type === BlockType.Empty) {
                 // go past the obstacle horizontally
                 return LEFT;
             } else {
                 // go past the obstacle diagonally
-                const vertical = this.moveAhead(currentBlock, nextBlock, t, dt);
+                const vertical = this.moveAhead(currentBlock, nextBlock, t);
                 return { x: -1, y: vertical };
             }
         } else if (
@@ -204,14 +202,14 @@ export class Ai {
         ) {
             if (this.host.y > currentBlock.y + 3 * this.host.height) {
                 // go past the obstacle
-                const vertical = this.moveAhead(currentBlock, nextBlock, t, dt);
+                const vertical = this.moveAhead(currentBlock, nextBlock, t);
                 return { x: 0, y: vertical };
             } else if (nextBlock.type === BlockType.Empty) {
                 // go past the obstacle horizontally
                 return RIGHT;
             } else {
                 // go past the obstacle diagonally
-                const vertical = this.moveAhead(currentBlock, nextBlock, t, dt);
+                const vertical = this.moveAhead(currentBlock, nextBlock, t);
                 return { x: 1, y: vertical };
             }
         }
@@ -223,7 +221,6 @@ export class Ai {
         currentBlock: Block,
         nextBlock: Block,
         t: number,
-        dt: number,
     ): Vector {
         if (this.target == null) {
             return ZERO_VECTOR;
@@ -238,7 +235,7 @@ export class Ai {
             // Back off if going over the edge
             verticalMovement = VERTICAL_BACKWARD;
         } else {
-            verticalMovement = this.moveAhead(currentBlock, nextBlock, t, dt);
+            verticalMovement = this.moveAhead(currentBlock, nextBlock, t);
         }
 
         if (
@@ -283,23 +280,30 @@ export class Ai {
         currentBlock: Block,
         nextBlock: Block,
         t: number,
-        dt: number,
     ): number {
+        // Some average in order to keep speed calculations steady
+        // despite changes in frame rate.
+        const averageDt = 25;
+
         if (
             nextBlock.type !== BlockType.Free &&
-            this.host.velocity.y < -(CHARACTER_MAX_RUN_SPEED * dt) * 2
+            this.host.velocity.y < -(CHARACTER_MAX_RUN_SPEED * averageDt) * 1.5
         ) {
-            // Slow down
-            return VERTICAL_BACKWARD;
-        } else if (
-            this.host.velocity.y < -(CHARACTER_MAX_RUN_SPEED * dt) * 5 &&
-            !this.isClearAhead(currentBlock)
-        ) {
-            // Stop progressing for a little while if going too fast already
             if (SLOWDOWN_TIME < t - this.lastSlowdownTime) {
                 this.lastSlowdownTime = t;
             }
 
+            // Slow down
+            return VERTICAL_BACKWARD;
+        } else if (
+            this.host.velocity.y < -(CHARACTER_MAX_RUN_SPEED * averageDt) * 4 &&
+            !this.isClearAhead(currentBlock)
+        ) {
+            if (SLOWDOWN_TIME < t - this.lastSlowdownTime) {
+                this.lastSlowdownTime = t;
+            }
+
+            // Stop progressing for a little while if going too fast already
             return 0;
         } else if (SLOWDOWN_TIME < t - this.lastSlowdownTime) {
             return VERTICAL_FORWARD;
