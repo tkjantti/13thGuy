@@ -48,11 +48,6 @@ const MAX_SPEED = 0.5;
 export const CHARACTER_MAX_RUN_SPEED = 0.01;
 const CHARACTER_RUN_ACCELERATION = 0.0005;
 
-/*
- * How much speed decreases when going over max run speed.
- */
-const CHARACTER_SLOWDOWN_ACCELERATION = -0.0001;
-
 const CHARACTER_STOP_ACCELERATION = 0.0006;
 
 const OBSTACLE_BOUNCE_FACTOR = 3;
@@ -87,7 +82,7 @@ export function getMovementVelocity(
 
     let accDirectionAmount = CHARACTER_RUN_ACCELERATION * dt;
     if (currentSpeedInDirection > CHARACTER_MAX_RUN_SPEED * dt) {
-        accDirectionAmount = CHARACTER_SLOWDOWN_ACCELERATION * dt;
+        accDirectionAmount = 0;
     }
 
     const accSlowdown = CHARACTER_STOP_ACCELERATION * dt;

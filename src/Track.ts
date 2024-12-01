@@ -25,10 +25,11 @@
 import { Area, overlap } from "./Area";
 import { GameObject } from "./GameObject";
 import {
+    Block,
     BLOCK_WIDTH,
-    BlockType,
     createTrack,
     ELEMENT_HEIGHT,
+    getEmptyBlock,
     isRaft,
     isSlope,
     LEFTMOST_EDGE,
@@ -36,6 +37,7 @@ import {
     TrackElementType,
     TT,
 } from "./TrackElement";
+import { Map } from "./Map";
 import { add, Vector } from "./Vector";
 
 const RAFT_SPEED = 0.005;
@@ -51,16 +53,7 @@ interface Checkpoint {
     y: number;
 }
 
-export interface Block extends Area {
-    row: number;
-    col: number;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}
-
-export class Track {
+export class Track implements Map {
     private elements: TrackElement[];
     private startY: number;
     private checkpoints: Checkpoint[];
@@ -169,45 +162,27 @@ export class Track {
         return this.elements[i];
     }
 
-    getBlockType(row: number, col: number): BlockType {
-        if (row < 0 || this.elements.length <= row) {
-            return BlockType.Empty;
-        }
-
-        const element = this.elements[row];
-        return element.getBlockType(col);
-    }
-
     isFree(row: number, col: number): boolean {
         if (row < 0 || this.elements.length <= row) {
             return false;
         }
         const element = this.elements[row];
 
-        if (element.surfaces.some((s) => isRaft(s))) {
-            element.calculateBlocks();
-        }
-
         // Check if a raft is over chasm.
         if (element.surfaces.length === 0) {
             const previousElement = this.elements[Math.max(row - 1, 0)];
-            return previousElement.isFree(element.y, col);
+            return previousElement.isFree(col, element.y);
         }
 
-        return !!element.blocks[col];
+        return element.isFree(col);
     }
 
     getBlock(row: number, col: number): Block {
+        if (row < 0 || this.elements.length <= row) {
+            return getEmptyBlock(row, col, this.startY - row * ELEMENT_HEIGHT);
+        }
         const element = this.elements[row];
-
-        return {
-            row,
-            col,
-            x: LEFTMOST_EDGE + col * BLOCK_WIDTH,
-            y: element.y,
-            width: BLOCK_WIDTH,
-            height: ELEMENT_HEIGHT,
-        };
+        return element.getBlock(col);
     }
 
     getBlockAt(position: Vector): Block {
