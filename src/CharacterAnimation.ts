@@ -83,7 +83,7 @@ export function renderCharacter(
 
     switch (animation) {
         case CharacterAnimation.Walk:
-            period = rightDirection ? 800 : verticalDirection ? 600 : 500;
+            period = rightDirection ? 600 : verticalDirection ? 400 : 300;
             bouncing = easeInOutSine(triangle(period / 2, t / 2)) * 0.02 * h;
             leg1Angle = arm2Angle =
                 -Math.PI / 6 +
