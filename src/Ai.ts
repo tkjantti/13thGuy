@@ -296,7 +296,8 @@ export class Ai {
             // Slow down
             return VERTICAL_BACKWARD;
         } else if (
-            this.host.velocity.y < -(CHARACTER_MAX_RUN_SPEED * averageDt) * 4 &&
+            this.host.velocity.y <
+                -(CHARACTER_MAX_RUN_SPEED * averageDt) * 3.5 &&
             !this.isClearAhead(currentBlock)
         ) {
             if (SLOWDOWN_TIME < t - this.lastSlowdownTime) {
