@@ -183,13 +183,16 @@ export class Ai {
             this.track.getBlock(currentBlock.row, currentBlock.col - 1).type ===
                 BlockType.Obstacle
         ) {
-            if (this.host.y > currentBlock.y + 3 * this.host.height) {
+            if (
+                this.host.y > currentBlock.y + 3 * this.host.height &&
+                nextBlock.type === BlockType.Empty
+            ) {
+                // go past the obstacle horizontally
+                return LEFT;
+            } else if (this.host.y > currentBlock.y + 3 * this.host.height) {
                 // go past the obstacle
                 const vertical = this.moveAhead(currentBlock, nextBlock, t);
                 return { x: 0, y: vertical };
-            } else if (nextBlock.type === BlockType.Empty) {
-                // go past the obstacle horizontally
-                return LEFT;
             } else {
                 // go past the obstacle diagonally
                 const vertical = this.moveAhead(currentBlock, nextBlock, t);
@@ -200,13 +203,16 @@ export class Ai {
             this.track.getBlock(currentBlock.row, currentBlock.col + 1).type ===
                 BlockType.Obstacle
         ) {
-            if (this.host.y > currentBlock.y + 3 * this.host.height) {
+            if (
+                this.host.y > currentBlock.y + 3 * this.host.height &&
+                nextBlock.type === BlockType.Empty
+            ) {
+                // go past the obstacle horizontally
+                return RIGHT;
+            } else if (this.host.y > currentBlock.y + 3 * this.host.height) {
                 // go past the obstacle
                 const vertical = this.moveAhead(currentBlock, nextBlock, t);
                 return { x: 0, y: vertical };
-            } else if (nextBlock.type === BlockType.Empty) {
-                // go past the obstacle horizontally
-                return RIGHT;
             } else {
                 // go past the obstacle diagonally
                 const vertical = this.moveAhead(currentBlock, nextBlock, t);
