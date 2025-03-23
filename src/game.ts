@@ -1,3 +1,27 @@
+/*
+ * Copyright (c) 2024 Tero Jäntti, Sami Heikkinen
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use, copy,
+ * modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 import {
     applyCRTEffect,
     applyGradient,
@@ -8,12 +32,7 @@ import {
     createFabricTexture,
     createPlateTexture,
 } from "./graphics";
-import {
-    initializeKeyboard,
-    sleep,
-    waitForAnyKey,
-    waitForEnter,
-} from "./keyboard";
+import { sleep, waitForAnyKey, waitForEnter } from "./keyboard";
 import { Level, State } from "./Level";
 import { getFirstTrack, getSecondTrack, getThirdTrack } from "./tracks";
 
@@ -39,6 +58,11 @@ import {
 } from "./CharacterAnimation";
 import { playerColor } from "./Character";
 import { VERSION } from "./version";
+import {
+    initializeControls,
+    renderTouchControls,
+    updateControls,
+} from "./controls";
 
 const versionText = "Director's cut (" + (VERSION ? VERSION : "DEV") + ")";
 
@@ -147,6 +171,9 @@ const setState = async (state: GameState) => {
                 startRace();
             }
             break;
+        case GameState.Running:
+            renderTouchControls();
+            break;
         default:
             break;
     }
@@ -169,6 +196,7 @@ const gameLoop = (t: number): void => {
 const update = (t: number, dt: number): void => {
     switch (gameState) {
         case GameState.Running: {
+            updateControls();
             level.update(t, dt);
             if (level.state === State.GAME_OVER) {
                 setState(GameState.GameOver);
@@ -445,6 +473,7 @@ const draw = (t: number, dt: number): void => {
         }
         default: {
             applyCRTEffect(false);
+            renderTouchControls();
 
             break;
         }
@@ -553,7 +582,7 @@ export const startRace = async (): Promise<void> => {
 };
 
 export const init = async (): Promise<void> => {
-    initializeKeyboard();
+    initializeControls();
     window.requestAnimationFrame(gameLoop);
 
     await initialize();

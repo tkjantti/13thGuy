@@ -22,44 +22,33 @@
  * SOFTWARE.
  */
 
-import { Vector } from "./Vector";
+import { canvas } from "./graphics";
+import { Vector, VectorMutable } from "./Vector";
 
-export interface Dimensions {
-    width: number;
-    height: number;
-}
+let isTouching: boolean = false;
+let touchPosition: VectorMutable = { x: 0, y: 0 };
 
-export interface Area extends Dimensions {
-    x: number;
-    y: number;
-}
-
-export function getCenter(area: Area): Vector {
-    return {
-        x: area.x + area.width / 2,
-        y: area.y + area.height / 2,
+export const initializeTouchscreen = (): void => {
+    canvas.ontouchstart = (e: TouchEvent): void => {
+        e.preventDefault();
+        isTouching = true;
+        const offset = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        touchPosition.x = touch.clientX - offset.left;
+        touchPosition.y = touch.clientY - offset.top;
     };
-}
+    canvas.ontouchmove = (e: TouchEvent): void => {
+        e.preventDefault();
+        const offset = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        touchPosition.x = touch.clientX - offset.left;
+        touchPosition.y = touch.clientY - offset.top;
+    };
+    canvas.ontouchend = (e: TouchEvent): void => {
+        e.preventDefault();
+        isTouching = false;
+    };
+};
 
-export function overlap(a: Area, b: Area): boolean {
-    const horizontally = b.x <= a.x + a.width && a.x <= b.x + b.width;
-    const vertically = b.y <= a.y + a.height && a.y <= b.y + b.height;
-
-    return horizontally && vertically;
-}
-
-export function includesPoint(host: Area, p: Vector): boolean {
-    return (
-        host.x <= p.x &&
-        p.x < host.x + host.width &&
-        host.y <= p.y &&
-        p.y < host.y + host.height
-    );
-}
-
-export function includesArea(host: Area, o: Area): boolean {
-    const horizontally = host.x <= o.x && o.x + o.width <= host.x + host.width;
-    const vertically = host.y <= o.y && o.y + o.height <= host.y + host.height;
-
-    return horizontally && vertically;
-}
+export const getTouchPosition = (): Vector | null =>
+    isTouching ? touchPosition : null;
