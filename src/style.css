@@ -11,3 +11,6 @@ canvas {
     image-rendering: auto;
     -ms-interpolation-mode: bicubic;
 }
+* {
+    touch-action: none;
+}

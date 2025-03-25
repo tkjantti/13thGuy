@@ -29,6 +29,19 @@ let isTouching: boolean = false;
 let touchPosition: VectorMutable = { x: 0, y: 0 };
 
 export const initializeTouchscreen = (): void => {
+    // Note: for preventing double-tap, also if the touch
+    // is outside the canvas, this should be added to the CSS:
+    //
+    // * {
+    //     touch-action: none;
+    // }
+
+    // Prevent a context menu, also when a long tap is done
+    // outside of canvas.
+    window.oncontextmenu = (e): void => {
+        e.preventDefault();
+    };
+
     canvas.ontouchstart = (e: TouchEvent): void => {
         e.preventDefault();
         isTouching = true;
