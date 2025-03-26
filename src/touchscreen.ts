@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import { Area, includesPoint } from "./Area";
 import { canvas } from "./graphics";
 import { Vector, VectorMutable } from "./Vector";
 
@@ -69,11 +70,20 @@ export const initializeTouchscreen = (): void => {
     };
 };
 
-export const waitForTap = (): Promise<void> => {
+export const waitForTap = (area?: Area): Promise<void> => {
     return new Promise((resolve) => {
-        const listener = (): void => {
-            window.removeEventListener("touchstart", listener);
-            resolve();
+        const listener = (e: TouchEvent): void => {
+            const offset = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            const point: Vector = {
+                x: touch.clientX - offset.left,
+                y: touch.clientY - offset.top,
+            };
+
+            if (!area || includesPoint(area, point)) {
+                window.removeEventListener("touchstart", listener);
+                resolve();
+            }
         };
 
         window.addEventListener("touchstart", listener);

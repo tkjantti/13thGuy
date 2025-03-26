@@ -52,10 +52,14 @@ const isFirefox = navigator.userAgent.toLowerCase().includes("firefox");
 
 let textAnimationCounter = 0;
 
-let leftButton: Button = { symbol: "◀", x: 0, y: 0, width: 0, height: 0 };
-let rightButton: Button = { symbol: "▶", x: 0, y: 0, width: 0, height: 0 };
-let upButton: Button = { symbol: "▲", x: 0, y: 0, width: 0, height: 0 };
-let downButton: Button = { symbol: "▼", x: 0, y: 0, width: 0, height: 0 };
+const leftButton: Button = { symbol: "◀", x: 0, y: 0, width: 0, height: 0 };
+const rightButton: Button = { symbol: "▶", x: 0, y: 0, width: 0, height: 0 };
+const upButton: Button = { symbol: "▲", x: 0, y: 0, width: 0, height: 0 };
+const downButton: Button = { symbol: "▼", x: 0, y: 0, width: 0, height: 0 };
+
+// Limit area to touch when progressing to a next screen, so that pressing
+// the touch controls would not accidentally trigger touch.
+const progressTouchArea: Area = { x: 0, y: 0, width: 0, height: 0 };
 
 const controls: Controls = {
     movement: { x: 0, y: 0 },
@@ -123,10 +127,17 @@ export const initializeControls = (): void => {
     downButton.y = verticalButtonHeight + yMargin;
     downButton.width = verticalButtonWidth;
     downButton.height = verticalButtonHeight;
+
+    const touchAreaMargin = canvas.width * 0.1;
+    progressTouchArea.x = rightButton.x + rightButton.width + touchAreaMargin;
+    progressTouchArea.y = 0;
+    progressTouchArea.width =
+        upButton.x - (rightButton.x + rightButton.width) - 2 * touchAreaMargin;
+    progressTouchArea.height = canvas.height;
 };
 
 export const waitForProgressInput = async (): Promise<void> => {
-    await (hasTouchScreen ? waitForTap() : waitForEnter());
+    await (hasTouchScreen ? waitForTap(progressTouchArea) : waitForEnter());
     playTune(SFX_KB);
 };
 
