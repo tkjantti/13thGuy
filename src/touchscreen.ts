@@ -28,7 +28,13 @@ import { Vector, VectorMutable } from "./Vector";
 let isTouching: boolean = false;
 let touchPosition: VectorMutable = { x: 0, y: 0 };
 
+export const hasTouchScreen = "ontouchstart" in window;
+
 export const initializeTouchscreen = (): void => {
+    if (!hasTouchScreen) {
+        return;
+    }
+
     // Note: for preventing double-tap, also if the touch
     // is outside the canvas, this should be added to the CSS:
     //
@@ -61,6 +67,17 @@ export const initializeTouchscreen = (): void => {
         e.preventDefault();
         isTouching = false;
     };
+};
+
+export const waitForTap = (): Promise<void> => {
+    return new Promise((resolve) => {
+        const listener = (): void => {
+            window.removeEventListener("touchstart", listener);
+            resolve();
+        };
+
+        window.addEventListener("touchstart", listener);
+    });
 };
 
 export const getTouchPosition = (): Vector | null =>

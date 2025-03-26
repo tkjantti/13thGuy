@@ -32,7 +32,7 @@ import {
     createFabricTexture,
     createPlateTexture,
 } from "./graphics";
-import { sleep, waitForAnyKey, waitForEnter } from "./keyboard";
+import { sleep } from "./keyboard";
 import { Level, State } from "./Level";
 import { getFirstTrack, getSecondTrack, getThirdTrack } from "./tracks";
 
@@ -61,7 +61,9 @@ import { VERSION } from "./version";
 import {
     initializeControls,
     renderTouchControls,
+    renderWaitForProgressInput,
     updateControls,
+    waitForProgressInput,
 } from "./controls";
 
 const versionText = "Director's cut (" + (VERSION ? VERSION : "DEV") + ")";
@@ -153,7 +155,7 @@ const setState = async (state: GameState) => {
             randomWidhOffset = 1 + Math.random() * 0.6;
             randomHeighOffset = 1 + Math.random() * 0.3;
 
-            await waitForEnter();
+            await waitForProgressInput();
             playTune(SFX_RESTART);
             startRace();
             break;
@@ -163,10 +165,10 @@ const setState = async (state: GameState) => {
             // Players left for next round?
             if (level.characters.length > 14) {
                 await sleep(2500);
-                await waitForEnter();
+                await waitForProgressInput();
                 setState(GameState.Ready);
             } else {
-                await waitForEnter();
+                await waitForProgressInput();
                 clearCharacterGradientCache();
                 startRace();
             }
@@ -224,18 +226,23 @@ const update = (t: number, dt: number): void => {
     }
 };
 
+const isFirefox = navigator.userAgent.toLowerCase().includes("firefox");
+
 let textAnimationCounter = 0;
 const loadingText = "LOADING...";
 
-const isFirefox = navigator.userAgent.toLowerCase().includes("firefox");
+export const renderLoadingText = (): void => {
+    const text =
+        textAnimationCounter < 10
+            ? loadingText.substring(0, textAnimationCounter)
+            : "LOADING...";
 
-const RenderWaitForKey = (text = "Press ENTER to continue", y = 100) => {
     renderText(
         text + (textAnimationCounter++ % 60 === 0 ? "" : "█"),
         24,
         "Courier New",
         1,
-        canvas.height / 2 + y,
+        canvas.height / 2 + 100,
         false,
         canvas.width / 2 -
             // Let's check if Firefox as there is a difference in rendering this versus Chromium based browsers
@@ -256,11 +263,7 @@ const draw = (t: number, dt: number): void => {
 
     switch (gameState) {
         case GameState.Load: {
-            RenderWaitForKey(
-                textAnimationCounter < 10
-                    ? loadingText.substring(0, textAnimationCounter)
-                    : "LOADING...",
-            );
+            renderLoadingText();
             textAnimationCounter++;
             applyGrayscale();
             applyCRTEffect(false);
@@ -269,7 +272,7 @@ const draw = (t: number, dt: number): void => {
         }
         case GameState.Init: {
             drawInitialScreen(true);
-            RenderWaitForKey("Press any key");
+            renderWaitForProgressInput("start");
             break;
         }
         case GameState.Start: {
@@ -374,7 +377,7 @@ const draw = (t: number, dt: number): void => {
                 );
             }
             if (radius >= maxRadius) {
-                RenderWaitForKey("Press ENTER to continue", 120);
+                renderWaitForProgressInput("continue", 120);
             }
 
             if (radius < maxRadius) {
@@ -436,7 +439,7 @@ const draw = (t: number, dt: number): void => {
                 }
 
                 if (radius >= maxRadius) {
-                    RenderWaitForKey();
+                    renderWaitForProgressInput();
                 }
 
                 cx.save();
@@ -533,11 +536,11 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
         renderText("▲ / W - ▼ / S - ◄ / A - ► / D", 20, "Sans-serif", 0.8, -90);
 
         if (gameState === GameState.Wait) {
-            RenderWaitForKey("Press ENTER to start the race!");
+            renderWaitForProgressInput("start the race!");
         }
     } else {
         Logo();
-        RenderWaitForKey();
+        renderWaitForProgressInput();
     }
 
     cx.restore();
@@ -572,10 +575,10 @@ export const startRace = async (): Promise<void> => {
     raceNumber = 1;
     z = 1;
     setState(GameState.Start);
-    await waitForEnter();
+    await waitForProgressInput();
     setState(GameState.Wait);
 
-    await waitForEnter();
+    await waitForProgressInput();
     setState(GameState.RaceStarting);
     await sleep(1000);
     setState(GameState.Ready);
@@ -588,7 +591,7 @@ export const init = async (): Promise<void> => {
     await initialize();
     setState(GameState.Init);
 
-    await waitForAnyKey();
+    await waitForProgressInput();
 
     playTune(SFX_START);
     setState(GameState.Start);

@@ -22,10 +22,22 @@
  * SOFTWARE.
  */
 
+import {
+    playTune,
+    SFX_KB,
+    // Ignore lint errors from JS import
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+} from "./sfx/sfx.js";
 import { Area, includesPoint } from "./Area";
-import { canvas, cx } from "./graphics";
-import { getKeys, initializeKeyboard } from "./keyboard";
-import { getTouchPosition, initializeTouchscreen } from "./touchscreen";
+import { canvas, cx, renderText } from "./graphics";
+import { getKeys, initializeKeyboard, waitForEnter } from "./keyboard";
+import {
+    getTouchPosition,
+    hasTouchScreen,
+    initializeTouchscreen,
+    waitForTap,
+} from "./touchscreen";
 import { normalize, VectorMutable, ZERO_VECTOR } from "./Vector";
 
 export interface Controls {
@@ -35,6 +47,10 @@ export interface Controls {
 interface Button extends Area {
     readonly symbol: string;
 }
+
+const isFirefox = navigator.userAgent.toLowerCase().includes("firefox");
+
+let textAnimationCounter = 0;
 
 let leftButton: Button = { symbol: "◀", x: 0, y: 0, width: 0, height: 0 };
 let rightButton: Button = { symbol: "▶", x: 0, y: 0, width: 0, height: 0 };
@@ -109,7 +125,36 @@ export const initializeControls = (): void => {
     downButton.height = verticalButtonHeight;
 };
 
+export const waitForProgressInput = async (): Promise<void> => {
+    await (hasTouchScreen ? waitForTap() : waitForEnter());
+    playTune(SFX_KB);
+};
+
+export const renderWaitForProgressInput = (
+    action = "continue",
+    y = 100,
+): void => {
+    const text = (hasTouchScreen ? "Tap to " : "Press ENTER to ") + action;
+
+    renderText(
+        text + (textAnimationCounter++ % 60 === 0 ? "" : "█"),
+        24,
+        "Courier New",
+        1,
+        canvas.height / 2 + y,
+        false,
+        canvas.width / 2 -
+            // Let's check if Firefox as there is a difference in rendering this versus Chromium based browsers
+            cx.measureText(text).width * (isFirefox ? 1.95 : 2) +
+            64,
+    );
+};
+
 export const renderTouchControls = (): void => {
+    if (!hasTouchScreen) {
+        return;
+    }
+
     cx.save();
     const symbolWidth = leftButton.width / 2;
     cx.font = symbolWidth + "px Impact";
@@ -121,7 +166,7 @@ export const renderTouchControls = (): void => {
     cx.restore();
 };
 
-export const renderButton = (button: Button, symbolWidth: number): void => {
+const renderButton = (button: Button, symbolWidth: number): void => {
     cx.fillRect(button.x, button.y, button.width, button.height);
     cx.fillText(
         button.symbol,
