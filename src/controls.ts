@@ -100,7 +100,11 @@ export const updateControls = (): void => {
 export const initializeControls = (): void => {
     initializeKeyboard();
     initializeTouchscreen();
+    resizeControls();
+    window.addEventListener("resize", resizeControls, false);
+};
 
+const resizeControls = (): void => {
     const xMargin = canvas.width * 0.01;
     const yMargin = canvas.height * 0.02;
     const horizontalButtonWidth = canvas.width * 0.1;
