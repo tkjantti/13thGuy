@@ -33,11 +33,10 @@ import { getControls } from "./controls";
 import { easeInQuad } from "./easings";
 import { GameObject } from "./GameObject";
 import { cx } from "./graphics";
-import { getKeys } from "./keyboard";
 import { random } from "./random";
 import { mirrorHorizontally } from "./rendering";
 import { Track } from "./Track";
-import { isZero, normalize, Vector, ZERO_VECTOR } from "./Vector";
+import { isZero, Vector, ZERO_VECTOR } from "./Vector";
 
 export const FALL_TIME: number = 500;
 export const DROP_TIME: number = 1000;

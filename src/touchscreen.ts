@@ -28,7 +28,7 @@ import { Vector, VectorMutable } from "./Vector";
 import { setCanvasPositionFromScreenPosition } from "./window";
 
 let isTouching: boolean = false;
-let touchPosition: VectorMutable = { x: 0, y: 0 };
+const touchPosition: VectorMutable = { x: 0, y: 0 };
 
 export const hasTouchScreen = "ontouchstart" in window;
 
