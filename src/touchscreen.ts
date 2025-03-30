@@ -25,6 +25,7 @@
 import { Area, includesPoint } from "./Area";
 import { canvas } from "./graphics";
 import { Vector, VectorMutable } from "./Vector";
+import { setCanvasPositionFromScreenPosition } from "./window";
 
 let isTouching: boolean = false;
 let touchPosition: VectorMutable = { x: 0, y: 0 };
@@ -52,17 +53,13 @@ export const initializeTouchscreen = (): void => {
     canvas.ontouchstart = (e: TouchEvent): void => {
         e.preventDefault();
         isTouching = true;
-        const offset = canvas.getBoundingClientRect();
-        const touch = e.touches[0];
-        touchPosition.x = touch.clientX - offset.left;
-        touchPosition.y = touch.clientY - offset.top;
+        const touch = e.targetTouches[0];
+        setCanvasPositionFromScreenPosition(touchPosition, touch);
     };
     canvas.ontouchmove = (e: TouchEvent): void => {
         e.preventDefault();
-        const offset = canvas.getBoundingClientRect();
-        const touch = e.touches[0];
-        touchPosition.x = touch.clientX - offset.left;
-        touchPosition.y = touch.clientY - offset.top;
+        const touch = e.targetTouches[0];
+        setCanvasPositionFromScreenPosition(touchPosition, touch);
     };
     canvas.ontouchend = (e: TouchEvent): void => {
         e.preventDefault();
@@ -73,12 +70,10 @@ export const initializeTouchscreen = (): void => {
 export const waitForTap = (area?: Area): Promise<void> => {
     return new Promise((resolve) => {
         const listener = (e: TouchEvent): void => {
-            const offset = canvas.getBoundingClientRect();
             const touch = e.touches[0];
-            const point: Vector = {
-                x: touch.clientX - offset.left,
-                y: touch.clientY - offset.top,
-            };
+            const point: VectorMutable = { x: 0, y: 0 };
+
+            setCanvasPositionFromScreenPosition(point, touch);
 
             if (!area || includesPoint(area, point)) {
                 window.removeEventListener("touchstart", listener);
