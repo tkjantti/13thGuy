@@ -96,30 +96,31 @@ export const initializeControls = (): void => {
 const resizeControls = (): void => {
     const xMargin = canvas.width * 0.01;
     const yMargin = canvas.height * 0.02;
-    const horizontalButtonWidth = canvas.width * 0.1;
-    const horizontalButtonHeight = canvas.height * 0.6;
-    const verticalButtonWidth = canvas.width * 0.1;
-    const verticalButtonHeight = canvas.height * 0.3;
+    const horizontalWidth = canvas.width * 0.1;
+    const horizontalHeight = canvas.height * 0.6;
+    const top = canvas.height - horizontalHeight - 2 * yMargin;
+    const verticalWidth = horizontalWidth;
+    const verticalHeight = horizontalHeight / 2;
 
     leftButton.x = 0;
-    leftButton.y = 0;
-    leftButton.width = horizontalButtonWidth;
-    leftButton.height = horizontalButtonHeight;
+    leftButton.y = top;
+    leftButton.width = horizontalWidth;
+    leftButton.height = horizontalHeight;
 
-    rightButton.x = horizontalButtonWidth + xMargin;
-    rightButton.y = 0;
-    rightButton.width = horizontalButtonWidth;
-    rightButton.height = horizontalButtonHeight;
+    rightButton.x = horizontalWidth + xMargin;
+    rightButton.y = top;
+    rightButton.width = horizontalWidth;
+    rightButton.height = horizontalHeight;
 
-    upButton.x = canvas.width - verticalButtonWidth;
-    upButton.y = 0;
-    upButton.width = verticalButtonWidth;
-    upButton.height = verticalButtonHeight;
+    upButton.x = canvas.width - verticalWidth;
+    upButton.y = top;
+    upButton.width = verticalWidth;
+    upButton.height = verticalHeight;
 
-    downButton.x = canvas.width - verticalButtonWidth;
-    downButton.y = verticalButtonHeight + yMargin;
-    downButton.width = verticalButtonWidth;
-    downButton.height = verticalButtonHeight;
+    downButton.x = canvas.width - verticalWidth;
+    downButton.y = top + verticalHeight + yMargin;
+    downButton.width = verticalWidth;
+    downButton.height = verticalHeight;
 
     const touchAreaMargin = canvas.width * 0.1;
     progressTouchArea.x = rightButton.x + rightButton.width + touchAreaMargin;
