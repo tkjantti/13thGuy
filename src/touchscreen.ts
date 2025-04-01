@@ -24,11 +24,20 @@
 
 import { Area, includesPoint } from "./Area";
 import { canvas } from "./graphics";
-import { Vector, VectorMutable } from "./Vector";
+import { VectorMutable } from "./Vector";
 import { setCanvasPositionFromScreenPosition } from "./window";
 
-let isTouching: boolean = false;
-const touchPosition: VectorMutable = { x: 0, y: 0 };
+// An optimized data structure for keeping track of touches:
+// no new vector instances on every frame. Note that there is
+// a separate variable for the array count.
+const MAX_TOUCH_COUNT = 4;
+let touchPositionsCount: number = 0;
+let touchPositions: readonly VectorMutable[] = [...Array(MAX_TOUCH_COUNT)].map(
+    () => ({
+        x: 0,
+        y: 0,
+    }),
+);
 
 export const hasTouchScreen = "ontouchstart" in window;
 
@@ -52,19 +61,24 @@ export const initializeTouchscreen = (): void => {
 
     canvas.ontouchstart = (e: TouchEvent): void => {
         e.preventDefault();
-        isTouching = true;
-        const touch = e.targetTouches[0];
-        setCanvasPositionFromScreenPosition(touchPosition, touch);
+        readTouchInput(e);
     };
     canvas.ontouchmove = (e: TouchEvent): void => {
         e.preventDefault();
-        const touch = e.targetTouches[0];
-        setCanvasPositionFromScreenPosition(touchPosition, touch);
+        readTouchInput(e);
     };
     canvas.ontouchend = (e: TouchEvent): void => {
         e.preventDefault();
-        isTouching = false;
+        readTouchInput(e);
     };
+};
+
+const readTouchInput = (e: TouchEvent): void => {
+    touchPositionsCount = Math.min(e.touches.length, MAX_TOUCH_COUNT);
+
+    for (let i = 0; i < touchPositionsCount; i++) {
+        setCanvasPositionFromScreenPosition(touchPositions[i], e.touches[i]);
+    }
 };
 
 export const waitForTap = (area?: Area): Promise<void> => {
@@ -85,5 +99,12 @@ export const waitForTap = (area?: Area): Promise<void> => {
     });
 };
 
-export const getTouchPosition = (): Vector | null =>
-    isTouching ? touchPosition : null;
+export const isTouching = (area: Area): boolean => {
+    for (let i = 0; i < touchPositionsCount; i++) {
+        if (includesPoint(area, touchPositions[i])) {
+            return true;
+        }
+    }
+
+    return false;
+};

@@ -29,13 +29,13 @@ import {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
 } from "./sfx/sfx.js";
-import { Area, includesPoint } from "./Area";
+import { Area } from "./Area";
 import { canvas, cx, renderText } from "./graphics";
 import { getKeys, initializeKeyboard, waitForEnter } from "./keyboard";
 import {
-    getTouchPosition,
     hasTouchScreen,
     initializeTouchscreen,
+    isTouching,
     waitForTap,
 } from "./touchscreen";
 import { normalize, VectorMutable, ZERO_VECTOR } from "./Vector";
@@ -67,22 +67,11 @@ const controls: Controls = {
 
 export const updateControls = (): void => {
     const keys = getKeys();
-    const touch = getTouchPosition();
 
-    const left =
-        keys.ArrowLeft ||
-        keys.KeyA ||
-        (touch && includesPoint(leftButton, touch));
-    const right =
-        keys.ArrowRight ||
-        keys.KeyD ||
-        (touch && includesPoint(rightButton, touch));
-    const up =
-        keys.ArrowUp || keys.KeyW || (touch && includesPoint(upButton, touch));
-    const down =
-        keys.ArrowDown ||
-        keys.KeyS ||
-        (touch && includesPoint(downButton, touch));
+    const left = keys.ArrowLeft || keys.KeyA || isTouching(leftButton);
+    const right = keys.ArrowRight || keys.KeyD || isTouching(rightButton);
+    const up = keys.ArrowUp || keys.KeyW || isTouching(upButton);
+    const down = keys.ArrowDown || keys.KeyS || isTouching(downButton);
 
     const dx = left ? -1 : right ? 1 : 0;
     const dy = up ? -1 : down ? 1 : 0;
