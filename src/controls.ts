@@ -30,7 +30,8 @@ import {
     // @ts-ignore
 } from "./sfx/sfx.js";
 import { Area } from "./Area";
-import { canvas, cx, renderText } from "./graphics";
+import { canvas, cx } from "./graphics";
+import { renderText } from "./text";
 import { getKeys, initializeKeyboard, waitForEnter } from "./keyboard";
 import {
     hasTouchScreen,

@@ -26,12 +26,12 @@ import {
     applyCRTEffect,
     applyGradient,
     applyGrayscale,
-    renderText,
     canvas,
     cx,
     createFabricTexture,
     createPlateTexture,
 } from "./graphics";
+import { renderText } from "./text";
 import { sleep } from "./keyboard";
 import { Level, State } from "./Level";
 import { getFirstTrack, getSecondTrack, getThirdTrack } from "./tracks";

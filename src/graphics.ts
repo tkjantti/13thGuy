@@ -145,28 +145,6 @@ export const applyGrayscale = () => {
     cx.putImageData(imageData, 0, 0);
 };
 
-export const renderText = (
-    text: string,
-    fontSize: number,
-    fontName: string,
-    alpha = 1,
-    yAdjust = 0,
-    center = true,
-    xAdjust = 0,
-) => {
-    cx.save();
-    cx.globalAlpha = alpha > 0 ? alpha : 0;
-    cx.fillStyle = "white";
-    cx.font = fontSize + "px " + fontName;
-    const textWidth = cx.measureText(text).width;
-    cx.fillText(
-        text,
-        center ? (canvas.width - textWidth) / 2 + xAdjust : xAdjust,
-        center ? canvas.height / 2 + yAdjust : fontSize + yAdjust,
-    );
-    cx.restore();
-};
-
 export const createFabricTexture = () => {
     const offscreenCanvas = document.createElement("canvas");
     offscreenCanvas.width = 4;
