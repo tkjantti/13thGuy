@@ -32,12 +32,12 @@ import { setCanvasPositionFromScreenPosition } from "./window";
 // a separate variable for the array count.
 const MAX_TOUCH_COUNT = 4;
 let touchPositionsCount: number = 0;
-let touchPositions: readonly VectorMutable[] = [...Array(MAX_TOUCH_COUNT)].map(
-    () => ({
-        x: 0,
-        y: 0,
-    }),
-);
+const touchPositions: readonly VectorMutable[] = [
+    ...Array(MAX_TOUCH_COUNT),
+].map(() => ({
+    x: 0,
+    y: 0,
+}));
 
 export const hasTouchScreen = "ontouchstart" in window;
 
