@@ -31,7 +31,7 @@ import {
     createFabricTexture,
     createPlateTexture,
 } from "./graphics";
-import { renderText } from "./text";
+import { renderText, TextSize } from "./text";
 import { sleep } from "./keyboard";
 import { Level, State } from "./Level";
 import { getFirstTrack, getSecondTrack, getThirdTrack } from "./tracks";
@@ -239,7 +239,7 @@ export const renderLoadingText = (): void => {
 
     renderText(
         text + (textAnimationCounter++ % 60 === 0 ? "" : "█"),
-        24,
+        TextSize.Small,
         "Courier New",
         1,
         canvas.height / 2 + 100,
@@ -329,14 +329,14 @@ const draw = (t: number, dt: number): void => {
                 if (radius < maxRadius / 4) {
                     renderText(
                         "▲ GO! ▲",
-                        64,
+                        TextSize.Xl,
                         "Impact",
                         (radius / maxRadius) * 4,
                     );
                 } else if (radius < maxRadius / 2) {
-                    renderText("Set...", 64, "Impact", 1);
+                    renderText("Set...", TextSize.Xl, "Impact", 1);
                 } else {
-                    renderText("Ready...", 64, "Impact", 1);
+                    renderText("Ready...", TextSize.Xl, "Impact", 1);
                 }
 
                 if (radius > 0) {
@@ -357,20 +357,26 @@ const draw = (t: number, dt: number): void => {
             cx.arc(centerX, centerY, radius, 0, Math.PI * 2);
             cx.fillStyle = "#802010";
             cx.fill();
-            renderText("❌ ELIMINATED!", 48, "Impact", 1, -70);
+            renderText("❌ ELIMINATED!", TextSize.Large, "Impact", 1, -70);
             if (level.player.rank === 13) {
-                renderText("Don't be the 13TH GUY", 24, "Sans-serif", 1, 0);
+                renderText(
+                    "Don't be the 13TH GUY",
+                    TextSize.Small,
+                    "Sans-serif",
+                    1,
+                    0,
+                );
             } else {
                 renderText(
                     "Don't be one of the last 13TH GUYs",
-                    24,
+                    TextSize.Small,
                     "Sans-serif",
                     1,
                     0,
                 );
                 renderText(
                     "The final rank is " + level.player.rank + ".",
-                    32,
+                    TextSize.Normal,
                     "Impact",
                     1,
                     50,
@@ -417,21 +423,33 @@ const draw = (t: number, dt: number): void => {
 
             if (radius >= maxRadius / 4) {
                 if (level.characters.length > 14) {
-                    renderText("✪ QUALIFIED!", 48, "Impact", 1, -80);
-                    renderText("☻", 80, "Impact", 1, 0);
+                    renderText(
+                        "✪ QUALIFIED!",
+                        TextSize.Large,
+                        "Impact",
+                        1,
+                        -80,
+                    );
+                    renderText("☻", TextSize.Huge, "Impact", 1, 0);
                     renderText(
                         "Ready for next round " + raceNumber + " / 3",
-                        32,
+                        TextSize.Normal,
                         "Sans-serif",
                         1,
                         60,
                     );
                 } else {
-                    renderText("GAME FINISHED!", 48, "Impact", 1, -80);
-                    renderText("☻", 80, "Impact", 1, 0);
+                    renderText(
+                        "GAME FINISHED!",
+                        TextSize.Large,
+                        "Impact",
+                        1,
+                        -80,
+                    );
+                    renderText("☻", TextSize.Huge, "Impact", 1, 0);
                     renderText(
                         "Congratulations to the winner!",
-                        32,
+                        TextSize.Normal,
                         "Impact",
                         1,
                         60,
@@ -486,9 +504,17 @@ const draw = (t: number, dt: number): void => {
 };
 
 const Logo = () => {
-    renderText("Don't be the", 24, "Impact", 1, -30);
-    renderText("❌ 13TH GUY", 64, "Impact", 1, 30);
-    renderText(versionText, 16, "Impact", 0.5, 20, false, canvas.width - 240);
+    renderText("Don't be the", TextSize.Small, "Impact", 1, -30);
+    renderText("❌ 13TH GUY", TextSize.Xl, "Impact", 1, 30);
+    renderText(
+        versionText,
+        TextSize.Tiny,
+        "Impact",
+        0.5,
+        20,
+        false,
+        canvas.width - 240,
+    );
 };
 
 const drawStartScreen = (t: number, wait: boolean, z: number): void => {
@@ -520,20 +546,26 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
     if (wait) {
         renderText(
             "Avoid being the 13th or among the last 13",
-            24,
+            TextSize.Small,
             "Sans-serif",
             1,
             -20,
         );
         renderText(
             "or you will be eventually ❌ eliminated!",
-            24,
+            TextSize.Small,
             "Sans-serif",
             1,
             20,
         );
-        renderText("MOVE WITH", 20, "Sans-serif", 0.8, -120);
-        renderText("▲ / W - ▼ / S - ◄ / A - ► / D", 20, "Sans-serif", 0.8, -90);
+        renderText("MOVE WITH", TextSize.Xs, "Sans-serif", 0.8, -120);
+        renderText(
+            "▲ / W - ▼ / S - ◄ / A - ► / D",
+            TextSize.Xs,
+            "Sans-serif",
+            0.8,
+            -90,
+        );
 
         if (gameState === GameState.Wait) {
             renderWaitForProgressInput("start the race!");

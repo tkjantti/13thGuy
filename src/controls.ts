@@ -31,7 +31,7 @@ import {
 } from "./sfx/sfx.js";
 import { Area } from "./Area";
 import { canvas, cx } from "./graphics";
-import { renderText } from "./text";
+import { renderText, TextSize } from "./text";
 import { getKeys, initializeKeyboard, waitForEnter } from "./keyboard";
 import {
     hasTouchScreen,
@@ -144,7 +144,7 @@ export const renderWaitForProgressInput = (
 
     renderText(
         text + (textAnimationCounter++ % 60 === 0 ? "" : "█"),
-        24,
+        TextSize.Small,
         "Courier New",
         1,
         canvas.height / 2 + y,

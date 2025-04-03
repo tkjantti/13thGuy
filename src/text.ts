@@ -24,9 +24,30 @@
 
 import { canvas, cx } from "./graphics";
 
+export enum TextSize {
+    Tiny = 16,
+    Xs = 20,
+    Small = 24,
+    Normal = 32,
+    Large = 48,
+    Xl = 64,
+    Huge = 80,
+}
+
+const scaleFontSize = (textSize: TextSize): number => {
+    if (canvas.width < 800) {
+        return Math.floor(textSize * 0.6);
+    }
+    if (canvas.width < 1000) {
+        return Math.floor(textSize * 0.8);
+    }
+
+    return textSize;
+};
+
 export const renderText = (
     text: string,
-    fontSize: number,
+    textSize: TextSize,
     fontName: string,
     alpha = 1,
     yAdjust = 0,
@@ -34,6 +55,7 @@ export const renderText = (
     xAdjust = 0,
 ) => {
     cx.save();
+    const fontSize = scaleFontSize(textSize);
     cx.globalAlpha = alpha > 0 ? alpha : 0;
     cx.fillStyle = "white";
     cx.font = fontSize + "px " + fontName;
