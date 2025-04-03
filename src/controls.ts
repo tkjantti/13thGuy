@@ -138,7 +138,8 @@ export const renderWaitForProgressInput = (
     action = "continue",
     y = 100,
 ): void => {
-    const text = (hasTouchScreen ? "Tap to " : "Press ENTER to ") + action;
+    const text =
+        (hasTouchScreen ? "Tap the screen to " : "Press ENTER to ") + action;
 
     renderText(
         text + (textAnimationCounter++ % 60 === 0 ? "" : "█"),
