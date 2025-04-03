@@ -226,8 +226,6 @@ const update = (t: number, dt: number): void => {
     }
 };
 
-const isFirefox = navigator.userAgent.toLowerCase().includes("firefox");
-
 let textAnimationCounter = 0;
 const loadingText = "LOADING...";
 
@@ -244,10 +242,7 @@ export const renderLoadingText = (): void => {
         1,
         canvas.height / 2 + 100,
         false,
-        canvas.width / 2 -
-            // Let's check if Firefox as there is a difference in rendering this versus Chromium based browsers
-            cx.measureText(text).width * (isFirefox ? 1.95 : 2) +
-            64,
+        loadingText,
     );
 };
 
@@ -506,15 +501,7 @@ const draw = (t: number, dt: number): void => {
 const Logo = () => {
     renderText("Don't be the", TextSize.Small, "Impact", 1, -30);
     renderText("❌ 13TH GUY", TextSize.Xl, "Impact", 1, 30);
-    renderText(
-        versionText,
-        TextSize.Tiny,
-        "Impact",
-        0.5,
-        20,
-        false,
-        canvas.width - 240,
-    );
+    renderText(versionText, TextSize.Tiny, "Impact", 0.5, 20, false);
 };
 
 const drawStartScreen = (t: number, wait: boolean, z: number): void => {

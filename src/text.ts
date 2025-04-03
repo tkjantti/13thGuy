@@ -51,19 +51,21 @@ export const renderText = (
     fontName: string,
     alpha = 1,
     yAdjust = 0,
-    center = true,
-    xAdjust = 0,
+    centerY = true,
+    referenceText?: string, // Text size is taken from this text
 ) => {
     cx.save();
     const fontSize = scaleFontSize(textSize);
     cx.globalAlpha = alpha > 0 ? alpha : 0;
     cx.fillStyle = "white";
     cx.font = fontSize + "px " + fontName;
-    const textWidth = cx.measureText(text).width;
+    const textWidth = cx.measureText(referenceText ?? text).width;
+
     cx.fillText(
         text,
-        center ? (canvas.width - textWidth) / 2 + xAdjust : xAdjust,
-        center ? canvas.height / 2 + yAdjust : fontSize + yAdjust,
+        (canvas.width - textWidth) / 2,
+        centerY ? canvas.height / 2 + yAdjust : fontSize + yAdjust,
     );
+
     cx.restore();
 };

@@ -49,8 +49,6 @@ interface Button extends Area {
     readonly symbol: string;
 }
 
-const isFirefox = navigator.userAgent.toLowerCase().includes("firefox");
-
 let textAnimationCounter = 0;
 
 const leftButton: Button = { symbol: "◀", x: 0, y: 0, width: 0, height: 0 };
@@ -149,10 +147,7 @@ export const renderWaitForProgressInput = (
         1,
         canvas.height / 2 + y,
         false,
-        canvas.width / 2 -
-            // Let's check if Firefox as there is a difference in rendering this versus Chromium based browsers
-            cx.measureText(text).width * (isFirefox ? 1.95 : 2) +
-            64,
+        text,
     );
 };
 
