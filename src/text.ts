@@ -35,14 +35,8 @@ export enum TextSize {
 }
 
 const scaleFontSize = (textSize: TextSize): number => {
-    if (canvas.width < 800) {
-        return Math.floor(textSize * 0.6);
-    }
-    if (canvas.width < 1000) {
-        return Math.floor(textSize * 0.8);
-    }
-
-    return textSize;
+    const scale = canvas.width / 1000;
+    return Math.floor(textSize * scale);
 };
 
 export const renderText = (
