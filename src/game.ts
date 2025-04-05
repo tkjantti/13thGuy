@@ -240,8 +240,8 @@ export const renderLoadingText = (): void => {
         TextSize.Small,
         "Courier New",
         1,
-        canvas.height / 2 + 100,
-        false,
+        7.7,
+        true,
         loadingText,
     );
 };
@@ -352,33 +352,29 @@ const draw = (t: number, dt: number): void => {
             cx.arc(centerX, centerY, radius, 0, Math.PI * 2);
             cx.fillStyle = "#802010";
             cx.fill();
-            renderText("❌ ELIMINATED!", TextSize.Large, "Impact", 1, -70);
+            renderText("❌ ELIMINATED!", TextSize.Large, "Impact", 1, -4.5);
             if (level.player.rank === 13) {
                 renderText(
                     "Don't be the 13TH GUY",
                     TextSize.Small,
                     "Sans-serif",
-                    1,
-                    0,
                 );
             } else {
                 renderText(
                     "Don't be one of the last 13TH GUYs",
                     TextSize.Small,
                     "Sans-serif",
-                    1,
-                    0,
                 );
                 renderText(
                     "The final rank is " + level.player.rank + ".",
                     TextSize.Normal,
                     "Impact",
                     1,
-                    50,
+                    3.1,
                 );
             }
             if (radius >= maxRadius) {
-                renderWaitForProgressInput("continue", 120);
+                renderWaitForProgressInput("continue", 9);
             }
 
             if (radius < maxRadius) {
@@ -418,20 +414,14 @@ const draw = (t: number, dt: number): void => {
 
             if (radius >= maxRadius / 4) {
                 if (level.characters.length > 14) {
-                    renderText(
-                        "✪ QUALIFIED!",
-                        TextSize.Large,
-                        "Impact",
-                        1,
-                        -80,
-                    );
-                    renderText("☻", TextSize.Huge, "Impact", 1, 0);
+                    renderText("✪ QUALIFIED!", TextSize.Large, "Impact", 1, -5);
+                    renderText("☻", TextSize.Huge, "Impact");
                     renderText(
                         "Ready for next round " + raceNumber + " / 3",
                         TextSize.Normal,
                         "Sans-serif",
                         1,
-                        60,
+                        3.8,
                     );
                 } else {
                     renderText(
@@ -439,15 +429,15 @@ const draw = (t: number, dt: number): void => {
                         TextSize.Large,
                         "Impact",
                         1,
-                        -80,
+                        -5,
                     );
-                    renderText("☻", TextSize.Huge, "Impact", 1, 0);
+                    renderText("☻", TextSize.Huge, "Impact");
                     renderText(
                         "Congratulations to the winner!",
                         TextSize.Normal,
                         "Impact",
                         1,
-                        60,
+                        3.8,
                     );
                 }
 
@@ -499,9 +489,10 @@ const draw = (t: number, dt: number): void => {
 };
 
 const Logo = () => {
-    renderText("Don't be the", TextSize.Small, "Impact", 1, -30);
-    renderText("❌ 13TH GUY", TextSize.Xl, "Impact", 1, 30);
-    renderText(versionText, TextSize.Tiny, "Impact", 0.5, 20, false);
+    renderText(versionText, TextSize.Tiny, "Impact", 0.5, 2.3, false);
+
+    renderText("Don't be the", TextSize.Small, "Impact", 1, -1.8);
+    renderText("❌ 13TH GUY", TextSize.Xl, "Impact", 1, 1.8);
 };
 
 const drawStartScreen = (t: number, wait: boolean, z: number): void => {
@@ -536,22 +527,22 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
             TextSize.Small,
             "Sans-serif",
             1,
-            -20,
+            -1.2,
         );
         renderText(
             "or you will be eventually ❌ eliminated!",
             TextSize.Small,
             "Sans-serif",
             1,
-            20,
+            1.3,
         );
-        renderText("MOVE WITH", TextSize.Xs, "Sans-serif", 0.8, -120);
+        renderText("MOVE WITH", TextSize.Xs, "Sans-serif", 0.8, -7.5);
         renderText(
             "▲ / W - ▼ / S - ◄ / A - ► / D",
             TextSize.Xs,
             "Sans-serif",
             0.8,
-            -90,
+            -5.6,
         );
 
         if (gameState === GameState.Wait) {

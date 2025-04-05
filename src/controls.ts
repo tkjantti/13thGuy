@@ -136,7 +136,7 @@ export const waitForProgressInput = async (): Promise<void> => {
 
 export const renderWaitForProgressInput = (
     action = "continue",
-    y = 100,
+    y = 7.7,
 ): void => {
     const text =
         (hasTouchScreen ? "Tap the screen to " : "Press ENTER to ") + action;
@@ -146,8 +146,8 @@ export const renderWaitForProgressInput = (
         TextSize.Small,
         "Courier New",
         1,
-        canvas.height / 2 + y,
-        false,
+        y,
+        true,
         text,
     );
 };
