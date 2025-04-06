@@ -137,6 +137,7 @@ export const renderWaitForProgressInput = (
         1,
         y,
         true,
+        0,
         text,
     );
 };

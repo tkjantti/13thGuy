@@ -242,6 +242,7 @@ export const renderLoadingText = (): void => {
         1,
         7.7,
         true,
+        0,
         loadingText,
     );
 };
@@ -491,7 +492,7 @@ const draw = (t: number, dt: number): void => {
 const Logo = () => {
     renderText(versionText, TextSize.Tiny, "Impact", 0.5, 2.3, false);
 
-    renderText("Don't be the", TextSize.Small, "Impact", 1, -1.8);
+    renderText("Don't be the", TextSize.Small, "Impact", 1, -1.8, true, -0.9);
     renderText("❌ 13TH GUY", TextSize.Xl, "Impact", 1, 1.8);
 };
 

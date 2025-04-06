@@ -46,6 +46,7 @@ export const renderText = (
     alpha = 1,
     yAdjust = 0, // Y position in relative "rem" units
     centerY = true,
+    xAdjust = 0,
     referenceText?: string, // Text size is taken from this text
 ) => {
     cx.save();
@@ -56,10 +57,11 @@ export const renderText = (
     cx.font = fontSize + "px " + fontName;
     const textWidth = cx.measureText(referenceText ?? text).width;
     const yAdjustAbsolute = yAdjust * remUnitSize;
+    const xAdjustAbsolute = xAdjust * remUnitSize;
 
     cx.fillText(
         text,
-        (canvas.width - textWidth) / 2,
+        (canvas.width - textWidth) / 2 + xAdjustAbsolute,
         (centerY ? canvas.height / 2 : 0) + yAdjustAbsolute,
     );
 
