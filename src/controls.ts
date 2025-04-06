@@ -56,10 +56,6 @@ const rightButton: Button = { symbol: "▶", x: 0, y: 0, width: 0, height: 0 };
 const upButton: Button = { symbol: "▲", x: 0, y: 0, width: 0, height: 0 };
 const downButton: Button = { symbol: "▼", x: 0, y: 0, width: 0, height: 0 };
 
-// Limit area to touch when progressing to a next screen, so that pressing
-// the touch controls would not accidentally trigger touch.
-const progressTouchArea: Area = { x: 0, y: 0, width: 0, height: 0 };
-
 const controls: Controls = {
     movement: { x: 0, y: 0 },
 };
@@ -120,17 +116,10 @@ const resizeControls = (): void => {
     downButton.y = top + verticalHeight + yMargin;
     downButton.width = verticalWidth;
     downButton.height = verticalHeight;
-
-    const touchAreaMargin = canvas.width * 0.1;
-    progressTouchArea.x = rightButton.x + rightButton.width + touchAreaMargin;
-    progressTouchArea.y = 0;
-    progressTouchArea.width =
-        upButton.x - (rightButton.x + rightButton.width) - 2 * touchAreaMargin;
-    progressTouchArea.height = canvas.height;
 };
 
 export const waitForProgressInput = async (): Promise<void> => {
-    await (hasTouchScreen ? waitForTap(progressTouchArea) : waitForEnter());
+    await (hasTouchScreen ? waitForTap() : waitForEnter());
     playTune(SFX_KB);
 };
 
