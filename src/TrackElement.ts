@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { Area, includes, overlap } from "./Area";
+import { Area, includesArea, overlap } from "./Area";
 import { GameObject } from "./GameObject";
 import { Obstacle } from "./Obstacle";
 import { random } from "./random";
@@ -196,7 +196,7 @@ export class TrackElement {
         };
 
         return (
-            this.surfaces.some((s) => includes(s, blockArea)) &&
+            this.surfaces.some((s) => includesArea(s, blockArea)) &&
             !this.objects.some((o) => overlap(o, blockArea))
         );
     }

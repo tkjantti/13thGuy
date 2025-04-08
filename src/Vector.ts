@@ -22,10 +22,12 @@
  * SOFTWARE.
  */
 
-export interface Vector {
-    readonly x: number;
-    readonly y: number;
+export interface VectorMutable {
+    x: number;
+    y: number;
 }
+
+export type Vector = Readonly<VectorMutable>;
 
 export const ZERO_VECTOR = { x: 0, y: 0 };
 

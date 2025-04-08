@@ -52,7 +52,7 @@ import {
 } from "./sfx/sfx.js";
 import { randomMinMax } from "./random";
 import { BLOCK_HEIGHT } from "./TrackElement";
-import { length } from "./Vector.js";
+import { length } from "./Vector";
 
 const TRACK_VISIBLE_HEIGHT = 70;
 

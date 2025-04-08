@@ -25,8 +25,8 @@
 import { Vector } from "./Vector";
 
 export interface Dimensions {
-    readonly width: number;
-    readonly height: number;
+    width: number;
+    height: number;
 }
 
 export interface Area extends Dimensions {
@@ -48,7 +48,16 @@ export function overlap(a: Area, b: Area): boolean {
     return horizontally && vertically;
 }
 
-export function includes(host: Area, o: Area): boolean {
+export function includesPoint(host: Area, p: Vector): boolean {
+    return (
+        host.x <= p.x &&
+        p.x < host.x + host.width &&
+        host.y <= p.y &&
+        p.y < host.y + host.height
+    );
+}
+
+export function includesArea(host: Area, o: Area): boolean {
     const horizontally = host.x <= o.x && o.x + o.width <= host.x + host.width;
     const vertically = host.y <= o.y && o.y + o.height <= host.y + host.height;
 

@@ -1,19 +1,38 @@
+/*
+ * Copyright (c) 2024 Tero Jäntti, Sami Heikkinen
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use, copy,
+ * modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 import {
     applyCRTEffect,
     applyGradient,
     applyGrayscale,
-    renderText,
     canvas,
     cx,
     createFabricTexture,
     createPlateTexture,
 } from "./graphics";
-import {
-    initializeKeyboard,
-    sleep,
-    waitForAnyKey,
-    waitForEnter,
-} from "./keyboard";
+import { renderText, TextSize } from "./text";
+import { sleep } from "./keyboard";
 import { Level, State } from "./Level";
 import { getFirstTrack, getSecondTrack, getThirdTrack } from "./tracks";
 
@@ -39,6 +58,13 @@ import {
 } from "./CharacterAnimation";
 import { playerColor } from "./Character";
 import { VERSION } from "./version";
+import {
+    initializeControls,
+    renderTouchControls,
+    renderWaitForProgressInput,
+    updateControls,
+    waitForProgressInput,
+} from "./controls";
 
 const versionText = "Director's cut (" + (VERSION ? VERSION : "DEV") + ")";
 
@@ -129,7 +155,7 @@ const setState = async (state: GameState) => {
             randomWidhOffset = 1 + Math.random() * 0.6;
             randomHeighOffset = 1 + Math.random() * 0.3;
 
-            await waitForEnter();
+            await waitForProgressInput();
             playTune(SFX_RESTART);
             startRace();
             break;
@@ -139,13 +165,16 @@ const setState = async (state: GameState) => {
             // Players left for next round?
             if (level.characters.length > 14) {
                 await sleep(2500);
-                await waitForEnter();
+                await waitForProgressInput();
                 setState(GameState.Ready);
             } else {
-                await waitForEnter();
+                await waitForProgressInput();
                 clearCharacterGradientCache();
                 startRace();
             }
+            break;
+        case GameState.Running:
+            renderTouchControls();
             break;
         default:
             break;
@@ -169,6 +198,7 @@ const gameLoop = (t: number): void => {
 const update = (t: number, dt: number): void => {
     switch (gameState) {
         case GameState.Running: {
+            updateControls();
             level.update(t, dt);
             if (level.state === State.GAME_OVER) {
                 setState(GameState.GameOver);
@@ -199,20 +229,21 @@ const update = (t: number, dt: number): void => {
 let textAnimationCounter = 0;
 const loadingText = "LOADING...";
 
-const isFirefox = navigator.userAgent.toLowerCase().includes("firefox");
+export const renderLoadingText = (): void => {
+    const text =
+        textAnimationCounter < 10
+            ? loadingText.substring(0, textAnimationCounter)
+            : "LOADING...";
 
-const RenderWaitForKey = (text = "Press ENTER to continue", y = 100) => {
     renderText(
         text + (textAnimationCounter++ % 60 === 0 ? "" : "█"),
-        24,
+        TextSize.Small,
         "Courier New",
         1,
-        canvas.height / 2 + y,
-        false,
-        canvas.width / 2 -
-            // Let's check if Firefox as there is a difference in rendering this versus Chromium based browsers
-            cx.measureText(text).width * (isFirefox ? 1.95 : 2) +
-            64,
+        7.7,
+        true,
+        0,
+        loadingText,
     );
 };
 
@@ -228,11 +259,7 @@ const draw = (t: number, dt: number): void => {
 
     switch (gameState) {
         case GameState.Load: {
-            RenderWaitForKey(
-                textAnimationCounter < 10
-                    ? loadingText.substring(0, textAnimationCounter)
-                    : "LOADING...",
-            );
+            renderLoadingText();
             textAnimationCounter++;
             applyGrayscale();
             applyCRTEffect(false);
@@ -241,7 +268,7 @@ const draw = (t: number, dt: number): void => {
         }
         case GameState.Init: {
             drawInitialScreen(true);
-            RenderWaitForKey("Press any key");
+            renderWaitForProgressInput("start");
             break;
         }
         case GameState.Start: {
@@ -298,14 +325,14 @@ const draw = (t: number, dt: number): void => {
                 if (radius < maxRadius / 4) {
                     renderText(
                         "▲ GO! ▲",
-                        64,
+                        TextSize.Xl,
                         "Impact",
                         (radius / maxRadius) * 4,
                     );
                 } else if (radius < maxRadius / 2) {
-                    renderText("Set...", 64, "Impact", 1);
+                    renderText("Set...", TextSize.Xl, "Impact", 1);
                 } else {
-                    renderText("Ready...", 64, "Impact", 1);
+                    renderText("Ready...", TextSize.Xl, "Impact", 1);
                 }
 
                 if (radius > 0) {
@@ -326,27 +353,29 @@ const draw = (t: number, dt: number): void => {
             cx.arc(centerX, centerY, radius, 0, Math.PI * 2);
             cx.fillStyle = "#802010";
             cx.fill();
-            renderText("❌ ELIMINATED!", 48, "Impact", 1, -70);
+            renderText("❌ ELIMINATED!", TextSize.Large, "Impact", 1, -4.5);
             if (level.player.rank === 13) {
-                renderText("Don't be the 13TH GUY", 24, "Sans-serif", 1, 0);
+                renderText(
+                    "Don't be the 13TH GUY",
+                    TextSize.Small,
+                    "Sans-serif",
+                );
             } else {
                 renderText(
                     "Don't be one of the last 13TH GUYs",
-                    24,
+                    TextSize.Small,
                     "Sans-serif",
-                    1,
-                    0,
                 );
                 renderText(
                     "The final rank is " + level.player.rank + ".",
-                    32,
+                    TextSize.Normal,
                     "Impact",
                     1,
-                    50,
+                    3.1,
                 );
             }
             if (radius >= maxRadius) {
-                RenderWaitForKey("Press ENTER to continue", 120);
+                renderWaitForProgressInput("continue", 9);
             }
 
             if (radius < maxRadius) {
@@ -386,29 +415,35 @@ const draw = (t: number, dt: number): void => {
 
             if (radius >= maxRadius / 4) {
                 if (level.characters.length > 14) {
-                    renderText("✪ QUALIFIED!", 48, "Impact", 1, -80);
-                    renderText("☻", 80, "Impact", 1, 0);
+                    renderText("✪ QUALIFIED!", TextSize.Large, "Impact", 1, -5);
+                    renderText("☻", TextSize.Huge, "Impact");
                     renderText(
                         "Ready for next round " + raceNumber + " / 3",
-                        32,
+                        TextSize.Normal,
                         "Sans-serif",
                         1,
-                        60,
+                        3.8,
                     );
                 } else {
-                    renderText("GAME FINISHED!", 48, "Impact", 1, -80);
-                    renderText("☻", 80, "Impact", 1, 0);
                     renderText(
-                        "Congratulations to the winner!",
-                        32,
+                        "GAME FINISHED!",
+                        TextSize.Large,
                         "Impact",
                         1,
-                        60,
+                        -5,
+                    );
+                    renderText("☻", TextSize.Huge, "Impact");
+                    renderText(
+                        "Congratulations to the winner!",
+                        TextSize.Normal,
+                        "Impact",
+                        1,
+                        3.8,
                     );
                 }
 
                 if (radius >= maxRadius) {
-                    RenderWaitForKey();
+                    renderWaitForProgressInput();
                 }
 
                 cx.save();
@@ -445,6 +480,7 @@ const draw = (t: number, dt: number): void => {
         }
         default: {
             applyCRTEffect(false);
+            renderTouchControls();
 
             break;
         }
@@ -454,9 +490,10 @@ const draw = (t: number, dt: number): void => {
 };
 
 const Logo = () => {
-    renderText("Don't be the", 24, "Impact", 1, -30);
-    renderText("❌ 13TH GUY", 64, "Impact", 1, 30);
-    renderText(versionText, 16, "Impact", 0.5, 20, false, canvas.width - 240);
+    renderText(versionText, TextSize.Tiny, "Impact", 0.5, 2.3, false);
+
+    renderText("Don't be the", TextSize.Small, "Impact", 1, -1.8, true, -0.9);
+    renderText("❌ 13TH GUY", TextSize.Xl, "Impact", 1, 1.8);
 };
 
 const drawStartScreen = (t: number, wait: boolean, z: number): void => {
@@ -488,27 +525,33 @@ const drawStartScreen = (t: number, wait: boolean, z: number): void => {
     if (wait) {
         renderText(
             "Avoid being the 13th or among the last 13",
-            24,
+            TextSize.Small,
             "Sans-serif",
             1,
-            -20,
+            -1.2,
         );
         renderText(
             "or you will be eventually ❌ eliminated!",
-            24,
+            TextSize.Small,
             "Sans-serif",
             1,
-            20,
+            1.3,
         );
-        renderText("MOVE WITH", 20, "Sans-serif", 0.8, -120);
-        renderText("▲ / W - ▼ / S - ◄ / A - ► / D", 20, "Sans-serif", 0.8, -90);
+        renderText("MOVE WITH", TextSize.Xs, "Sans-serif", 0.8, -7.5);
+        renderText(
+            "▲ / W - ▼ / S - ◄ / A - ► / D",
+            TextSize.Xs,
+            "Sans-serif",
+            0.8,
+            -5.6,
+        );
 
         if (gameState === GameState.Wait) {
-            RenderWaitForKey("Press ENTER to start the race!");
+            renderWaitForProgressInput("start the race!");
         }
     } else {
         Logo();
-        RenderWaitForKey();
+        renderWaitForProgressInput();
     }
 
     cx.restore();
@@ -543,23 +586,23 @@ export const startRace = async (): Promise<void> => {
     raceNumber = 1;
     z = 1;
     setState(GameState.Start);
-    await waitForEnter();
+    await waitForProgressInput();
     setState(GameState.Wait);
 
-    await waitForEnter();
+    await waitForProgressInput();
     setState(GameState.RaceStarting);
     await sleep(1000);
     setState(GameState.Ready);
 };
 
 export const init = async (): Promise<void> => {
-    initializeKeyboard();
+    initializeControls();
     window.requestAnimationFrame(gameLoop);
 
     await initialize();
     setState(GameState.Init);
 
-    await waitForAnyKey();
+    await waitForProgressInput();
 
     playTune(SFX_START);
     setState(GameState.Start);

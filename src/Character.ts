@@ -29,14 +29,14 @@ import {
     CharacterFacingDirection,
     renderCharacter,
 } from "./CharacterAnimation";
+import { getControls } from "./controls";
 import { easeInQuad } from "./easings";
 import { GameObject } from "./GameObject";
 import { cx } from "./graphics";
-import { getKeys } from "./keyboard";
 import { random } from "./random";
 import { mirrorHorizontally } from "./rendering";
 import { Track } from "./Track";
-import { isZero, normalize, Vector, ZERO_VECTOR } from "./Vector";
+import { isZero, Vector, ZERO_VECTOR } from "./Vector";
 
 export const FALL_TIME: number = 500;
 export const DROP_TIME: number = 1000;
@@ -150,24 +150,7 @@ export class Character implements GameObject {
     getMovement(t: number): Vector {
         if (!this.ai) {
             // Player
-            const keys = getKeys();
-
-            const left = keys.ArrowLeft || keys.KeyA;
-            const right = keys.ArrowRight || keys.KeyD;
-            const up = keys.ArrowUp || keys.KeyW;
-            const down = keys.ArrowDown || keys.KeyS;
-
-            const dx = left ? -1 : right ? 1 : 0;
-            const dy = up ? -1 : down ? 1 : 0;
-
-            if (dx === 0 && dy === 0) {
-                return ZERO_VECTOR;
-            }
-
-            return normalize({
-                x: dx,
-                y: dy,
-            });
+            return getControls().movement;
         }
 
         return this.ai.getMovement(t);
