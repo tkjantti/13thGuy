@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 -2025 Tero Jäntti, Sami Heikkinen
+ * Copyright (c) 2024 - 2025 Tero Jäntti, Sami Heikkinen
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
