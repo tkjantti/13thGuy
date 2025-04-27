@@ -650,6 +650,8 @@ export const init = async (): Promise<void> => {
 
         await waitForProgressInput();
 
+        goFullScreen();
+
         await postInitActions();
     });
 
@@ -659,6 +661,7 @@ export const init = async (): Promise<void> => {
     await waitForProgressInput();
 
     goFullScreen();
+
     await postInitActions();
 };
 
