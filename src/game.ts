@@ -39,6 +39,7 @@ import { getFirstTrack, getSecondTrack, getThirdTrack } from "./tracks";
 import {
     initialize,
     playTune,
+    stopTune,
     SFX_START,
     SFX_RACE,
     SFX_FINISHED,
@@ -114,17 +115,33 @@ const platePattern = createPlateTexture();
 
 let counted = 0;
 
+const restartButton = document.createElement("button");
+
 const setState = async (state: GameState) => {
     gameState = state;
 
-    maxRadius = 1280 * 2; // Always same size to make animations last the same time (max canvas * 2)
+    const button = document.getElementById("restartButton");
+    if (button) {
+        button.style.display = state === GameState.Init ? "none" : "block";
+    }
+
+    maxRadius = 1280 * 2;
 
     switch (state) {
         case GameState.Start:
+            await waitForProgressInput();
+            await setState(GameState.Wait);
+            break;
+        case GameState.Wait:
+            await waitForProgressInput();
+            await setState(GameState.RaceStarting);
+            break;
+        case GameState.RaceStarting:
+            await setState(GameState.Ready);
             break;
         case GameState.Ready:
             counted = 0;
-            if (raceNumber > 1 && !level.player.eliminated) {
+            if (raceNumber > 1 && level && !level.player.eliminated) {
                 const track =
                     raceNumber === 3 ? getThirdTrack() : getSecondTrack();
                 level = new Level(
@@ -157,26 +174,32 @@ const setState = async (state: GameState) => {
 
             await waitForProgressInput();
             playTune(SFX_RESTART);
-            startRace();
+            raceNumber = 1;
+            await setState(GameState.Start);
             break;
         case GameState.GameFinished:
             radius = 1;
             playTune(SFX_FINISHED);
-            // Players left for next round?
-            if (level.characters.length > 14) {
+            if (level && level.characters.length > 14) {
                 await sleep(2500);
                 await waitForProgressInput();
-                setState(GameState.Ready);
+                await setState(GameState.Ready);
             } else {
                 await waitForProgressInput();
                 clearCharacterGradientCache();
-                startRace();
+                raceNumber = 1;
+                await setState(GameState.Start);
             }
             break;
         case GameState.Running:
             renderTouchControls();
             break;
+        case GameState.Init:
+            if (button) button.style.display = "none";
+            break;
         default:
+            if (button && state !== GameState.Load)
+                button.style.display = "block";
             break;
     }
 };
@@ -582,29 +605,114 @@ const drawInitialScreen = (noisy: boolean): void => {
     applyCRTEffect(noisy);
 };
 
-export const startRace = async (): Promise<void> => {
+// Helper function for the actions right after Init screen interaction
+async function postInitActions() {
+    goFullScreen();
+    playTune(SFX_START);
+    const button = document.getElementById("restartButton");
+    if (button) button.style.display = "block";
     raceNumber = 1;
-    z = 1;
-    setState(GameState.Start);
-    await waitForProgressInput();
-    setState(GameState.Wait);
-
-    await waitForProgressInput();
-    setState(GameState.RaceStarting);
-    await sleep(1000);
-    setState(GameState.Ready);
-};
+    await setState(GameState.Start);
+}
 
 export const init = async (): Promise<void> => {
     initializeControls();
     window.requestAnimationFrame(gameLoop);
 
+    restartButton.id = "restartButton";
+    restartButton.style.position = "absolute";
+    restartButton.style.top = "10px";
+    restartButton.style.right = "10px";
+    restartButton.style.zIndex = "10";
+    restartButton.textContent = "⟳";
+    restartButton.style.padding = "5px 10px";
+    restartButton.style.color = "white";
+    restartButton.style.background = "black";
+    restartButton.style.border = "1px solid white";
+    restartButton.style.borderRadius = "4px";
+    restartButton.style.fontSize = "24px";
+    restartButton.style.display = "none";
+
+    document.body.appendChild(restartButton);
+
+    restartButton.addEventListener("click", async (event) => {
+        event.stopPropagation();
+
+        exitFullScreen();
+        stopTune(SFX_START);
+        stopTune(SFX_RACE);
+        restartButton.style.display = "none";
+
+        z = 1;
+        randomWidhOffset = 1 + Math.random() * 0.6;
+        randomHeighOffset = 1 + Math.random() * 0.3;
+        clearCharacterGradientCache();
+
+        await setState(GameState.Init);
+
+        await waitForProgressInput();
+
+        await postInitActions();
+    });
+
     await initialize();
-    setState(GameState.Init);
+    await setState(GameState.Init);
 
     await waitForProgressInput();
 
-    playTune(SFX_START);
-    setState(GameState.Start);
-    startRace();
+    await postInitActions();
 };
+
+// Function to request fullscreen
+function goFullScreen() {
+    const elem = document.documentElement as HTMLElement & {
+        mozRequestFullScreen?: () => Promise<void>;
+        webkitRequestFullscreen?: () => Promise<void>;
+    };
+    if (elem.requestFullscreen) {
+        elem.requestFullscreen().catch((err) => {
+            console.error(
+                `Error attempting to enable full-screen mode: ${err.message} (${err.name})`,
+            );
+        });
+    } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen().catch((err) => {
+            console.error(
+                `Error attempting to enable full-screen mode: ${err.message} (${err.name})`,
+            );
+        });
+    } else if (elem.mozRequestFullScreen) {
+        elem.mozRequestFullScreen().catch((err) => {
+            console.error(
+                `Error attempting to enable full-screen mode: ${err.message} (${err.name})`,
+            );
+        });
+    }
+}
+
+// Function to exit fullscreen
+function exitFullScreen() {
+    const doc = document as Document & {
+        mozCancelFullScreen?: () => Promise<void>;
+        webkitExitFullscreen?: () => Promise<void>;
+    };
+    if (doc.exitFullscreen) {
+        doc.exitFullscreen().catch((err) => {
+            console.error(
+                `Error attempting to disable full-screen mode: ${err.message} (${err.name})`,
+            );
+        });
+    } else if (doc.webkitExitFullscreen) {
+        doc.webkitExitFullscreen().catch((err) => {
+            console.error(
+                `Error attempting to disable full-screen mode: ${err.message} (${err.name})`,
+            );
+        });
+    } else if (doc.mozCancelFullScreen) {
+        doc.mozCancelFullScreen().catch((err) => {
+            console.error(
+                `Error attempting to disable full-screen mode: ${err.message} (${err.name})`,
+            );
+        });
+    }
+}
