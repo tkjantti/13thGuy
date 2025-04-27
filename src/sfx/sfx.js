@@ -222,10 +222,10 @@ export const stopTune = (tune) => {
             break;
         }
         default : {
+            startTune.volume = 0;
             startTune.pause();
-            startTune.currentTime = 0;
+            raceTune.volume = 0;
             raceTune.pause();
-            raceTune.currentTime = 0;
             break;
         }
     }
