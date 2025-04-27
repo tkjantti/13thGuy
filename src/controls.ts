@@ -93,26 +93,26 @@ const resizeControls = (): void => {
     const yMargin = canvas.height * 0.02;
     const horizontalWidth = canvas.width * 0.1;
     const horizontalHeight = canvas.height * 0.6;
-    const top = canvas.height - horizontalHeight - 2 * yMargin;
+    const top = canvas.height - horizontalHeight * 0.65 - 2 * yMargin;
     const verticalWidth = horizontalWidth;
-    const verticalHeight = horizontalHeight / 2;
+    const verticalHeight = horizontalHeight / 3;
 
-    leftButton.x = 0;
-    leftButton.y = top;
+    leftButton.x = xMargin;
+    leftButton.y = top + verticalHeight + yMargin;
     leftButton.width = horizontalWidth;
-    leftButton.height = horizontalHeight;
+    leftButton.height = horizontalHeight / 3;
 
-    rightButton.x = horizontalWidth + xMargin;
-    rightButton.y = top;
+    rightButton.x = horizontalWidth + 2 * xMargin;
+    rightButton.y = top + verticalHeight + yMargin;
     rightButton.width = horizontalWidth;
-    rightButton.height = horizontalHeight;
+    rightButton.height = horizontalHeight / 3;
 
-    upButton.x = canvas.width - verticalWidth;
+    upButton.x = canvas.width - verticalWidth - xMargin;
     upButton.y = top;
     upButton.width = verticalWidth;
     upButton.height = verticalHeight;
 
-    downButton.x = canvas.width - verticalWidth;
+    downButton.x = canvas.width - verticalWidth - xMargin;
     downButton.y = top + verticalHeight + yMargin;
     downButton.width = verticalWidth;
     downButton.height = verticalHeight;
@@ -159,7 +159,10 @@ export const renderTouchControls = (): void => {
 };
 
 const renderButton = (button: Button, symbolWidth: number): void => {
-    cx.fillRect(button.x, button.y, button.width, button.height);
+    cx.strokeStyle = "rgba(200, 200, 200, 0.2)";
+    cx.lineWidth = 2;
+    cx.strokeRect(button.x, button.y, button.width, button.height);
+
     cx.fillText(
         button.symbol,
         button.x + button.width / 2 - symbolWidth / 2,
