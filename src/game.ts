@@ -638,9 +638,9 @@ export const init = async (): Promise<void> => {
     restartButton.addEventListener("click", async (event) => {
         event.stopPropagation();
 
+        stopTune();
+
         exitFullScreen();
-        stopTune(SFX_START);
-        stopTune(SFX_RACE);
         restartButton.style.display = "none";
 
         z = 1;
