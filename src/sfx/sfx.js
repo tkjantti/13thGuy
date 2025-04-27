@@ -221,5 +221,10 @@ export const stopTune = (tune) => {
             FadeOut(startTune);
             break;
         }
+        default : {
+            startTune.pause();
+            raceTune.pause();
+            break;
+        }
     }
 };
