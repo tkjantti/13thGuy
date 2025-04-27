@@ -122,7 +122,10 @@ const setState = async (state: GameState) => {
 
     const button = document.getElementById("restartButton");
     if (button) {
-        button.style.display = state === GameState.Init ? "none" : "block";
+        button.style.display =
+            state === GameState.Running || state === GameState.Start
+                ? "block"
+                : "none";
     }
 
     maxRadius = 1280 * 2;
@@ -198,8 +201,6 @@ const setState = async (state: GameState) => {
             if (button) button.style.display = "none";
             break;
         default:
-            if (button && state !== GameState.Load)
-                button.style.display = "block";
             break;
     }
 };
@@ -609,8 +610,6 @@ const drawInitialScreen = (noisy: boolean): void => {
 async function postInitActions() {
     goFullScreen();
     playTune(SFX_START);
-    const button = document.getElementById("restartButton");
-    if (button) button.style.display = "block";
     raceNumber = 1;
     await setState(GameState.Start);
 }
