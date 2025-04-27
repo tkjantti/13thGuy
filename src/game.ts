@@ -122,10 +122,7 @@ const setState = async (state: GameState) => {
 
     const button = document.getElementById("restartButton");
     if (button) {
-        button.style.display =
-            state === GameState.Running || state === GameState.Start
-                ? "block"
-                : "none";
+        button.style.display = state !== GameState.Init ? "block" : "none";
     }
 
     maxRadius = 1280 * 2;
@@ -613,6 +610,12 @@ async function postInitActions() {
     await setState(GameState.Start);
 }
 
+async function startGameFlow() {
+    await waitForProgressInput();
+    goFullScreen();
+    await postInitActions();
+}
+
 export const init = async (): Promise<void> => {
     initializeControls();
     window.requestAnimationFrame(gameLoop);
@@ -648,21 +651,13 @@ export const init = async (): Promise<void> => {
 
         await setState(GameState.Init);
 
-        await waitForProgressInput();
-
-        goFullScreen();
-
-        await postInitActions();
+        await startGameFlow();
     });
 
     await initialize();
     await setState(GameState.Init);
 
-    await waitForProgressInput();
-
-    goFullScreen();
-
-    await postInitActions();
+    await startGameFlow();
 };
 
 // Function to request fullscreen
