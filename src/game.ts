@@ -608,7 +608,6 @@ const drawInitialScreen = (noisy: boolean): void => {
 
 // Helper function for the actions right after Init screen interaction
 async function postInitActions() {
-    goFullScreen();
     playTune(SFX_START);
     raceNumber = 1;
     await setState(GameState.Start);
@@ -659,6 +658,7 @@ export const init = async (): Promise<void> => {
 
     await waitForProgressInput();
 
+    goFullScreen();
     await postInitActions();
 };
 
