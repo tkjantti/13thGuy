@@ -137,12 +137,14 @@ const setState = async (state: GameState) => {
     switch (state) {
         case GameState.Start:
             // SFX_START or SFX_RESTART is playing
-            await waitForProgressInput();
-            await setState(GameState.Wait);
+            // Force a yield to the event loop AFTER the state has visually updated (implicitly via gameLoop)
+            // and BEFORE waiting for the next input.
+            await sleep(0);
+            await waitForProgressInput(); // Now wait for a genuinely new input
+            await setState(GameState.Wait); // Transition to Wait state after the input
             break;
         case GameState.Wait:
             // SFX_START continues playing.
-            // Problem: waitForProgressInput might resolve immediately after restart.
             await waitForProgressInput();
             await setState(GameState.RaceStarting);
             break;
@@ -641,19 +643,18 @@ function setupInitialStartListener() {
     removeStartListeners();
 
     // Define the handler function
-    currentStartHandler = async () => {
+    currentStartHandler = async (event: Event) => {
+        event.preventDefault(); // Prevent default action (like scrolling on touch or key default behavior)
         goFullScreen();
         await postInitActions();
     };
 
-    // Add the listeners with { once: true }
+    // Add the listeners with { once: true } but WITHOUT capture: true
     document.body.addEventListener("touchstart", currentStartHandler, {
         once: true,
-        capture: true,
     });
     document.body.addEventListener("keydown", currentStartHandler, {
         once: true,
-        capture: true,
     });
 }
 
