@@ -658,7 +658,7 @@ function setupInitialStartListener() {
 async function postInitActions() {
     playTune(SFX_START); // Play start tune
     raceNumber = 1; // Set race number for the first race
-    await setState(GameState.Start);
+    setState(GameState.Start);
 }
 
 // Function to request fullscreen
@@ -720,6 +720,6 @@ export const init = async (): Promise<void> => {
 
     // --- Final Initial Load Steps ---
     await initialize(); // Initialize SFX system
-    await setState(GameState.Init); // Set initial state to Init
+    setState(GameState.Init); // Set initial state to Init
     setupInitialStartListener(); // Setup listener for the *first* interaction
 };
