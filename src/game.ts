@@ -72,7 +72,7 @@ const versionText = "Director's cut (" + (VERSION ? VERSION : "DEV") + ")";
 const TIME_STEP = 1000 / 60;
 const MAX_FRAME = TIME_STEP * 5;
 
-let lastTime = 0;
+let lastTime = performance.now();
 
 let raceNumber = 0;
 
@@ -83,7 +83,7 @@ let randomHeighOffset = 1 + Math.random() * 0.3;
 // Player zoom level for animation
 let z = 1;
 
-let level: Level;
+let level: Level | undefined; // Explicitly allow undefined
 
 let maxRadius = 0;
 
@@ -117,6 +117,9 @@ let counted = 0;
 
 const restartButton = document.createElement("button");
 
+// Keep track of the handler function reference to remove it later
+let currentStartHandler: ((event: Event) => Promise<void>) | null = null;
+
 const setState = async (state: GameState) => {
     gameState = state;
 
@@ -125,22 +128,32 @@ const setState = async (state: GameState) => {
         button.style.display = state !== GameState.Init ? "block" : "none";
     }
 
+    if (state !== GameState.Init) {
+        removeStartListeners(); // Removes the initial start listener
+    }
+
     maxRadius = 1280 * 2;
 
     switch (state) {
         case GameState.Start:
+            // SFX_START or SFX_RESTART is playing
             await waitForProgressInput();
             await setState(GameState.Wait);
             break;
         case GameState.Wait:
+            // SFX_START continues playing.
+            // Problem: waitForProgressInput might resolve immediately after restart.
             await waitForProgressInput();
             await setState(GameState.RaceStarting);
             break;
         case GameState.RaceStarting:
-            await setState(GameState.Ready);
+            // SFX_START continues playing
+            await setState(GameState.Ready); // Automatic transition
             break;
         case GameState.Ready:
-            counted = 0;
+            counted = 0; // Ensure counted is 0 when entering Ready
+            stopTune(); // Stop previous tune (SFX_START)
+            // Create new level instance
             if (raceNumber > 1 && level && !level.player.eliminated) {
                 const track =
                     raceNumber === 3 ? getThirdTrack() : getSecondTrack();
@@ -148,54 +161,60 @@ const setState = async (state: GameState) => {
                     track,
                     randomWidhOffset,
                     randomHeighOffset,
-                    level.characters,
+                    level.characters, // Pass existing characters for subsequent rounds
                     platePattern,
                 );
             } else {
+                // First race or after elimination, start fresh
                 level = new Level(
                     getFirstTrack(),
                     randomWidhOffset,
                     randomHeighOffset,
-                    undefined,
+                    undefined, // Start with default characters
                     platePattern,
                 );
             }
-            raceNumber++;
-            radius = maxRadius;
+            radius = maxRadius; // Reset radius for the animation
             readyCircleStartTime = drawTime;
-            playTune(SFX_RACE);
+            playTune(SFX_RACE); // Play race tune *only* here
             break;
 
         case GameState.GameOver:
             radius = 1;
-            playTune(SFX_GAMEOVER);
+            playTune(SFX_GAMEOVER); // Play game over tune
             randomWidhOffset = 1 + Math.random() * 0.6;
             randomHeighOffset = 1 + Math.random() * 0.3;
 
-            await waitForProgressInput();
-            playTune(SFX_RESTART);
-            raceNumber = 1;
-            await setState(GameState.Start);
+            // Don't stop the tune here, let it play while waiting
+            await waitForProgressInput(); // Wait for continue input
+            playTune(SFX_RESTART); // Play restart tune *after* input
+            await setState(GameState.Start); // Go back to Start state
             break;
         case GameState.GameFinished:
             radius = 1;
-            playTune(SFX_FINISHED);
+            playTune(SFX_FINISHED); // Play finished tune
             if (level && level.characters.length > 14) {
-                await sleep(2500);
+                // Qualified
+                await sleep(2500); // Let tune play during wait
                 await waitForProgressInput();
-                await setState(GameState.Ready);
+                raceNumber++; // Increment race number for the next round
+                await setState(GameState.Ready); // Go to next race
             } else {
-                await waitForProgressInput();
+                // Final Winner
+                // Let tune play while waiting
+                await waitForProgressInput(); // Wait for input to restart
                 clearCharacterGradientCache();
-                raceNumber = 1;
-                await setState(GameState.Start);
+                playTune(SFX_RESTART); // Play restart tune *after* input
+                await setState(GameState.Start); // Go back to Start state
             }
             break;
         case GameState.Running:
             renderTouchControls();
             break;
         case GameState.Init:
+            stopTune();
             if (button) button.style.display = "none";
+            // Reset any state specific to Init if needed, though most resets are in the handler now
             break;
         default:
             break;
@@ -220,10 +239,10 @@ const update = (t: number, dt: number): void => {
     switch (gameState) {
         case GameState.Running: {
             updateControls();
-            level.update(t, dt);
-            if (level.state === State.GAME_OVER) {
+            level?.update(t, dt);
+            if (level?.state === State.GAME_OVER) {
                 setState(GameState.GameOver);
-            } else if (level.state === State.FINISHED) {
+            } else if (level?.state === State.FINISHED) {
                 setState(GameState.GameFinished);
             }
             break;
@@ -375,7 +394,7 @@ const draw = (t: number, dt: number): void => {
             cx.fillStyle = "#802010";
             cx.fill();
             renderText("❌ ELIMINATED!", TextSize.Large, "Impact", 1, -4.5);
-            if (level.player.rank === 13) {
+            if (level?.player.rank === 13) {
                 renderText(
                     "Don't be the 13TH GUY",
                     TextSize.Small,
@@ -388,7 +407,7 @@ const draw = (t: number, dt: number): void => {
                     "Sans-serif",
                 );
                 renderText(
-                    "The final rank is " + level.player.rank + ".",
+                    "The final rank is " + level?.player.rank + ".",
                     TextSize.Normal,
                     "Impact",
                     1,
@@ -435,11 +454,11 @@ const draw = (t: number, dt: number): void => {
             cx.fill();
 
             if (radius >= maxRadius / 4) {
-                if (level.characters.length > 14) {
+                if (level && level.characters.length > 14) {
                     renderText("✪ QUALIFIED!", TextSize.Large, "Impact", 1, -5);
                     renderText("☻", TextSize.Huge, "Impact");
                     renderText(
-                        "Ready for next round " + raceNumber + " / 3",
+                        "Ready for next round " + (raceNumber + 1) + " / 3",
                         TextSize.Normal,
                         "Sans-serif",
                         1,
@@ -480,10 +499,11 @@ const draw = (t: number, dt: number): void => {
                     t,
                     radius < canvas.width / 6
                         ? CharacterFacingDirection.Right
-                        : level.characters.length <= 14 || t % 3600 > 1800
+                        : (level && level.characters.length <= 14) ||
+                            t % 3600 > 1800
                           ? CharacterFacingDirection.Backward
                           : CharacterFacingDirection.BackwardRight,
-                    level.characters.length > 14
+                    level && level.characters.length > 14
                         ? CharacterAnimation.Walk
                         : CharacterAnimation.Celebrate,
                     pattern,
@@ -603,62 +623,46 @@ const drawInitialScreen = (noisy: boolean): void => {
     applyCRTEffect(noisy);
 };
 
+// Function to remove existing start listeners
+function removeStartListeners() {
+    if (currentStartHandler) {
+        document.body.removeEventListener("touchstart", currentStartHandler, {
+            capture: true,
+        });
+        document.body.removeEventListener("keydown", currentStartHandler, {
+            capture: true,
+        });
+        currentStartHandler = null;
+    }
+}
+
+// Function to setup the one-time listener for starting the game
+function setupInitialStartListener() {
+    removeStartListeners();
+
+    // Define the handler function
+    currentStartHandler = async () => {
+        goFullScreen();
+        await postInitActions();
+    };
+
+    // Add the listeners with { once: true }
+    document.body.addEventListener("touchstart", currentStartHandler, {
+        once: true,
+        capture: true,
+    });
+    document.body.addEventListener("keydown", currentStartHandler, {
+        once: true,
+        capture: true,
+    });
+}
+
 // Helper function for the actions right after Init screen interaction
 async function postInitActions() {
-    playTune(SFX_START);
-    raceNumber = 1;
+    playTune(SFX_START); // Play start tune
+    raceNumber = 1; // Set race number for the first race
     await setState(GameState.Start);
 }
-
-async function startGameFlow() {
-    await waitForProgressInput();
-    goFullScreen();
-    await postInitActions();
-}
-
-export const init = async (): Promise<void> => {
-    initializeControls();
-    window.requestAnimationFrame(gameLoop);
-
-    restartButton.id = "restartButton";
-    restartButton.style.position = "absolute";
-    restartButton.style.top = "10px";
-    restartButton.style.right = "10px";
-    restartButton.style.zIndex = "10";
-    restartButton.textContent = "⟳";
-    restartButton.style.padding = "5px 10px";
-    restartButton.style.color = "white";
-    restartButton.style.background = "black";
-    restartButton.style.border = "1px solid white";
-    restartButton.style.borderRadius = "4px";
-    restartButton.style.fontSize = "24px";
-    restartButton.style.display = "none";
-
-    document.body.appendChild(restartButton);
-
-    restartButton.addEventListener("click", async (event) => {
-        event.stopPropagation();
-
-        stopTune();
-
-        exitFullScreen();
-        restartButton.style.display = "none";
-
-        z = 1;
-        randomWidhOffset = 1 + Math.random() * 0.6;
-        randomHeighOffset = 1 + Math.random() * 0.3;
-        clearCharacterGradientCache();
-
-        await setState(GameState.Init);
-
-        await startGameFlow();
-    });
-
-    await initialize();
-    await setState(GameState.Init);
-
-    await startGameFlow();
-};
 
 // Function to request fullscreen
 function goFullScreen() {
@@ -687,29 +691,38 @@ function goFullScreen() {
     }
 }
 
-// Function to exit fullscreen
-function exitFullScreen() {
-    const doc = document as Document & {
-        mozCancelFullScreen?: () => Promise<void>;
-        webkitExitFullscreen?: () => Promise<void>;
-    };
-    if (doc.exitFullscreen) {
-        doc.exitFullscreen().catch((err) => {
-            console.error(
-                `Error attempting to disable full-screen mode: ${err.message} (${err.name})`,
-            );
-        });
-    } else if (doc.webkitExitFullscreen) {
-        doc.webkitExitFullscreen().catch((err) => {
-            console.error(
-                `Error attempting to disable full-screen mode: ${err.message} (${err.name})`,
-            );
-        });
-    } else if (doc.mozCancelFullScreen) {
-        doc.mozCancelFullScreen().catch((err) => {
-            console.error(
-                `Error attempting to disable full-screen mode: ${err.message} (${err.name})`,
-            );
-        });
-    }
-}
+export const init = async (): Promise<void> => {
+    // --- Initial Setup ---
+    initializeControls();
+    lastTime = performance.now(); // Initialize lastTime here
+    window.requestAnimationFrame(gameLoop);
+
+    // --- Restart Button Setup ---
+    restartButton.id = "restartButton";
+    restartButton.style.position = "absolute";
+    restartButton.style.top = "10px";
+    restartButton.style.right = "10px";
+    restartButton.style.zIndex = "10";
+    restartButton.textContent = "⟳";
+    restartButton.style.padding = "5px 10px";
+    restartButton.style.color = "white";
+    restartButton.style.background = "black";
+    restartButton.style.border = "1px solid white";
+    restartButton.style.borderRadius = "4px";
+    restartButton.style.fontSize = "24px";
+    restartButton.style.display = "none";
+
+    document.body.appendChild(restartButton);
+
+    restartButton.addEventListener("click", (event) => {
+        event.stopPropagation(); // Prevent triggering other listeners
+
+        // --- Use reload for a full reset ---
+        window.location.reload();
+    });
+
+    // --- Final Initial Load Steps ---
+    await initialize(); // Initialize SFX system
+    await setState(GameState.Init); // Set initial state to Init
+    setupInitialStartListener(); // Setup listener for the *first* interaction
+};
