@@ -201,6 +201,7 @@ const setState = async (state: GameState) => {
             } else {
                 // Final Winner
                 await waitForProgressInput(); // Wait for input to restart
+                raceNumber = 1;
                 clearCharacterGradientCache();
                 playTune(SFX_RESTART); // Play restart tune *after* input
                 setState(GameState.Start);
