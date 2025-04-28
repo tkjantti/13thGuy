@@ -139,16 +139,16 @@ const setState = async (state: GameState) => {
             // SFX_START or SFX_RESTART is playing
             await sleep(0);
             await waitForProgressInput(); // Now wait for a genuinely new input
-            setState(GameState.Wait); // Removed await
+            setState(GameState.Wait);
             break;
         case GameState.Wait:
             // SFX_START continues playing.
             await waitForProgressInput();
-            setState(GameState.RaceStarting); // Removed await
+            setState(GameState.RaceStarting);
             break;
         case GameState.RaceStarting:
             // SFX_START continues playing
-            setState(GameState.Ready); // Removed await
+            setState(GameState.Ready);
             break;
         case GameState.Ready:
             counted = 0; // Ensure counted is 0 when entering Ready
@@ -187,7 +187,7 @@ const setState = async (state: GameState) => {
 
             await waitForProgressInput(); // Wait for continue input
             playTune(SFX_RESTART); // Play restart tune *after* input
-            setState(GameState.Start); // Removed await
+            setState(GameState.Start);
             break;
         case GameState.GameFinished:
             radius = 1;
@@ -197,13 +197,13 @@ const setState = async (state: GameState) => {
                 await sleep(2500); // Let tune play during wait
                 await waitForProgressInput();
                 raceNumber++; // Increment race number for the next round
-                setState(GameState.Ready); // Removed await
+                setState(GameState.Ready);
             } else {
                 // Final Winner
                 await waitForProgressInput(); // Wait for input to restart
                 clearCharacterGradientCache();
                 playTune(SFX_RESTART); // Play restart tune *after* input
-                setState(GameState.Start); // Removed await
+                setState(GameState.Start);
             }
             break;
         case GameState.Running:
