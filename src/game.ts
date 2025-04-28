@@ -186,6 +186,7 @@ const setState = async (state: GameState) => {
             randomHeighOffset = 1 + Math.random() * 0.3;
 
             await waitForProgressInput(); // Wait for continue input
+            raceNumber = 1;
             playTune(SFX_RESTART); // Play restart tune *after* input
             setState(GameState.Start);
             break;
