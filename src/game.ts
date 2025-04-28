@@ -137,20 +137,18 @@ const setState = async (state: GameState) => {
     switch (state) {
         case GameState.Start:
             // SFX_START or SFX_RESTART is playing
-            // Force a yield to the event loop AFTER the state has visually updated (implicitly via gameLoop)
-            // and BEFORE waiting for the next input.
             await sleep(0);
             await waitForProgressInput(); // Now wait for a genuinely new input
-            await setState(GameState.Wait); // Transition to Wait state after the input
+            setState(GameState.Wait); // Removed await
             break;
         case GameState.Wait:
             // SFX_START continues playing.
             await waitForProgressInput();
-            await setState(GameState.RaceStarting);
+            setState(GameState.RaceStarting); // Removed await
             break;
         case GameState.RaceStarting:
             // SFX_START continues playing
-            await setState(GameState.Ready); // Automatic transition
+            setState(GameState.Ready); // Removed await
             break;
         case GameState.Ready:
             counted = 0; // Ensure counted is 0 when entering Ready
@@ -187,10 +185,9 @@ const setState = async (state: GameState) => {
             randomWidhOffset = 1 + Math.random() * 0.6;
             randomHeighOffset = 1 + Math.random() * 0.3;
 
-            // Don't stop the tune here, let it play while waiting
             await waitForProgressInput(); // Wait for continue input
             playTune(SFX_RESTART); // Play restart tune *after* input
-            await setState(GameState.Start); // Go back to Start state
+            setState(GameState.Start); // Removed await
             break;
         case GameState.GameFinished:
             radius = 1;
@@ -200,14 +197,13 @@ const setState = async (state: GameState) => {
                 await sleep(2500); // Let tune play during wait
                 await waitForProgressInput();
                 raceNumber++; // Increment race number for the next round
-                await setState(GameState.Ready); // Go to next race
+                setState(GameState.Ready); // Removed await
             } else {
                 // Final Winner
-                // Let tune play while waiting
                 await waitForProgressInput(); // Wait for input to restart
                 clearCharacterGradientCache();
                 playTune(SFX_RESTART); // Play restart tune *after* input
-                await setState(GameState.Start); // Go back to Start state
+                setState(GameState.Start); // Removed await
             }
             break;
         case GameState.Running:
