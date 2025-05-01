@@ -69,6 +69,8 @@ import {
 
 const versionText = "Director's cut (" + (VERSION ? VERSION : "DEV") + ")";
 
+let errorMessage: string | undefined;
+
 const TIME_STEP = 1000 / 60;
 const MAX_FRAME = TIME_STEP * 5;
 
@@ -520,6 +522,11 @@ const draw = (t: number, dt: number): void => {
         }
     }
 
+    // Temporary drawing of error message
+    if (errorMessage) {
+        renderText(errorMessage, TextSize.Normal, "Impact", 1, -10);
+    }
+
     cx.restore();
 };
 
@@ -643,6 +650,7 @@ async function goFullScreen(): Promise<void> {
             console.error(
                 `Error attempting to enable full-screen mode: ${err.message} (${err.name})`,
             );
+            errorMessage = err.message;
         }
     }
 }
