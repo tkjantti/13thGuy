@@ -2,6 +2,7 @@
   "name": "js13kgames-2024",
   "private": true,
   "version": "0.0.0",
+  "homepage": "https://tkjantti.github.io/13thGuy/",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,16 +10,18 @@
     "prebuild": "node scripts/prebuild.js",
     "build": "tsc && vite build",
     "postbuild": "node scripts/postbuild.js",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist",
     "preview": "vite preview",
     "lint": "eslint ."
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
     "@types/eslint__js": "^8.42.3",
-    "archiver": "^7.0.1",
     "eslint": "^9.9.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
+    "gh-pages": "^6.3.0",
     "prettier": "3.3.3",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.1.0",
