@@ -103,8 +103,6 @@ enum GameState {
 
 let gameState: GameState = GameState.Load;
 
-let inFullScreen = false;
-
 // Hold the time of drawing for functions where the t variable is not
 // available.
 let drawTime: number = 0;
@@ -129,11 +127,6 @@ const setState = async (state: GameState) => {
     if (restartButton) {
         restartButton.style.display =
             state !== GameState.Init ? "block" : "none";
-    }
-
-    const fullscreenButton = document.getElementById("fullscreenButton");
-    if (fullscreenButton) {
-        fullscreenButton.style.display = inFullScreen ? "none" : "block";
     }
 
     maxRadius = 1280 * 2;
@@ -637,41 +630,47 @@ async function postInitActions() {
     setState(GameState.Start);
 }
 
-// Function to request fullscreen
-async function goFullScreen(): Promise<void> {
+// Function to request fullscreen and exit fullscreen
+async function toggleFullScreen(): Promise<void> {
     const elem = document.documentElement as HTMLElement & {
         mozRequestFullScreen?: () => Promise<void>;
         webkitRequestFullscreen?: () => Promise<void>;
     };
 
-    try {
-        if (elem.requestFullscreen) {
-            await elem.requestFullscreen();
-        } else if (elem.webkitRequestFullscreen) {
-            await elem.webkitRequestFullscreen();
-        } else if (elem.mozRequestFullScreen) {
-            await elem.mozRequestFullScreen();
-        }
-    } catch (err: unknown) {
-        if (err instanceof Error) {
-            console.error(
-                `Error attempting to enable full-screen mode: ${err.message} (${err.name})`,
-            );
-            errorMessage = err.message;
-
-            return;
-        }
-    }
-
-    inFullScreen = true;
     const fullscreenButton = document.getElementById("fullscreenButton");
-    if (fullscreenButton) {
-        fullscreenButton.style.display = "none";
-    }
 
-    const restartButton = document.getElementById("restartButton");
-    if (restartButton) {
-        restartButton.style.right = "10px";
+    if (document.fullscreenElement) {
+        document
+            .exitFullscreen()
+            .then(() => {
+                if (fullscreenButton) {
+                    fullscreenButton.textContent = "⛶";
+                }
+            })
+            .catch((err) => console.error(err));
+    } else {
+        try {
+            if (elem.requestFullscreen) {
+                await elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) {
+                await elem.webkitRequestFullscreen();
+            } else if (elem.mozRequestFullScreen) {
+                await elem.mozRequestFullScreen();
+            }
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                console.error(
+                    `Error attempting to enable full-screen mode: ${err.message} (${err.name})`,
+                );
+                errorMessage = err.message;
+
+                return;
+            }
+        }
+
+        if (fullscreenButton) {
+            fullscreenButton.textContent = "🗕";
+        }
     }
 }
 
@@ -703,7 +702,6 @@ export const init = async (): Promise<void> => {
     fullscreenButton.style.border = border;
     fullscreenButton.style.borderRadius = borderRadius;
     fullscreenButton.style.fontSize = fontSize;
-    fullscreenButton.style.display = "none";
 
     restartButton.id = "restartButton";
     restartButton.style.position = "absolute";
@@ -726,7 +724,7 @@ export const init = async (): Promise<void> => {
     fullscreenButton.addEventListener("click", (event) => {
         event.stopPropagation();
 
-        goFullScreen();
+        toggleFullScreen();
     });
 
     restartButton.addEventListener("click", (event) => {
