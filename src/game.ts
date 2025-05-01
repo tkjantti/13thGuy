@@ -103,6 +103,8 @@ enum GameState {
 
 let gameState: GameState = GameState.Load;
 
+let inFullScreen = false;
+
 // Hold the time of drawing for functions where the t variable is not
 // available.
 let drawTime: number = 0;
@@ -117,14 +119,21 @@ const platePattern = createPlateTexture();
 
 let counted = 0;
 
+const fullscreenButton = document.createElement("button");
 const restartButton = document.createElement("button");
 
 const setState = async (state: GameState) => {
     gameState = state;
 
-    const button = document.getElementById("restartButton");
-    if (button) {
-        button.style.display = state !== GameState.Init ? "block" : "none";
+    const restartButton = document.getElementById("restartButton");
+    if (restartButton) {
+        restartButton.style.display =
+            state !== GameState.Init ? "block" : "none";
+    }
+
+    const fullscreenButton = document.getElementById("fullscreenButton");
+    if (fullscreenButton) {
+        fullscreenButton.style.display = inFullScreen ? "none" : "block";
     }
 
     maxRadius = 1280 * 2;
@@ -208,8 +217,6 @@ const setState = async (state: GameState) => {
             break;
         case GameState.Init:
             stopTune();
-            if (button) button.style.display = "none";
-            // Reset any state specific to Init if needed, though most resets are in the handler now
             break;
         default:
             break;
@@ -651,7 +658,20 @@ async function goFullScreen(): Promise<void> {
                 `Error attempting to enable full-screen mode: ${err.message} (${err.name})`,
             );
             errorMessage = err.message;
+
+            return;
         }
+    }
+
+    inFullScreen = true;
+    const fullscreenButton = document.getElementById("fullscreenButton");
+    if (fullscreenButton) {
+        fullscreenButton.style.display = "none";
+    }
+
+    const restartButton = document.getElementById("restartButton");
+    if (restartButton) {
+        restartButton.style.right = "10px";
     }
 }
 
@@ -661,11 +681,24 @@ export const init = async (): Promise<void> => {
     lastTime = performance.now(); // Initialize lastTime here
     window.requestAnimationFrame(gameLoop);
 
-    // --- Restart Button Setup ---
+    fullscreenButton.id = "fullscreenButton";
+    fullscreenButton.style.position = "absolute";
+    fullscreenButton.style.top = "10px";
+    fullscreenButton.style.right = "10px";
+    fullscreenButton.style.zIndex = "10";
+    fullscreenButton.textContent = "⛶";
+    fullscreenButton.style.padding = "5px 10px";
+    fullscreenButton.style.color = "white";
+    fullscreenButton.style.background = "black";
+    fullscreenButton.style.border = "1px solid white";
+    fullscreenButton.style.borderRadius = "4px";
+    fullscreenButton.style.fontSize = "24px";
+    fullscreenButton.style.display = "none";
+
     restartButton.id = "restartButton";
     restartButton.style.position = "absolute";
     restartButton.style.top = "10px";
-    restartButton.style.right = "10px";
+    restartButton.style.right = "80px";
     restartButton.style.zIndex = "10";
     restartButton.textContent = "⟳";
     restartButton.style.padding = "5px 10px";
@@ -677,9 +710,16 @@ export const init = async (): Promise<void> => {
     restartButton.style.display = "none";
 
     document.body.appendChild(restartButton);
+    document.body.appendChild(fullscreenButton);
+
+    fullscreenButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+
+        goFullScreen();
+    });
 
     restartButton.addEventListener("click", (event) => {
-        event.stopPropagation(); // Prevent triggering other listeners
+        event.stopPropagation();
 
         // --- Use reload for a full reset ---
         window.location.reload();
@@ -691,6 +731,5 @@ export const init = async (): Promise<void> => {
 
     await waitForProgressInput();
 
-    await goFullScreen();
     await postInitActions();
 };
