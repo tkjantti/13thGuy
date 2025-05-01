@@ -669,7 +669,7 @@ async function toggleFullScreen(): Promise<void> {
         }
 
         if (fullscreenButton) {
-            fullscreenButton.textContent = "🗕";
+            fullscreenButton.textContent = "╬";
         }
     }
 }
@@ -688,6 +688,7 @@ export const init = async (): Promise<void> => {
     const border = "1px solid white";
     const borderRadius = "4px";
     const fontSize = "24px";
+    const lineHeight = "0";
 
     fullscreenButton.id = "fullscreenButton";
     fullscreenButton.style.position = "absolute";
@@ -702,13 +703,14 @@ export const init = async (): Promise<void> => {
     fullscreenButton.style.border = border;
     fullscreenButton.style.borderRadius = borderRadius;
     fullscreenButton.style.fontSize = fontSize;
+    fullscreenButton.style.lineHeight = lineHeight;
 
     restartButton.id = "restartButton";
     restartButton.style.position = "absolute";
     restartButton.style.top = top;
     restartButton.style.right = "60px";
     restartButton.style.zIndex = zIndex;
-    restartButton.textContent = "↻";
+    restartButton.textContent = "↺";
     restartButton.style.width = size;
     restartButton.style.height = size;
     restartButton.style.color = color;
@@ -716,6 +718,7 @@ export const init = async (): Promise<void> => {
     restartButton.style.border = border;
     restartButton.style.borderRadius = borderRadius;
     restartButton.style.fontSize = fontSize;
+    restartButton.style.lineHeight = lineHeight;
     restartButton.style.display = "none";
 
     document.body.appendChild(restartButton);
