@@ -117,19 +117,12 @@ let counted = 0;
 
 const restartButton = document.createElement("button");
 
-// Keep track of the handler function reference to remove it later
-let currentStartHandler: ((event: Event) => Promise<void>) | null = null;
-
 const setState = async (state: GameState) => {
     gameState = state;
 
     const button = document.getElementById("restartButton");
     if (button) {
         button.style.display = state !== GameState.Init ? "block" : "none";
-    }
-
-    if (state !== GameState.Init) {
-        removeStartListeners(); // Removes the initial start listener
     }
 
     maxRadius = 1280 * 2;
@@ -623,39 +616,6 @@ const drawInitialScreen = (noisy: boolean): void => {
     applyCRTEffect(noisy);
 };
 
-// Function to remove existing start listeners
-function removeStartListeners() {
-    if (currentStartHandler) {
-        document.body.removeEventListener("touchstart", currentStartHandler, {
-            capture: true,
-        });
-        document.body.removeEventListener("keydown", currentStartHandler, {
-            capture: true,
-        });
-        currentStartHandler = null;
-    }
-}
-
-// Function to setup the one-time listener for starting the game
-function setupInitialStartListener() {
-    removeStartListeners();
-
-    // Define the handler function
-    currentStartHandler = async (event: Event) => {
-        event.preventDefault(); // Prevent default action (like scrolling on touch or key default behavior)
-        goFullScreen();
-        await postInitActions();
-    };
-
-    // Add the listeners with { once: true } but WITHOUT capture: true
-    document.body.addEventListener("touchstart", currentStartHandler, {
-        once: true,
-    });
-    document.body.addEventListener("keydown", currentStartHandler, {
-        once: true,
-    });
-}
-
 // Helper function for the actions right after Init screen interaction
 async function postInitActions() {
     playTune(SFX_START); // Play start tune
@@ -664,29 +624,26 @@ async function postInitActions() {
 }
 
 // Function to request fullscreen
-function goFullScreen() {
+async function goFullScreen(): Promise<void> {
     const elem = document.documentElement as HTMLElement & {
         mozRequestFullScreen?: () => Promise<void>;
         webkitRequestFullscreen?: () => Promise<void>;
     };
-    if (elem.requestFullscreen) {
-        elem.requestFullscreen().catch((err) => {
+
+    try {
+        if (elem.requestFullscreen) {
+            await elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+            await elem.webkitRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+            await elem.mozRequestFullScreen();
+        }
+    } catch (err: unknown) {
+        if (err instanceof Error) {
             console.error(
                 `Error attempting to enable full-screen mode: ${err.message} (${err.name})`,
             );
-        });
-    } else if (elem.webkitRequestFullscreen) {
-        elem.webkitRequestFullscreen().catch((err) => {
-            console.error(
-                `Error attempting to enable full-screen mode: ${err.message} (${err.name})`,
-            );
-        });
-    } else if (elem.mozRequestFullScreen) {
-        elem.mozRequestFullScreen().catch((err) => {
-            console.error(
-                `Error attempting to enable full-screen mode: ${err.message} (${err.name})`,
-            );
-        });
+        }
     }
 }
 
@@ -723,5 +680,9 @@ export const init = async (): Promise<void> => {
     // --- Final Initial Load Steps ---
     await initialize(); // Initialize SFX system
     setState(GameState.Init); // Set initial state to Init
-    setupInitialStartListener(); // Setup listener for the *first* interaction
+
+    await waitForProgressInput();
+
+    await goFullScreen();
+    await postInitActions();
 };
