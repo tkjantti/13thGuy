@@ -681,32 +681,43 @@ export const init = async (): Promise<void> => {
     lastTime = performance.now(); // Initialize lastTime here
     window.requestAnimationFrame(gameLoop);
 
+    const top = "10px";
+    const zIndex = "10";
+    const size = "40px";
+    const color = "white";
+    const background = "black";
+    const border = "1px solid white";
+    const borderRadius = "4px";
+    const fontSize = "24px";
+
     fullscreenButton.id = "fullscreenButton";
     fullscreenButton.style.position = "absolute";
-    fullscreenButton.style.top = "10px";
+    fullscreenButton.style.top = top;
     fullscreenButton.style.right = "10px";
-    fullscreenButton.style.zIndex = "10";
+    fullscreenButton.style.zIndex = zIndex;
     fullscreenButton.textContent = "⛶";
-    fullscreenButton.style.padding = "5px 10px";
-    fullscreenButton.style.color = "white";
-    fullscreenButton.style.background = "black";
-    fullscreenButton.style.border = "1px solid white";
-    fullscreenButton.style.borderRadius = "4px";
-    fullscreenButton.style.fontSize = "24px";
+    fullscreenButton.style.width = size;
+    fullscreenButton.style.height = size;
+    fullscreenButton.style.color = color;
+    fullscreenButton.style.background = background;
+    fullscreenButton.style.border = border;
+    fullscreenButton.style.borderRadius = borderRadius;
+    fullscreenButton.style.fontSize = fontSize;
     fullscreenButton.style.display = "none";
 
     restartButton.id = "restartButton";
     restartButton.style.position = "absolute";
-    restartButton.style.top = "10px";
-    restartButton.style.right = "80px";
-    restartButton.style.zIndex = "10";
-    restartButton.textContent = "⟳";
-    restartButton.style.padding = "5px 10px";
-    restartButton.style.color = "white";
-    restartButton.style.background = "black";
-    restartButton.style.border = "1px solid white";
-    restartButton.style.borderRadius = "4px";
-    restartButton.style.fontSize = "24px";
+    restartButton.style.top = top;
+    restartButton.style.right = "60px";
+    restartButton.style.zIndex = zIndex;
+    restartButton.textContent = "↻";
+    restartButton.style.width = size;
+    restartButton.style.height = size;
+    restartButton.style.color = color;
+    restartButton.style.background = background;
+    restartButton.style.border = border;
+    restartButton.style.borderRadius = borderRadius;
+    restartButton.style.fontSize = fontSize;
     restartButton.style.display = "none";
 
     document.body.appendChild(restartButton);
