@@ -88,55 +88,101 @@ export const initialize = () => {
 };
 
 const FadeOut = (tune, vol = 0) => {
+    if (tune._fadeInterval) {
+        clearInterval(tune._fadeInterval);
+        tune._fadeInterval = null;
+    }
     var currentVolume = tune.volume;
-    if (tune.volume > vol) {
-        var fadeOutInterval = setInterval(function () {
-            currentVolume = (parseFloat(currentVolume) - 0.1).toFixed(1);
-            if (currentVolume > vol) {
-                tune.volume = currentVolume;
-            } else {
-                tune.volume = vol;
+    if (currentVolume > vol) {
+        tune._fadeInterval = setInterval(function () {
+            currentVolume = Math.max(vol, parseFloat(currentVolume) - 0.1).toFixed(1);
+            tune.volume = currentVolume;
+            if (currentVolume <= vol) {
                 if (vol === 0) tune.pause();
-                clearInterval(fadeOutInterval);
+                clearInterval(tune._fadeInterval);
+                tune._fadeInterval = null;
             }
         }, 100);
+    } else if (vol === 0 && !tune.paused) {
+        tune.pause();
+        tune.volume = 0;
     }
 };
 
 const FadeIn = (tune, vol = 1) => {
-    setTimeout(() => {
-        tune.play();
+    if (tune._fadeInterval) {
+        clearInterval(tune._fadeInterval);
+        tune._fadeInterval = null;
+    }
+
+    let playPromise = Promise.resolve();
+    if (tune.paused) {
+        tune.volume = 0;
+        playPromise = tune.play();
+    }
+
+    playPromise.then(() => {
         var currentVolume = tune.volume;
-        if (tune.volume < vol) {
-            var fadeOutInterval = setInterval(function () {
-                currentVolume = (parseFloat(currentVolume) + 0.1).toFixed(1);
-                if (currentVolume < vol) {
-                    tune.volume = currentVolume;
-                } else {
+        if (currentVolume < vol) {
+            if (tune._fadeInterval) clearInterval(tune._fadeInterval);
+
+            tune._fadeInterval = setInterval(function () {
+                currentVolume = Math.min(vol, parseFloat(currentVolume) + 0.1).toFixed(1);
+                tune.volume = currentVolume;
+
+                if (parseFloat(currentVolume) >= vol) {
                     tune.volume = vol;
-                    clearInterval(fadeOutInterval);
+                    clearInterval(tune._fadeInterval);
+                    tune._fadeInterval = null;
                 }
             }, 100);
+        } else {
+            tune.volume = vol;
         }
-    }, 200);
+    }).catch(e => {
+        console.warn("FadeIn play() failed:", e);
+        if (tune._fadeInterval) {
+            clearInterval(tune._fadeInterval);
+            tune._fadeInterval = null;
+        }
+    });
 };
 
 const FadeOutIn = (tune1, tune2) => {
-    var currentVolume = tune1.volume;
-    var fadeOutInterval1 = setInterval(function () {
-        currentVolume = (parseFloat(currentVolume) - 0.1).toFixed(1);
-        if (currentVolume > 0) {
-            tune1.volume = currentVolume;
-        } else {
-            tune1.volume = 0;
-            tune1.pause();
-            clearInterval(fadeOutInterval1);
+    if (tune1._fadeInterval) clearInterval(tune1._fadeInterval);
+    if (tune1._fadeOutInTimeout) clearTimeout(tune1._fadeOutInTimeout);
+    if (tune2._fadeInterval) clearInterval(tune2._fadeInterval);
+    if (tune2._fadeOutInTimeout) clearTimeout(tune2._fadeOutInTimeout);
+    tune1._fadeInterval = null;
+    tune1._fadeOutInTimeout = null;
+    tune2._fadeInterval = null;
+    tune2._fadeOutInTimeout = null;
 
-            setTimeout(() => {
-                FadeIn(tune2, 1);
-            }, 500);
-        }
-    }, 100);
+    var currentVolume = tune1.volume;
+    if (currentVolume > 0) {
+        tune1._fadeInterval = setInterval(function () {
+            currentVolume = Math.max(0, parseFloat(currentVolume) - 0.1).toFixed(1);
+            tune1.volume = currentVolume;
+
+            if (currentVolume <= 0) {
+                tune1.pause();
+                clearInterval(tune1._fadeInterval);
+                tune1._fadeInterval = null;
+
+                tune1._fadeOutInTimeout = setTimeout(() => {
+                    FadeIn(tune2, 1);
+                    tune1._fadeOutInTimeout = null;
+                }, 500);
+            }
+        }, 100);
+    } else {
+        tune1.pause();
+        tune1.volume = 0;
+        tune1._fadeOutInTimeout = setTimeout(() => {
+            FadeIn(tune2, 1);
+            tune1._fadeOutInTimeout = null;
+        }, 500);
+    }
 };
 
 export const playTune = (tune, vol) => {
@@ -156,7 +202,7 @@ export const playTune = (tune, vol) => {
         }
         case SFX_GAMEOVER: {
             gameoverFx.volume = 1;
-            gameoverFx.play();
+            gameoverFx.play().catch(e => console.warn("gameoverFx play failed:", e));
             FadeOut(raceTune);
             break;
         }
@@ -168,22 +214,9 @@ export const playTune = (tune, vol) => {
         case SFX_START: {
             startTune.volume = 0;
             startTune.currentTime = 0;
-            raceTune.currentTime = 0;
-            var promise = startTune.play();
-            if (promise !== undefined) {
-                promise
-                    .then(() => {
-                        // Autoplay started!
-                    })
-                    .catch((error) => {
-                        console.log("No for autoplay!" + error);
-                        // Autoplay was prevented.
-                    });
-            }
             FadeIn(startTune);
             break;
         }
-        //SFX
         case SFX_BOUNCE: {
             zzfx(vol, ...bounceSfx);
             break;
@@ -212,14 +245,27 @@ export const playTune = (tune, vol) => {
 };
 
 export const stopTune = (tune) => {
-    switch (tune) {
-        case SFX_RACE: {
-            FadeOut(raceTune);
-            break;
-        }
-        case SFX_START: {
-            FadeOut(startTune);
-            break;
-        }
+    const tunesToStop = [];
+
+    if (tune === SFX_RACE) {
+        tunesToStop.push(raceTune);
+    } else if (tune === SFX_START) {
+        tunesToStop.push(startTune);
+    } else {
+        tunesToStop.push(startTune, raceTune, gameoverFx);
     }
+
+    tunesToStop.forEach(audioEl => {
+        if (audioEl._fadeInterval) {
+            clearInterval(audioEl._fadeInterval);
+            audioEl._fadeInterval = null;
+        }
+        if (audioEl._fadeOutInTimeout) {
+            clearTimeout(audioEl._fadeOutInTimeout);
+            audioEl._fadeOutInTimeout = null;
+        }
+
+        audioEl.pause();
+        audioEl.currentTime = 0;
+    });
 };

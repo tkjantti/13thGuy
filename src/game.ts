@@ -39,6 +39,7 @@ import { getFirstTrack, getSecondTrack, getThirdTrack } from "./tracks";
 import {
     initialize,
     playTune,
+    stopTune,
     SFX_START,
     SFX_RACE,
     SFX_FINISHED,
@@ -68,10 +69,12 @@ import {
 
 const versionText = "Director's cut (" + (VERSION ? VERSION : "DEV") + ")";
 
+let errorMessage: string | undefined;
+
 const TIME_STEP = 1000 / 60;
 const MAX_FRAME = TIME_STEP * 5;
 
-let lastTime = 0;
+let lastTime = performance.now();
 
 let raceNumber = 0;
 
@@ -82,7 +85,7 @@ let randomHeighOffset = 1 + Math.random() * 0.3;
 // Player zoom level for animation
 let z = 1;
 
-let level: Level;
+let level: Level | undefined; // Explicitly allow undefined
 
 let maxRadius = 0;
 
@@ -114,67 +117,99 @@ const platePattern = createPlateTexture();
 
 let counted = 0;
 
+const fullscreenButton = document.createElement("button");
+const restartButton = document.createElement("button");
+
 const setState = async (state: GameState) => {
     gameState = state;
 
-    maxRadius = 1280 * 2; // Always same size to make animations last the same time (max canvas * 2)
+    const restartButton = document.getElementById("restartButton");
+    if (restartButton) {
+        restartButton.style.display =
+            state !== GameState.Init ? "block" : "none";
+    }
+
+    maxRadius = 1280 * 2;
 
     switch (state) {
         case GameState.Start:
+            // SFX_START or SFX_RESTART is playing
+            await sleep(0);
+            await waitForProgressInput(); // Now wait for a genuinely new input
+            setState(GameState.Wait);
+            break;
+        case GameState.Wait:
+            // SFX_START continues playing.
+            await waitForProgressInput();
+            setState(GameState.RaceStarting);
+            break;
+        case GameState.RaceStarting:
+            // SFX_START continues playing
+            setState(GameState.Ready);
             break;
         case GameState.Ready:
-            counted = 0;
-            if (raceNumber > 1 && !level.player.eliminated) {
+            counted = 0; // Ensure counted is 0 when entering Ready
+            stopTune(); // Stop previous tune (SFX_START)
+            // Create new level instance
+            if (raceNumber > 1 && level && !level.player.eliminated) {
                 const track =
                     raceNumber === 3 ? getThirdTrack() : getSecondTrack();
                 level = new Level(
                     track,
                     randomWidhOffset,
                     randomHeighOffset,
-                    level.characters,
+                    level.characters, // Pass existing characters for subsequent rounds
                     platePattern,
                 );
             } else {
+                // First race or after elimination, start fresh
                 level = new Level(
                     getFirstTrack(),
                     randomWidhOffset,
                     randomHeighOffset,
-                    undefined,
+                    undefined, // Start with default characters
                     platePattern,
                 );
             }
-            raceNumber++;
-            radius = maxRadius;
+            radius = maxRadius; // Reset radius for the animation
             readyCircleStartTime = drawTime;
-            playTune(SFX_RACE);
+            playTune(SFX_RACE); // Play race tune *only* here
             break;
 
         case GameState.GameOver:
             radius = 1;
-            playTune(SFX_GAMEOVER);
+            playTune(SFX_GAMEOVER); // Play game over tune
             randomWidhOffset = 1 + Math.random() * 0.6;
             randomHeighOffset = 1 + Math.random() * 0.3;
 
-            await waitForProgressInput();
-            playTune(SFX_RESTART);
-            startRace();
+            await waitForProgressInput(); // Wait for continue input
+            raceNumber = 1;
+            playTune(SFX_RESTART); // Play restart tune *after* input
+            setState(GameState.Start);
             break;
         case GameState.GameFinished:
             radius = 1;
-            playTune(SFX_FINISHED);
-            // Players left for next round?
-            if (level.characters.length > 14) {
-                await sleep(2500);
+            playTune(SFX_FINISHED); // Play finished tune
+            if (level && level.characters.length > 14) {
+                // Qualified
+                await sleep(2500); // Let tune play during wait
                 await waitForProgressInput();
+                raceNumber++; // Increment race number for the next round
                 setState(GameState.Ready);
             } else {
-                await waitForProgressInput();
+                // Final Winner
+                await waitForProgressInput(); // Wait for input to restart
+                raceNumber = 1;
                 clearCharacterGradientCache();
-                startRace();
+                playTune(SFX_RESTART); // Play restart tune *after* input
+                setState(GameState.Start);
             }
             break;
         case GameState.Running:
             renderTouchControls();
+            break;
+        case GameState.Init:
+            stopTune();
             break;
         default:
             break;
@@ -199,10 +234,10 @@ const update = (t: number, dt: number): void => {
     switch (gameState) {
         case GameState.Running: {
             updateControls();
-            level.update(t, dt);
-            if (level.state === State.GAME_OVER) {
+            level?.update(t, dt);
+            if (level?.state === State.GAME_OVER) {
                 setState(GameState.GameOver);
-            } else if (level.state === State.FINISHED) {
+            } else if (level?.state === State.FINISHED) {
                 setState(GameState.GameFinished);
             }
             break;
@@ -354,7 +389,7 @@ const draw = (t: number, dt: number): void => {
             cx.fillStyle = "#802010";
             cx.fill();
             renderText("❌ ELIMINATED!", TextSize.Large, "Impact", 1, -4.5);
-            if (level.player.rank === 13) {
+            if (level?.player.rank === 13) {
                 renderText(
                     "Don't be the 13TH GUY",
                     TextSize.Small,
@@ -367,7 +402,7 @@ const draw = (t: number, dt: number): void => {
                     "Sans-serif",
                 );
                 renderText(
-                    "The final rank is " + level.player.rank + ".",
+                    "The final rank is " + level?.player.rank + ".",
                     TextSize.Normal,
                     "Impact",
                     1,
@@ -414,11 +449,11 @@ const draw = (t: number, dt: number): void => {
             cx.fill();
 
             if (radius >= maxRadius / 4) {
-                if (level.characters.length > 14) {
+                if (level && level.characters.length > 14) {
                     renderText("✪ QUALIFIED!", TextSize.Large, "Impact", 1, -5);
                     renderText("☻", TextSize.Huge, "Impact");
                     renderText(
-                        "Ready for next round " + raceNumber + " / 3",
+                        "Ready for next round " + (raceNumber + 1) + " / 3",
                         TextSize.Normal,
                         "Sans-serif",
                         1,
@@ -459,10 +494,11 @@ const draw = (t: number, dt: number): void => {
                     t,
                     radius < canvas.width / 6
                         ? CharacterFacingDirection.Right
-                        : level.characters.length <= 14 || t % 3600 > 1800
+                        : (level && level.characters.length <= 14) ||
+                            t % 3600 > 1800
                           ? CharacterFacingDirection.Backward
                           : CharacterFacingDirection.BackwardRight,
-                    level.characters.length > 14
+                    level && level.characters.length > 14
                         ? CharacterAnimation.Walk
                         : CharacterAnimation.Celebrate,
                     pattern,
@@ -484,6 +520,11 @@ const draw = (t: number, dt: number): void => {
 
             break;
         }
+    }
+
+    // Temporary drawing of error message
+    if (errorMessage) {
+        renderText(errorMessage, TextSize.Normal, "Impact", 1, -10);
     }
 
     cx.restore();
@@ -582,29 +623,132 @@ const drawInitialScreen = (noisy: boolean): void => {
     applyCRTEffect(noisy);
 };
 
-export const startRace = async (): Promise<void> => {
-    raceNumber = 1;
-    z = 1;
+// Helper function for the actions right after Init screen interaction
+async function postInitActions() {
+    playTune(SFX_START); // Play start tune
+    raceNumber = 1; // Set race number for the first race
     setState(GameState.Start);
-    await waitForProgressInput();
-    setState(GameState.Wait);
+}
 
-    await waitForProgressInput();
-    setState(GameState.RaceStarting);
-    await sleep(1000);
-    setState(GameState.Ready);
-};
+// Function to request fullscreen and exit fullscreen
+async function toggleFullScreen(): Promise<void> {
+    const elem = document.documentElement as HTMLElement & {
+        mozRequestFullScreen?: () => Promise<void>;
+        webkitRequestFullscreen?: () => Promise<void>;
+    };
+
+    const fullscreenButton = document.getElementById("fullscreenButton");
+
+    if (document.fullscreenElement) {
+        try {
+            await document.exitFullscreen();
+            if (fullscreenButton) {
+                fullscreenButton.textContent = "⛶";
+            }
+        } catch (err) {
+            if (err instanceof Error) {
+                console.error(
+                    `Error exiting fullscreen:${err.message} (${err.name})`,
+                );
+                errorMessage = err.message;
+
+                return;
+            }
+        }
+    } else {
+        try {
+            if (elem.requestFullscreen) {
+                await elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) {
+                await elem.webkitRequestFullscreen();
+            } else if (elem.mozRequestFullScreen) {
+                await elem.mozRequestFullScreen();
+            }
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                console.error(
+                    `Error attempting to enable full-screen mode: ${err.message} (${err.name})`,
+                );
+                errorMessage = err.message;
+
+                return;
+            }
+        }
+
+        if (fullscreenButton) {
+            fullscreenButton.textContent = "╬";
+        }
+    }
+}
 
 export const init = async (): Promise<void> => {
+    // --- Initial Setup ---
     initializeControls();
+    lastTime = performance.now(); // Initialize lastTime here
     window.requestAnimationFrame(gameLoop);
 
-    await initialize();
-    setState(GameState.Init);
+    const top = "10px";
+    const zIndex = "10";
+    const size = "40px";
+    const color = "white";
+    const background = "black";
+    const border = "1px solid white";
+    const borderRadius = "4px";
+    const fontSize = "24px";
+    const lineHeight = "0";
+
+    fullscreenButton.id = "fullscreenButton";
+    fullscreenButton.style.position = "absolute";
+    fullscreenButton.style.top = top;
+    fullscreenButton.style.right = "10px";
+    fullscreenButton.style.zIndex = zIndex;
+    fullscreenButton.textContent = "⛶";
+    fullscreenButton.style.width = size;
+    fullscreenButton.style.height = size;
+    fullscreenButton.style.color = color;
+    fullscreenButton.style.background = background;
+    fullscreenButton.style.border = border;
+    fullscreenButton.style.borderRadius = borderRadius;
+    fullscreenButton.style.fontSize = fontSize;
+    fullscreenButton.style.lineHeight = lineHeight;
+
+    restartButton.id = "restartButton";
+    restartButton.style.position = "absolute";
+    restartButton.style.top = top;
+    restartButton.style.right = "60px";
+    restartButton.style.zIndex = zIndex;
+    restartButton.textContent = "↺";
+    restartButton.style.width = size;
+    restartButton.style.height = size;
+    restartButton.style.color = color;
+    restartButton.style.background = background;
+    restartButton.style.border = border;
+    restartButton.style.borderRadius = borderRadius;
+    restartButton.style.fontSize = fontSize;
+    restartButton.style.lineHeight = lineHeight;
+    restartButton.style.display = "none";
+
+    document.body.appendChild(restartButton);
+    document.body.appendChild(fullscreenButton);
+
+    fullscreenButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+
+        toggleFullScreen();
+    });
+
+    restartButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+
+        // --- Use reload for a full reset ---
+        window.location.reload();
+    });
+
+    // --- Final Initial Load Steps ---
+    await initialize(); // Initialize SFX system
+    setState(GameState.Init); // Set initial state to Init
 
     await waitForProgressInput();
 
-    playTune(SFX_START);
-    setState(GameState.Start);
-    startRace();
+    await postInitActions();
 };
