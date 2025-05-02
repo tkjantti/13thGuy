@@ -84,18 +84,25 @@ const readTouchInput = (e: TouchEvent): void => {
 export const waitForTap = (area?: Area): Promise<void> => {
     return new Promise((resolve) => {
         const listener = (e: TouchEvent): void => {
-            const touch = e.touches[0];
+            // Prevent default behavior if the touch is on the canvas
+            e.preventDefault();
+
+            // Use changedTouches for touchend/touchstart to get the specific touch point
+            const touch = e.changedTouches[0];
+            if (!touch) return; // Exit if no touch information is available
+
             const point: VectorMutable = { x: 0, y: 0 };
 
             setCanvasPositionFromScreenPosition(point, touch);
 
             if (!area || includesPoint(area, point)) {
-                window.removeEventListener("touchstart", listener);
+                canvas.removeEventListener("touchstart", listener); // Remove listener from canvas
                 resolve();
             }
         };
 
-        window.addEventListener("touchstart", listener);
+        // Add listener to canvas instead of window
+        canvas.addEventListener("touchstart", listener, { passive: false });
     });
 };
 
