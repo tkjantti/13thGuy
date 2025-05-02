@@ -640,14 +640,21 @@ async function toggleFullScreen(): Promise<void> {
     const fullscreenButton = document.getElementById("fullscreenButton");
 
     if (document.fullscreenElement) {
-        document
-            .exitFullscreen()
-            .then(() => {
-                if (fullscreenButton) {
-                    fullscreenButton.textContent = "⛶";
-                }
-            })
-            .catch((err) => console.error(err));
+        try {
+            await document.exitFullscreen();
+            if (fullscreenButton) {
+                fullscreenButton.textContent = "⛶";
+            }
+        } catch (err) {
+            if (err instanceof Error) {
+                console.error(
+                    `Error exiting fullscreen:${err.message} (${err.name})`,
+                );
+                errorMessage = err.message;
+
+                return;
+            }
+        }
     } else {
         try {
             if (elem.requestFullscreen) {
