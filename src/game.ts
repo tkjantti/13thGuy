@@ -66,10 +66,9 @@ import {
     updateControls,
     waitForProgressInput,
 } from "./controls";
+import { hasTouchScreen } from "./touchscreen";
 
 const versionText = "Director's cut (" + (VERSION ? VERSION : "DEV") + ")";
-
-let errorMessage: string | undefined;
 
 const TIME_STEP = 1000 / 60;
 const MAX_FRAME = TIME_STEP * 5;
@@ -119,6 +118,8 @@ let counted = 0;
 
 const fullscreenButton = document.createElement("button");
 const restartButton = document.createElement("button");
+const startButton = document.createElement("button");
+const START_BUTTON_ID = "startButton";
 
 const setState = async (state: GameState) => {
     gameState = state;
@@ -127,6 +128,12 @@ const setState = async (state: GameState) => {
     if (restartButton) {
         restartButton.style.display =
             state !== GameState.Init ? "block" : "none";
+    }
+
+    const fullscreenButton = document.getElementById("fullscreenButton");
+    if (fullscreenButton) {
+        fullscreenButton.style.display =
+            state !== GameState.Init || !hasTouchScreen ? "block" : "none";
     }
 
     maxRadius = 1280 * 2;
@@ -302,8 +309,19 @@ const draw = (t: number, dt: number): void => {
             break;
         }
         case GameState.Init: {
-            drawInitialScreen(true);
-            renderWaitForProgressInput("start");
+            drawInitialScreen(true); // Draw background/character/logo
+
+            if (hasTouchScreen) {
+                // TOUCH DEVICE: Show full screen start button
+                const btn = document.getElementById(START_BUTTON_ID);
+                if (btn && btn.style.display === "none") {
+                    btn.style.display = "block";
+                }
+            } else {
+                // NON-TOUCH DEVICE
+                renderWaitForProgressInput("start");
+            }
+
             break;
         }
         case GameState.Start: {
@@ -515,16 +533,16 @@ const draw = (t: number, dt: number): void => {
             break;
         }
         default: {
+            // Ensure start button is hidden if we leave Init state
+            const btn = document.getElementById(START_BUTTON_ID);
+            if (btn && btn.style.display !== "none") {
+                btn.style.display = "none";
+            }
             applyCRTEffect(false);
             renderTouchControls();
 
             break;
         }
-    }
-
-    // Temporary drawing of error message
-    if (errorMessage) {
-        renderText(errorMessage, TextSize.Normal, "Impact", 1, -10);
     }
 
     cx.restore();
@@ -625,8 +643,14 @@ const drawInitialScreen = (noisy: boolean): void => {
 
 // Helper function for the actions right after Init screen interaction
 async function postInitActions() {
-    playTune(SFX_START); // Play start tune
-    raceNumber = 1; // Set race number for the first race
+    // Remove the start button once the game starts
+    const btn = document.getElementById(START_BUTTON_ID);
+    if (btn) {
+        btn.style.display = "none";
+    }
+
+    playTune(SFX_START);
+    raceNumber = 1;
     setState(GameState.Start);
 }
 
@@ -650,7 +674,6 @@ async function toggleFullScreen(): Promise<void> {
                 console.error(
                     `Error exiting fullscreen:${err.message} (${err.name})`,
                 );
-                errorMessage = err.message;
 
                 return;
             }
@@ -669,7 +692,6 @@ async function toggleFullScreen(): Promise<void> {
                 console.error(
                     `Error attempting to enable full-screen mode: ${err.message} (${err.name})`,
                 );
-                errorMessage = err.message;
 
                 return;
             }
@@ -682,11 +704,16 @@ async function toggleFullScreen(): Promise<void> {
 }
 
 export const init = async (): Promise<void> => {
+    // Make sure the canvas can can be focused
+    canvas.tabIndex = 0;
+    canvas.style.outline = "none"; // Prevents outline when focused
+
     // --- Initial Setup ---
     initializeControls();
-    lastTime = performance.now(); // Initialize lastTime here
+    lastTime = performance.now();
     window.requestAnimationFrame(gameLoop);
 
+    // --- Button Styles ---
     const top = "10px";
     const zIndex = "10";
     const size = "40px";
@@ -697,6 +724,7 @@ export const init = async (): Promise<void> => {
     const fontSize = "24px";
     const lineHeight = "0";
 
+    // --- Configure Buttons ---
     fullscreenButton.id = "fullscreenButton";
     fullscreenButton.style.position = "absolute";
     fullscreenButton.style.top = top;
@@ -711,6 +739,7 @@ export const init = async (): Promise<void> => {
     fullscreenButton.style.borderRadius = borderRadius;
     fullscreenButton.style.fontSize = fontSize;
     fullscreenButton.style.lineHeight = lineHeight;
+    fullscreenButton.style.display = hasTouchScreen ? "none" : "block";
 
     restartButton.id = "restartButton";
     restartButton.style.position = "absolute";
@@ -728,27 +757,59 @@ export const init = async (): Promise<void> => {
     restartButton.style.lineHeight = lineHeight;
     restartButton.style.display = "none";
 
+    startButton.id = START_BUTTON_ID;
+    startButton.style.position = "absolute";
+    startButton.textContent = "Tap the screen to continue";
+    startButton.style.padding = "20vw 0 0 0";
+    startButton.style.fontFamily = "Courier New";
+    startButton.style.background = "transparent";
+    startButton.style.border = "none";
+    startButton.style.fontSize = "28";
+    startButton.style.top = "0";
+    startButton.style.bottom = "0";
+    startButton.style.left = "0";
+    startButton.style.right = "0";
+    startButton.style.zIndex = zIndex;
+    startButton.style.color = color;
+    startButton.style.display = "none";
+
+    // --- Add Buttons to DOM ---
     document.body.appendChild(restartButton);
     document.body.appendChild(fullscreenButton);
+    document.body.appendChild(startButton);
 
+    // --- Add Event Listeners ---
     fullscreenButton.addEventListener("click", (event) => {
         event.stopPropagation();
-
         toggleFullScreen();
+        canvas.focus(); // Prevent toggling fullscreen again when trying to continue
     });
 
     restartButton.addEventListener("click", (event) => {
         event.stopPropagation();
-
-        // --- Use reload for a full reset ---
         window.location.reload();
     });
 
     // --- Final Initial Load Steps ---
-    await initialize(); // Initialize SFX system
-    setState(GameState.Init); // Set initial state to Init
+    await initialize();
+    setState(GameState.Init);
 
-    await waitForProgressInput();
-
-    await postInitActions();
+    // --- Conditional Logic for First Interaction ---
+    if (hasTouchScreen) {
+        startButton.addEventListener(
+            "click",
+            async (event) => {
+                event.stopPropagation();
+                // Actions on START button click
+                await toggleFullScreen();
+                canvas.focus();
+                await postInitActions();
+            },
+            { passive: false, once: true },
+        );
+    } else {
+        // Non-touch device
+        await waitForProgressInput();
+        await postInitActions();
+    }
 };
