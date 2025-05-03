@@ -66,6 +66,7 @@ import {
     updateControls,
     waitForProgressInput,
 } from "./controls";
+import { hasTouchScreen } from "./touchscreen";
 
 const versionText = "Director's cut (" + (VERSION ? VERSION : "DEV") + ")";
 
@@ -119,6 +120,8 @@ let counted = 0;
 
 const fullscreenButton = document.createElement("button");
 const restartButton = document.createElement("button");
+const startButton = document.createElement("button");
+const START_BUTTON_ID = "startButton";
 
 const setState = async (state: GameState) => {
     gameState = state;
@@ -302,8 +305,19 @@ const draw = (t: number, dt: number): void => {
             break;
         }
         case GameState.Init: {
-            drawInitialScreen(true);
-            renderWaitForProgressInput("start");
+            drawInitialScreen(true); // Draw background/character/logo
+
+            if (hasTouchScreen) {
+                // TOUCH DEVICE: Show the Start Button
+                const btn = document.getElementById(START_BUTTON_ID);
+                if (btn && btn.style.display === "none") {
+                    btn.style.display = "block"; // Make the start button visible
+                }
+            } else {
+                // NON-TOUCH DEVICE: Show the text prompt
+                renderWaitForProgressInput("start");
+            }
+
             break;
         }
         case GameState.Start: {
@@ -515,6 +529,11 @@ const draw = (t: number, dt: number): void => {
             break;
         }
         default: {
+            // Ensure start button is hidden if we leave Init state
+            const btn = document.getElementById(START_BUTTON_ID);
+            if (btn && btn.style.display !== "none") {
+                btn.style.display = "none";
+            }
             applyCRTEffect(false);
             renderTouchControls();
 
@@ -524,7 +543,7 @@ const draw = (t: number, dt: number): void => {
 
     // Temporary drawing of error message
     if (errorMessage) {
-        renderText(errorMessage, TextSize.Normal, "Impact", 1, -10);
+        // renderText(errorMessage, TextSize.Normal, "Impact", 1, -10);
     }
 
     cx.restore();
@@ -625,6 +644,12 @@ const drawInitialScreen = (noisy: boolean): void => {
 
 // Helper function for the actions right after Init screen interaction
 async function postInitActions() {
+    // Remove the start button once the game starts
+    const btn = document.getElementById(START_BUTTON_ID);
+    if (btn) {
+        btn.style.display = "none"; // Hide the start button
+    }
+
     playTune(SFX_START); // Play start tune
     raceNumber = 1; // Set race number for the first race
     setState(GameState.Start);
@@ -684,9 +709,10 @@ async function toggleFullScreen(): Promise<void> {
 export const init = async (): Promise<void> => {
     // --- Initial Setup ---
     initializeControls();
-    lastTime = performance.now(); // Initialize lastTime here
+    lastTime = performance.now();
     window.requestAnimationFrame(gameLoop);
 
+    // --- Button Styles ---
     const top = "10px";
     const zIndex = "10";
     const size = "40px";
@@ -697,6 +723,7 @@ export const init = async (): Promise<void> => {
     const fontSize = "24px";
     const lineHeight = "0";
 
+    // --- Configure Buttons ---
     fullscreenButton.id = "fullscreenButton";
     fullscreenButton.style.position = "absolute";
     fullscreenButton.style.top = top;
@@ -728,27 +755,64 @@ export const init = async (): Promise<void> => {
     restartButton.style.lineHeight = lineHeight;
     restartButton.style.display = "none";
 
+    startButton.id = START_BUTTON_ID;
+    startButton.style.position = "absolute";
+    startButton.textContent = "Tap the screen to continue";
+    startButton.style.padding = "20vw 0 0 0";
+    startButton.style.fontFamily = "Courier New";
+    startButton.style.background = "transparent";
+    startButton.style.fontSize = "28";
+    startButton.style.top = "0";
+    startButton.style.bottom = "0";
+    startButton.style.left = "0";
+    startButton.style.right = "0";
+    startButton.style.zIndex = zIndex;
+    startButton.style.color = color;
+    startButton.style.display = "none";
+
+    // --- Add Buttons to DOM ---
     document.body.appendChild(restartButton);
     document.body.appendChild(fullscreenButton);
+    document.body.appendChild(startButton);
 
+    // --- Add Event Listeners ---
     fullscreenButton.addEventListener("click", (event) => {
         event.stopPropagation();
-
         toggleFullScreen();
     });
 
     restartButton.addEventListener("click", (event) => {
         event.stopPropagation();
-
-        // --- Use reload for a full reset ---
         window.location.reload();
     });
 
     // --- Final Initial Load Steps ---
     await initialize(); // Initialize SFX system
-    setState(GameState.Init); // Set initial state to Init
+    setState(GameState.Init); // Set initial state to Init FIRST
 
-    await waitForProgressInput();
-
-    await postInitActions();
+    // --- Conditional Logic for First Interaction ---
+    if (hasTouchScreen) {
+        // TOUCH DEVICE: Use the Start Button
+        // Add listener for the START button. The draw function will make it visible.
+        startButton.addEventListener(
+            "click",
+            async (event) => {
+                event.stopPropagation();
+                // Actions on START button click
+                toggleFullScreen().catch((err) => {
+                    console.error(
+                        "Error attempting fullscreen via Start button:",
+                        err,
+                    );
+                    if (err instanceof Error) errorMessage = err.message;
+                });
+                await postInitActions();
+            },
+            { passive: false, once: true }, // Use 'once' to auto-remove listener
+        );
+    } else {
+        // NON-TOUCH DEVICE: Use the original waitForProgressInput method
+        await waitForProgressInput(); // Wait for Enter/Key press
+        await postInitActions(); // Proceed after input
+    }
 };
