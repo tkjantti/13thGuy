@@ -130,6 +130,12 @@ const setState = async (state: GameState) => {
             state !== GameState.Init ? "block" : "none";
     }
 
+    const fullscreenButton = document.getElementById("fullscreenButton");
+    if (fullscreenButton) {
+        fullscreenButton.style.display =
+            state !== GameState.Init || !hasTouchScreen ? "block" : "none";
+    }
+
     maxRadius = 1280 * 2;
 
     switch (state) {
@@ -306,7 +312,7 @@ const draw = (t: number, dt: number): void => {
             drawInitialScreen(true); // Draw background/character/logo
 
             if (hasTouchScreen) {
-                // TOUCH DEVICE: Show full screen button
+                // TOUCH DEVICE: Show full screen start button
                 const btn = document.getElementById(START_BUTTON_ID);
                 if (btn && btn.style.display === "none") {
                     btn.style.display = "block";
@@ -698,6 +704,10 @@ async function toggleFullScreen(): Promise<void> {
 }
 
 export const init = async (): Promise<void> => {
+    // Make sure the canvas can can be focused
+    canvas.tabIndex = 0;
+    canvas.style.outline = "none"; // Prevents outline when focused
+
     // --- Initial Setup ---
     initializeControls();
     lastTime = performance.now();
@@ -729,6 +739,7 @@ export const init = async (): Promise<void> => {
     fullscreenButton.style.borderRadius = borderRadius;
     fullscreenButton.style.fontSize = fontSize;
     fullscreenButton.style.lineHeight = lineHeight;
+    fullscreenButton.style.display = hasTouchScreen ? "none" : "block";
 
     restartButton.id = "restartButton";
     restartButton.style.position = "absolute";
@@ -752,6 +763,7 @@ export const init = async (): Promise<void> => {
     startButton.style.padding = "20vw 0 0 0";
     startButton.style.fontFamily = "Courier New";
     startButton.style.background = "transparent";
+    startButton.style.border = "none";
     startButton.style.fontSize = "28";
     startButton.style.top = "0";
     startButton.style.bottom = "0";
@@ -770,6 +782,7 @@ export const init = async (): Promise<void> => {
     fullscreenButton.addEventListener("click", (event) => {
         event.stopPropagation();
         toggleFullScreen();
+        canvas.focus(); // Prevent toggling fullscreen again when trying to continue
     });
 
     restartButton.addEventListener("click", (event) => {
@@ -789,6 +802,7 @@ export const init = async (): Promise<void> => {
                 event.stopPropagation();
                 // Actions on START button click
                 await toggleFullScreen();
+                canvas.focus();
                 await postInitActions();
             },
             { passive: false, once: true },
