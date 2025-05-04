@@ -68,6 +68,85 @@ import {
 } from "./controls";
 import { hasTouchScreen } from "./touchscreen";
 
+// Declare playTune on the global scope for the iOS audio unlock workaround
+declare global {
+    // eslint-disable-next-line no-var
+    var playTune: (soundId: number) => void;
+}
+
+// Simple iOS audio unlock function
+function unlockAudioForIOS() {
+    // Create a silent audio element
+    const silentAudio = document.createElement("audio");
+    silentAudio.setAttribute(
+        "src",
+        "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjIwLjEwMAAAAAAAAAAAAAAA//tUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABGwD///////////////////////////////////////////8AAAA8TEFNRTMuMTAwA8MAAAAAAAAAABQgJAUHQQAB9AAAARvMPHBz//////////////////////////////////////////////////////////////////8AAAA",
+    );
+    silentAudio.setAttribute("playsinline", "playsinline");
+    silentAudio.volume = 0.001; // ultra low volume
+
+    // Function to play the silent sound and unlock audio
+    const unlockAudio = () => {
+        silentAudio
+            .play()
+            .then(() => {
+                console.log("Audio unlocked for iOS");
+
+                // Play the start sound after unlocking audio
+                playTune(SFX_START); // Use playTune instead of stopTune
+
+                // Remove event listeners
+                document.removeEventListener("touchstart", unlockAudio);
+                document.removeEventListener("touchend", unlockAudio);
+                document.removeEventListener("click", unlockAudio);
+            })
+            .catch((error) => {
+                console.error("Failed to unlock audio:", error);
+            });
+    };
+
+    // Add event listeners for user interaction
+    document.addEventListener("touchstart", unlockAudio, false);
+    document.addEventListener("touchend", unlockAudio, false);
+    document.addEventListener("click", unlockAudio, false);
+
+    // Return the unlock function for direct calling
+    return unlockAudio;
+}
+
+// Check for iOS and initialize audio unlock if needed
+function initIOSAudio() {
+    const isIOS =
+        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+    if (isIOS) {
+        console.log("iOS device detected, initializing audio unlock");
+        unlockAudioForIOS();
+
+        // Intercept the first SFX_START playback attempt to avoid silent playback
+        // Replace the imported playTune function with our wrapper
+        // We need to use the same scope, not window object
+        (function () {
+            // Save reference to the original imported function
+            const original = playTune;
+
+            // Override the imported function
+            globalThis.playTune = function (soundId) {
+                if (soundId === SFX_START) {
+                    // First call will be skipped, the unlockAudio function will play it instead
+                    globalThis.playTune = original;
+                    return;
+                }
+                return original(soundId);
+            };
+        })();
+    }
+}
+
+// Call this function immediately
+initIOSAudio();
+
 const versionText = "Director's cut (" + (VERSION ? VERSION : "DEV") + ")";
 
 const TIME_STEP = 1000 / 60;
