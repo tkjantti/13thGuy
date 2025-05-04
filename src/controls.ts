@@ -159,10 +159,11 @@ export const renderTouchControls = (): void => {
 };
 
 const renderButton = (button: Button, symbolWidth: number): void => {
-    cx.strokeStyle = "rgba(200, 200, 200, 0.2)";
+    cx.strokeStyle = "rgba(255, 255, 255, 0.2)";
     cx.lineWidth = 2;
     cx.strokeRect(button.x, button.y, button.width, button.height);
 
+    cx.fillStyle = "rgba(255, 255, 255, 0.4)";
     cx.fillText(
         button.symbol,
         button.x + button.width / 2 - symbolWidth / 2,
