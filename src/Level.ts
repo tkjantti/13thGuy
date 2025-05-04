@@ -569,7 +569,7 @@ export class Level implements Area {
 
             for (let i = 1; i <= surface.width / 9 - 1; i++) {
                 cx.fillText(
-                    element.type === TrackElementType.Finish ? "✪" : "☂",
+                    element.type === TrackElementType.Finish ? "✪" : "✓",
                     surface.x + i * spacing,
                     surface.y + surface.height / 2.4,
                 );
