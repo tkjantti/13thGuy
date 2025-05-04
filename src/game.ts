@@ -717,9 +717,9 @@ export const init = async (): Promise<void> => {
     const top = "10px";
     const zIndex = "10";
     const size = "40px";
-    const color = "white";
+    const color = "rgba(255, 255, 255, 0.4)";
     const background = "black";
-    const border = "1px solid white";
+    const border = "1px solid rgba(255, 255, 255, 0.2)";
     const borderRadius = "4px";
     const fontSize = "24px";
     const lineHeight = "0";
