@@ -51,10 +51,10 @@ interface Button extends Area {
 
 let textAnimationCounter = 0;
 
-const leftButton: Button = { symbol: "◀", x: 0, y: 0, width: 0, height: 0 };
-const rightButton: Button = { symbol: "▶", x: 0, y: 0, width: 0, height: 0 };
-const upButton: Button = { symbol: "▲", x: 0, y: 0, width: 0, height: 0 };
-const downButton: Button = { symbol: "▼", x: 0, y: 0, width: 0, height: 0 };
+const leftButton: Button = { symbol: "◁", x: 0, y: 0, width: 0, height: 0 };
+const rightButton: Button = { symbol: "▷", x: 0, y: 0, width: 0, height: 0 };
+const upButton: Button = { symbol: "△", x: 0, y: 0, width: 0, height: 0 };
+const downButton: Button = { symbol: "▽", x: 0, y: 0, width: 0, height: 0 };
 
 const controls: Controls = {
     movement: { x: 0, y: 0 },
@@ -159,14 +159,15 @@ export const renderTouchControls = (): void => {
 };
 
 const renderButton = (button: Button, symbolWidth: number): void => {
-    cx.strokeStyle = "rgba(200, 200, 200, 0.2)";
+    cx.strokeStyle = "rgba(255, 255, 255, 0.2)";
     cx.lineWidth = 2;
     cx.strokeRect(button.x, button.y, button.width, button.height);
 
+    cx.fillStyle = "rgba(255, 255, 255, 0.4)";
     cx.fillText(
         button.symbol,
         button.x + button.width / 2 - symbolWidth / 2,
-        button.y + button.height / 2 + symbolWidth * 0.25,
+        button.y + button.height / 2 + symbolWidth * 0.45,
         symbolWidth,
     );
 };

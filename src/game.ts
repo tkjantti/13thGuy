@@ -717,9 +717,9 @@ export const init = async (): Promise<void> => {
     const top = "10px";
     const zIndex = "10";
     const size = "40px";
-    const color = "white";
+    const color = "rgba(255, 255, 255, 0.4)";
     const background = "black";
-    const border = "1px solid white";
+    const border = "1px solid rgba(255, 255, 255, 0.2)";
     const borderRadius = "4px";
     const fontSize = "24px";
     const lineHeight = "0";
@@ -731,6 +731,7 @@ export const init = async (): Promise<void> => {
     fullscreenButton.style.right = "10px";
     fullscreenButton.style.zIndex = zIndex;
     fullscreenButton.textContent = "⛶";
+    startButton.style.fontFamily = "Impact";
     fullscreenButton.style.width = size;
     fullscreenButton.style.height = size;
     fullscreenButton.style.color = color;
@@ -747,6 +748,7 @@ export const init = async (): Promise<void> => {
     restartButton.style.right = "60px";
     restartButton.style.zIndex = zIndex;
     restartButton.textContent = "↺";
+    startButton.style.fontFamily = "Impact";
     restartButton.style.width = size;
     restartButton.style.height = size;
     restartButton.style.color = color;
@@ -759,12 +761,12 @@ export const init = async (): Promise<void> => {
 
     startButton.id = START_BUTTON_ID;
     startButton.style.position = "absolute";
-    startButton.textContent = "Tap the screen to continue";
+    startButton.textContent = "Tap the screen to continue█";
     startButton.style.padding = "20vw 0 0 0";
     startButton.style.fontFamily = "Courier New";
     startButton.style.background = "transparent";
     startButton.style.border = "none";
-    startButton.style.fontSize = "28";
+    startButton.style.fontSize = "2vw";
     startButton.style.top = "0";
     startButton.style.bottom = "0";
     startButton.style.left = "0";
