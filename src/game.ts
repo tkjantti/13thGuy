@@ -67,6 +67,7 @@ import {
     waitForProgressInput,
 } from "./controls";
 import { hasTouchScreen } from "./touchscreen";
+import { isFullscreen, toggleFullScreen } from "./fullscreen";
 
 const versionText = "Director's cut (" + (VERSION ? VERSION : "DEV") + ")";
 
@@ -654,55 +655,6 @@ async function postInitActions() {
     setState(GameState.Start);
 }
 
-// Function to request fullscreen and exit fullscreen
-async function toggleFullScreen(): Promise<void> {
-    const elem = document.documentElement as HTMLElement & {
-        mozRequestFullScreen?: () => Promise<void>;
-        webkitRequestFullscreen?: () => Promise<void>;
-    };
-
-    const fullscreenButton = document.getElementById("fullscreenButton");
-
-    if (document.fullscreenElement) {
-        try {
-            await document.exitFullscreen();
-            if (fullscreenButton) {
-                fullscreenButton.textContent = "⛶";
-            }
-        } catch (err) {
-            if (err instanceof Error) {
-                console.error(
-                    `Error exiting fullscreen:${err.message} (${err.name})`,
-                );
-
-                return;
-            }
-        }
-    } else {
-        try {
-            if (elem.requestFullscreen) {
-                await elem.requestFullscreen();
-            } else if (elem.webkitRequestFullscreen) {
-                await elem.webkitRequestFullscreen();
-            } else if (elem.mozRequestFullScreen) {
-                await elem.mozRequestFullScreen();
-            }
-        } catch (err: unknown) {
-            if (err instanceof Error) {
-                console.error(
-                    `Error attempting to enable full-screen mode: ${err.message} (${err.name})`,
-                );
-
-                return;
-            }
-        }
-
-        if (fullscreenButton) {
-            fullscreenButton.textContent = "╬";
-        }
-    }
-}
-
 export const init = async (): Promise<void> => {
     // Make sure the canvas can can be focused
     canvas.tabIndex = 0;
@@ -790,6 +742,10 @@ export const init = async (): Promise<void> => {
     restartButton.addEventListener("click", (event) => {
         event.stopPropagation();
         window.location.reload();
+    });
+
+    window.addEventListener("resize", () => {
+        fullscreenButton.textContent = isFullscreen() ? "╬" : "⛶";
     });
 
     // --- Final Initial Load Steps ---
