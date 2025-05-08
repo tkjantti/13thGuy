@@ -40,6 +40,7 @@ import {
     initialize,
     playTune,
     stopTune,
+    unlockAudio, // Import this from sfx.js if you added it there
     SFX_START,
     SFX_RACE,
     SFX_FINISHED,
@@ -74,78 +75,64 @@ declare global {
     var playTune: (soundId: number) => void;
 }
 
-// Simple iOS audio unlock function
-function unlockAudioForIOS() {
-    // Create a silent audio element
+// Universal audio unlock for all mobile devices
+function setupAudioUnlock() {
+    console.log("Setting up audio unlock for all mobile devices");
+
+    // Create a silent audio element as backup method
     const silentAudio = document.createElement("audio");
     silentAudio.setAttribute(
         "src",
         "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjIwLjEwMAAAAAAAAAAAAAAA//tUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABGwD///////////////////////////////////////////8AAAA8TEFNRTMuMTAwA8MAAAAAAAAAABQgJAUHQQAB9AAAARvMPHBz//////////////////////////////////////////////////////////////////8AAAA",
     );
     silentAudio.setAttribute("playsinline", "playsinline");
-    silentAudio.volume = 0.001; // ultra low volume
+    silentAudio.volume = 0.1; // Higher volume to ensure it registers
 
-    // Function to play the silent sound and unlock audio
-    const unlockAudio = () => {
-        silentAudio
-            .play()
-            .then(() => {
-                console.log("Audio unlocked for iOS");
+    // Function to attempt unlocking audio
+    const attemptUnlock = async () => {
+        console.log("Attempting to unlock audio systems");
 
-                // Play the start sound after unlocking audio
-                playTune(SFX_START); // Use playTune instead of stopTune
+        // 1. Try to play the silent sound
+        try {
+            silentAudio
+                .play()
+                .catch((e) => console.log("Silent audio error:", e));
+        } catch (e) {
+            console.log("Silent audio exception:", e);
+        }
 
-                // Remove event listeners
-                document.removeEventListener("touchstart", unlockAudio);
-                document.removeEventListener("touchend", unlockAudio);
-                document.removeEventListener("click", unlockAudio);
-            })
-            .catch((error) => {
-                console.error("Failed to unlock audio:", error);
-            });
+        // 2. If you added unlockAudio to sfx.js, call it
+        if (typeof unlockAudio === "function") {
+            try {
+                await unlockAudio();
+            } catch (e) {
+                console.log("sfx unlockAudio error:", e);
+            }
+        }
+
+        // Remove event listeners after attempting unlock
+        document.removeEventListener("touchstart", attemptUnlock, true);
+        document.removeEventListener("touchend", attemptUnlock, true);
+        document.removeEventListener("click", attemptUnlock, true);
     };
 
-    // Add event listeners for user interaction
-    document.addEventListener("touchstart", unlockAudio, false);
-    document.addEventListener("touchend", unlockAudio, false);
-    document.addEventListener("click", unlockAudio, false);
-
-    // Return the unlock function for direct calling
-    return unlockAudio;
+    // Add listeners in capture phase to handle them first
+    document.addEventListener("touchstart", attemptUnlock, {
+        once: true,
+        capture: true,
+    });
+    document.addEventListener("touchend", attemptUnlock, {
+        once: true,
+        capture: true,
+    });
+    document.addEventListener("click", attemptUnlock, {
+        once: true,
+        capture: true,
+    });
 }
 
-// Check for iOS and initialize audio unlock if needed
-function initIOSAudio() {
-    const isIOS =
-        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-
-    if (isIOS) {
-        console.log("iOS device detected, initializing audio unlock");
-        unlockAudioForIOS();
-
-        // Intercept the first SFX_START playback attempt to avoid silent playback
-        // Replace the imported playTune function with our wrapper
-        // We need to use the same scope, not window object
-        (function () {
-            // Save reference to the original imported function
-            const original = playTune;
-
-            // Override the imported function
-            globalThis.playTune = function (soundId) {
-                if (soundId === SFX_START) {
-                    // First call will be skipped, the unlockAudio function will play it instead
-                    globalThis.playTune = original;
-                    return;
-                }
-                return original(soundId);
-            };
-        })();
-    }
-}
-
-// Call this function immediately
-initIOSAudio();
+// Call this instead of initIOSAudio()
+setupAudioUnlock();
 
 const versionText = "Director's cut (" + (VERSION ? VERSION : "DEV") + ")";
 
@@ -226,7 +213,7 @@ const setState = async (state: GameState) => {
             break;
         case GameState.Wait:
             // SFX_START continues playing.
-            await waitForProgressInput();
+            await waitForProgressInput(SFX_RACE);
             setState(GameState.RaceStarting);
             break;
         case GameState.RaceStarting:
@@ -235,7 +222,6 @@ const setState = async (state: GameState) => {
             break;
         case GameState.Ready:
             counted = 0; // Ensure counted is 0 when entering Ready
-            stopTune(); // Stop previous tune (SFX_START)
             // Create new level instance
             if (raceNumber > 1 && level && !level.player.eliminated) {
                 const track =
@@ -259,7 +245,6 @@ const setState = async (state: GameState) => {
             }
             radius = maxRadius; // Reset radius for the animation
             readyCircleStartTime = drawTime;
-            playTune(SFX_RACE); // Play race tune *only* here
             break;
 
         case GameState.GameOver:
@@ -268,9 +253,8 @@ const setState = async (state: GameState) => {
             randomWidhOffset = 1 + Math.random() * 0.6;
             randomHeighOffset = 1 + Math.random() * 0.3;
 
-            await waitForProgressInput(); // Wait for continue input
+            await waitForProgressInput(SFX_RESTART); // Wait for continue input
             raceNumber = 1;
-            playTune(SFX_RESTART); // Play restart tune *after* input
             setState(GameState.Start);
             break;
         case GameState.GameFinished:
@@ -278,16 +262,14 @@ const setState = async (state: GameState) => {
             playTune(SFX_FINISHED); // Play finished tune
             if (level && level.characters.length > 14) {
                 // Qualified
-                await sleep(2500); // Let tune play during wait
-                await waitForProgressInput();
+                await waitForProgressInput(SFX_RACE);
                 raceNumber++; // Increment race number for the next round
                 setState(GameState.Ready);
             } else {
                 // Final Winner
-                await waitForProgressInput(); // Wait for input to restart
+                await waitForProgressInput(SFX_RESTART); // Wait for input to restart
                 raceNumber = 1;
                 clearCharacterGradientCache();
-                playTune(SFX_RESTART); // Play restart tune *after* input
                 setState(GameState.Start);
             }
             break;
@@ -728,7 +710,6 @@ async function postInitActions() {
         btn.style.display = "none";
     }
 
-    playTune(SFX_START);
     raceNumber = 1;
     setState(GameState.Start);
 }
@@ -881,8 +862,28 @@ export const init = async (): Promise<void> => {
             "click",
             async (event) => {
                 event.stopPropagation();
-                // Actions on START button click
-                await toggleFullScreen();
+
+                // Hide button immediately
+                startButton.style.display = "none";
+
+                // IMPORTANT: Play sound BEFORE attempting fullscreen
+                try {
+                    console.log("Playing start sound");
+                    // Call the actual playTune not any wrapped version
+                    playTune(SFX_START);
+                } catch (e) {
+                    console.error("Start sound failed:", e);
+                }
+
+                // Wait a brief moment to let audio initialize
+                await new Promise((resolve) => setTimeout(resolve, 100));
+
+                try {
+                    await toggleFullScreen();
+                } catch (e) {
+                    console.warn("Fullscreen failed:", e);
+                }
+
                 canvas.focus();
                 await postInitActions();
             },
@@ -890,7 +891,7 @@ export const init = async (): Promise<void> => {
         );
     } else {
         // Non-touch device
-        await waitForProgressInput();
+        await waitForProgressInput(SFX_START);
         await postInitActions();
     }
 };

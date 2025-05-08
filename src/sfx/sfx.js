@@ -54,6 +54,43 @@ const startTune = document.createElement("audio");
 const raceTune = document.createElement("audio");
 const gameoverFx = document.createElement("audio");
 
+// Make these accessible outside
+export let audioContext;
+export let audioUnlocked = false;
+
+export const unlockAudio = async () => {
+    console.log("Attempting to unlock audio systems...");
+    
+    if (audioUnlocked) return true;
+    
+    // 1. Try to unlock HTML Audio elements
+    try {
+        // Quick play attempt on the startTune element
+        startTune.volume = 0.01;
+        await startTune.play().catch(e => console.log("First unlock attempt:", e));
+        startTune.pause();
+        startTune.currentTime = 0;
+        console.log("HTML Audio unlocked successfully");
+    } catch (e) {
+        console.warn("HTML Audio unlock attempt failed:", e);
+    }
+    
+    // 2. Make sure zzfx audio context is created and resumed
+    try {
+        // Get the audio context used by zzfx
+        audioContext = zzfx.getAudioContext();
+        if (audioContext && audioContext.state !== "running") {
+            await audioContext.resume();
+        }
+        console.log("Web Audio API context state:", audioContext?.state);
+    } catch (e) {
+        console.warn("Web Audio API context resume failed:", e);
+    }
+    
+    audioUnlocked = true;
+    return true;
+};
+
 export const initMusicPlayer = (audioTrack, tune, isLooped) => {
     return new Promise((resolve) => {
         var songplayer = new CPlayer();
@@ -185,8 +222,17 @@ const FadeOutIn = (tune1, tune2) => {
     }
 };
 
-export const playTune = (tune, vol) => {
-    if (vol === 0) return
+export const playTune = async (tune, vol) => {
+    if (vol === 0) return;
+    
+    // Always try to unlock audio context for zzfx
+    if (audioContext && audioContext.state !== "running") {
+        try {
+            await audioContext.resume();
+        } catch (e) {
+            console.warn("AudioContext resume failed in playTune:", e);
+        }
+    }
 
     switch (tune) {
         case SFX_RACE: {
