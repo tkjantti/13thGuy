@@ -721,14 +721,9 @@ async function toggleFullScreen(): Promise<void> {
         webkitRequestFullscreen?: () => Promise<void>;
     };
 
-    const fullscreenButton = document.getElementById("fullscreenButton");
-
     if (document.fullscreenElement) {
         try {
             await document.exitFullscreen();
-            if (fullscreenButton) {
-                fullscreenButton.textContent = "⛶";
-            }
         } catch (err) {
             if (err instanceof Error) {
                 console.error(
@@ -755,10 +750,6 @@ async function toggleFullScreen(): Promise<void> {
 
                 return;
             }
-        }
-
-        if (fullscreenButton) {
-            fullscreenButton.textContent = "╬";
         }
     }
 }
@@ -867,22 +858,12 @@ export const init = async (): Promise<void> => {
                 startButton.style.display = "none";
 
                 // IMPORTANT: Play sound BEFORE attempting fullscreen
-                try {
-                    console.log("Playing start sound");
-                    // Call the actual playTune not any wrapped version
-                    playTune(SFX_START);
-                } catch (e) {
-                    console.error("Start sound failed:", e);
-                }
+                playTune(SFX_START);
 
                 // Wait a brief moment to let audio initialize
                 await new Promise((resolve) => setTimeout(resolve, 100));
 
-                try {
-                    await toggleFullScreen();
-                } catch (e) {
-                    console.warn("Fullscreen failed:", e);
-                }
+                await toggleFullScreen();
 
                 canvas.focus();
                 await postInitActions();
