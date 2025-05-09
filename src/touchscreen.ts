@@ -26,6 +26,12 @@ import { Area, includesPoint } from "./Area";
 import { canvas } from "./graphics";
 import { VectorMutable } from "./Vector";
 import { setCanvasPositionFromScreenPosition } from "./window";
+import {
+    SFX_KB,
+    playTune,
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+} from "./sfx/sfx.js";
 
 // An optimized data structure for keeping track of touches:
 // no new vector instances on every frame. Note that there is
@@ -81,7 +87,10 @@ const readTouchInput = (e: TouchEvent): void => {
     }
 };
 
-export const waitForTap = (area?: Area): Promise<void> => {
+export const waitForTap = (
+    area?: Area,
+    soundToPlay?: number,
+): Promise<void> => {
     return new Promise((resolve) => {
         const listener = (e: TouchEvent): void => {
             // Prevent default behavior if the touch is on the canvas
@@ -91,12 +100,25 @@ export const waitForTap = (area?: Area): Promise<void> => {
             const touch = e.changedTouches[0];
             if (!touch) return; // Exit if no touch information is available
 
+            playTune(SFX_KB);
+
             const point: VectorMutable = { x: 0, y: 0 };
 
             setCanvasPositionFromScreenPosition(point, touch);
 
             if (!area || includesPoint(area, point)) {
                 canvas.removeEventListener("touchstart", listener); // Remove listener from canvas
+
+                // Play sound if specified
+                if (soundToPlay !== undefined) {
+                    try {
+                        console.log(`Playing sound ID: ${soundToPlay}`);
+                        playTune(soundToPlay);
+                    } catch (err) {
+                        console.error("Error playing sound:", err);
+                    }
+                }
+
                 resolve();
             }
         };
@@ -104,6 +126,14 @@ export const waitForTap = (area?: Area): Promise<void> => {
         // Add listener to canvas instead of window
         canvas.addEventListener("touchstart", listener, { passive: false });
     });
+};
+
+// Also add a utility function to wait for tap and play sound in one call
+export const waitForTapAndPlaySound = (
+    soundToPlay: number,
+    area?: Area,
+): Promise<void> => {
+    return waitForTap(area, soundToPlay);
 };
 
 export const isTouching = (area: Area): boolean => {

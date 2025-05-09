@@ -22,13 +22,6 @@
  * SOFTWARE.
  */
 
-import {
-    playTune,
-    SFX_KB,
-    // Ignore lint errors from JS import
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-} from "./sfx/sfx.js";
 import { Area } from "./Area";
 import { canvas, cx } from "./graphics";
 import { renderText, TextSize } from "./text";
@@ -38,6 +31,7 @@ import {
     initializeTouchscreen,
     isTouching,
     waitForTap,
+    waitForTapAndPlaySound,
 } from "./touchscreen";
 import { normalize, VectorMutable, ZERO_VECTOR } from "./Vector";
 
@@ -118,9 +112,14 @@ const resizeControls = (): void => {
     downButton.height = verticalHeight;
 };
 
-export const waitForProgressInput = async (): Promise<void> => {
-    await (hasTouchScreen ? waitForTap() : waitForEnter());
-    playTune(SFX_KB);
+export const waitForProgressInput = async (
+    soundToPlay?: number,
+): Promise<void> => {
+    await (hasTouchScreen
+        ? soundToPlay
+            ? waitForTapAndPlaySound(soundToPlay)
+            : waitForTap()
+        : waitForEnter(soundToPlay));
 };
 
 export const renderWaitForProgressInput = (

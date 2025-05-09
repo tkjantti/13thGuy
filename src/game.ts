@@ -67,6 +67,7 @@ import {
     waitForProgressInput,
 } from "./controls";
 import { hasTouchScreen } from "./touchscreen";
+import { toggleFullScreen } from "./fullscreen";
 
 const versionText = "Director's cut (" + (VERSION ? VERSION : "DEV") + ")";
 
@@ -147,7 +148,7 @@ const setState = async (state: GameState) => {
             break;
         case GameState.Wait:
             // SFX_START continues playing.
-            await waitForProgressInput();
+            await waitForProgressInput(SFX_RACE);
             setState(GameState.RaceStarting);
             break;
         case GameState.RaceStarting:
@@ -156,7 +157,6 @@ const setState = async (state: GameState) => {
             break;
         case GameState.Ready:
             counted = 0; // Ensure counted is 0 when entering Ready
-            stopTune(); // Stop previous tune (SFX_START)
             // Create new level instance
             if (raceNumber > 1 && level && !level.player.eliminated) {
                 const track =
@@ -180,7 +180,6 @@ const setState = async (state: GameState) => {
             }
             radius = maxRadius; // Reset radius for the animation
             readyCircleStartTime = drawTime;
-            playTune(SFX_RACE); // Play race tune *only* here
             break;
 
         case GameState.GameOver:
@@ -189,9 +188,8 @@ const setState = async (state: GameState) => {
             randomWidhOffset = 1 + Math.random() * 0.6;
             randomHeighOffset = 1 + Math.random() * 0.3;
 
-            await waitForProgressInput(); // Wait for continue input
+            await waitForProgressInput(SFX_RESTART); // Wait for continue input
             raceNumber = 1;
-            playTune(SFX_RESTART); // Play restart tune *after* input
             setState(GameState.Start);
             break;
         case GameState.GameFinished:
@@ -199,8 +197,7 @@ const setState = async (state: GameState) => {
             playTune(SFX_FINISHED); // Play finished tune
             if (level && level.characters.length > 14) {
                 // Qualified
-                await sleep(2500); // Let tune play during wait
-                await waitForProgressInput();
+                await waitForProgressInput(SFX_RACE);
                 raceNumber++; // Increment race number for the next round
                 setState(GameState.Ready);
             } else {
@@ -208,7 +205,6 @@ const setState = async (state: GameState) => {
                 await waitForProgressInput(); // Wait for input to restart
                 raceNumber = 1;
                 clearCharacterGradientCache();
-                playTune(SFX_RESTART); // Play restart tune *after* input
                 setState(GameState.Start);
             }
             break;
@@ -649,58 +645,8 @@ async function postInitActions() {
         btn.style.display = "none";
     }
 
-    playTune(SFX_START);
     raceNumber = 1;
     setState(GameState.Start);
-}
-
-// Function to request fullscreen and exit fullscreen
-async function toggleFullScreen(): Promise<void> {
-    const elem = document.documentElement as HTMLElement & {
-        mozRequestFullScreen?: () => Promise<void>;
-        webkitRequestFullscreen?: () => Promise<void>;
-    };
-
-    const fullscreenButton = document.getElementById("fullscreenButton");
-
-    if (document.fullscreenElement) {
-        try {
-            await document.exitFullscreen();
-            if (fullscreenButton) {
-                fullscreenButton.textContent = "⛶";
-            }
-        } catch (err) {
-            if (err instanceof Error) {
-                console.error(
-                    `Error exiting fullscreen:${err.message} (${err.name})`,
-                );
-
-                return;
-            }
-        }
-    } else {
-        try {
-            if (elem.requestFullscreen) {
-                await elem.requestFullscreen();
-            } else if (elem.webkitRequestFullscreen) {
-                await elem.webkitRequestFullscreen();
-            } else if (elem.mozRequestFullScreen) {
-                await elem.mozRequestFullScreen();
-            }
-        } catch (err: unknown) {
-            if (err instanceof Error) {
-                console.error(
-                    `Error attempting to enable full-screen mode: ${err.message} (${err.name})`,
-                );
-
-                return;
-            }
-        }
-
-        if (fullscreenButton) {
-            fullscreenButton.textContent = "╬";
-        }
-    }
 }
 
 export const init = async (): Promise<void> => {
@@ -802,8 +748,18 @@ export const init = async (): Promise<void> => {
             "click",
             async (event) => {
                 event.stopPropagation();
-                // Actions on START button click
+
+                // Hide button immediately
+                startButton.style.display = "none";
+
+                // IMPORTANT: Play sound BEFORE attempting fullscreen
+                playTune(SFX_START);
+
+                // Wait a brief moment to let audio initialize
+                await new Promise((resolve) => setTimeout(resolve, 100));
+
                 await toggleFullScreen();
+
                 canvas.focus();
                 await postInitActions();
             },
@@ -811,7 +767,7 @@ export const init = async (): Promise<void> => {
         );
     } else {
         // Non-touch device
-        await waitForProgressInput();
+        await waitForProgressInput(SFX_START);
         await postInitActions();
     }
 };

@@ -54,6 +54,96 @@ const startTune = document.createElement("audio");
 const raceTune = document.createElement("audio");
 const gameoverFx = document.createElement("audio");
 
+export let audioContext;
+export let audioUnlocked = false;
+
+export const unlockAudio = async () => {
+    console.log("Attempting to unlock audio systems...");
+    
+    if (audioUnlocked) return true;
+    
+    // 1. Try to unlock HTML Audio elements
+    try {
+        // Quick play attempt on the startTune element
+        startTune.volume = 0.1;
+        await startTune.play().catch(e => console.log("First unlock attempt:", e));
+        startTune.pause();
+        startTune.currentTime = 0;
+        console.log("HTML Audio unlocked successfully");
+    } catch (e) {
+        console.warn("HTML Audio unlock attempt failed:", e);
+    }
+    
+    // 2. Make sure zzfx audio context is created and resumed
+    try {
+        // Get the audio context used by zzfx
+        audioContext = zzfx.getAudioContext();
+        if (audioContext && audioContext.state !== "running") {
+            await audioContext.resume();
+        }
+        console.log("Web Audio API context state:", audioContext?.state);
+    } catch (e) {
+        console.warn("Web Audio API context resume failed:", e);
+    }
+    
+    audioUnlocked = true;
+    return true;
+};
+
+// Set up automatic audio unlocking on first interaction
+export const setupAudioUnlock = () => {
+    console.log("Setting up audio unlock for all mobile devices");
+
+    // Create a silent audio element as backup method
+    const silentAudio = document.createElement("audio");
+    silentAudio.setAttribute(
+        "src",
+        "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjIwLjEwMAAAAAAAAAAAAAAA//tUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABGwD///////////////////////////////////////////8AAAA8TEFNRTMuMTAwA8MAAAAAAAAAABQgJAUHQQAB9AAAARvMPHBz//////////////////////////////////////////////////////////////////8AAAA"
+    );
+    silentAudio.setAttribute("playsinline", "playsinline");
+    silentAudio.volume = 0.1; // Higher volume to ensure it registers
+
+    // Function to attempt unlocking audio
+    const attemptUnlock = async () => {
+        console.log("Attempting to unlock audio systems from event handler");
+
+        // 1. Try to play the silent sound
+        try {
+            silentAudio
+                .play()
+                .catch((e) => console.log("Silent audio error:", e));
+        } catch (e) {
+            console.log("Silent audio exception:", e);
+        }
+
+        // 2. Call our comprehensive unlockAudio function
+        try {
+            await unlockAudio();
+        } catch (e) {
+            console.log("sfx unlockAudio error:", e);
+        }
+
+        // Remove event listeners after attempting unlock
+        document.removeEventListener("touchstart", attemptUnlock, true);
+        document.removeEventListener("touchend", attemptUnlock, true);
+        document.removeEventListener("click", attemptUnlock, true);
+    };
+
+    // Add listeners in capture phase to handle them first
+    document.addEventListener("touchstart", attemptUnlock, {
+        once: true,
+        capture: true,
+    });
+    document.addEventListener("touchend", attemptUnlock, {
+        once: true,
+        capture: true,
+    });
+    document.addEventListener("click", attemptUnlock, {
+        once: true,
+        capture: true,
+    });
+};
+
 export const initMusicPlayer = (audioTrack, tune, isLooped) => {
     return new Promise((resolve) => {
         var songplayer = new CPlayer();
@@ -80,6 +170,9 @@ export const initMusicPlayer = (audioTrack, tune, isLooped) => {
 };
 
 export const initialize = () => {
+    // Set up audio unlock automatically
+    setupAudioUnlock();
+    
     return Promise.all([
         initMusicPlayer(startTune, song1, true),
         initMusicPlayer(raceTune, song2, true),
@@ -109,20 +202,30 @@ const FadeOut = (tune, vol = 0) => {
     }
 };
 
+// Check if we're on iOS
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
 const FadeIn = (tune, vol = 1) => {
     if (tune._fadeInterval) {
         clearInterval(tune._fadeInterval);
         tune._fadeInterval = null;
     }
 
+
     let playPromise = Promise.resolve();
     if (tune.paused) {
-        tune.volume = 0;
+        // Key change: Start with a small audible volume on iOS
+        tune.volume = isIOS ? 0.1 : 0;
+        
+        // Add playsinline for iOS (just to be safe)
+        tune.setAttribute("playsinline", "playsinline");
         playPromise = tune.play();
     }
 
     playPromise.then(() => {
-        var currentVolume = tune.volume;
+        // Start from current volume
+        var currentVolume = parseFloat(tune.volume);
+        
         if (currentVolume < vol) {
             if (tune._fadeInterval) clearInterval(tune._fadeInterval);
 
@@ -141,6 +244,12 @@ const FadeIn = (tune, vol = 1) => {
         }
     }).catch(e => {
         console.warn("FadeIn play() failed:", e);
+        // Try one more time with higher volume on any failure
+        if (tune.paused) {
+            tune.volume = 1;
+            tune.play().catch(err => console.error("Second play attempt failed:", err));
+        }
+        
         if (tune._fadeInterval) {
             clearInterval(tune._fadeInterval);
             tune._fadeInterval = null;
@@ -164,7 +273,7 @@ const FadeOutIn = (tune1, tune2) => {
             currentVolume = Math.max(0, parseFloat(currentVolume) - 0.1).toFixed(1);
             tune1.volume = currentVolume;
 
-            if (currentVolume <= 0) {
+            if (currentVolume <= 0.1) {
                 tune1.pause();
                 clearInterval(tune1._fadeInterval);
                 tune1._fadeInterval = null;
@@ -185,8 +294,17 @@ const FadeOutIn = (tune1, tune2) => {
     }
 };
 
-export const playTune = (tune, vol) => {
-    if (vol === 0) return
+export const playTune = async (tune, vol) => {
+    if (vol === 0) return;
+    
+    // Always try to unlock audio context for zzfx
+    if (audioContext && audioContext.state !== "running") {
+        try {
+            await audioContext.resume();
+        } catch (e) {
+            console.warn("AudioContext resume failed in playTune:", e);
+        }
+    }
 
     switch (tune) {
         case SFX_RACE: {
@@ -212,7 +330,6 @@ export const playTune = (tune, vol) => {
             break;
         }
         case SFX_START: {
-            startTune.volume = 0;
             startTune.currentTime = 0;
             FadeIn(startTune);
             break;
