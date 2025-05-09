@@ -40,7 +40,6 @@ import {
     initialize,
     playTune,
     stopTune,
-    unlockAudio, // Import this from sfx.js if you added it there
     SFX_START,
     SFX_RACE,
     SFX_FINISHED,
@@ -68,71 +67,7 @@ import {
     waitForProgressInput,
 } from "./controls";
 import { hasTouchScreen } from "./touchscreen";
-
-// Declare playTune on the global scope for the iOS audio unlock workaround
-declare global {
-    // eslint-disable-next-line no-var
-    var playTune: (soundId: number) => void;
-}
-
-// Universal audio unlock for all mobile devices
-function setupAudioUnlock() {
-    console.log("Setting up audio unlock for all mobile devices");
-
-    // Create a silent audio element as backup method
-    const silentAudio = document.createElement("audio");
-    silentAudio.setAttribute(
-        "src",
-        "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjIwLjEwMAAAAAAAAAAAAAAA//tUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABGwD///////////////////////////////////////////8AAAA8TEFNRTMuMTAwA8MAAAAAAAAAABQgJAUHQQAB9AAAARvMPHBz//////////////////////////////////////////////////////////////////8AAAA",
-    );
-    silentAudio.setAttribute("playsinline", "playsinline");
-    silentAudio.volume = 0.1; // Higher volume to ensure it registers
-
-    // Function to attempt unlocking audio
-    const attemptUnlock = async () => {
-        console.log("Attempting to unlock audio systems");
-
-        // 1. Try to play the silent sound
-        try {
-            silentAudio
-                .play()
-                .catch((e) => console.log("Silent audio error:", e));
-        } catch (e) {
-            console.log("Silent audio exception:", e);
-        }
-
-        // 2. If you added unlockAudio to sfx.js, call it
-        if (typeof unlockAudio === "function") {
-            try {
-                await unlockAudio();
-            } catch (e) {
-                console.log("sfx unlockAudio error:", e);
-            }
-        }
-
-        // Remove event listeners after attempting unlock
-        document.removeEventListener("touchstart", attemptUnlock, true);
-        document.removeEventListener("touchend", attemptUnlock, true);
-        document.removeEventListener("click", attemptUnlock, true);
-    };
-
-    // Add listeners in capture phase to handle them first
-    document.addEventListener("touchstart", attemptUnlock, {
-        once: true,
-        capture: true,
-    });
-    document.addEventListener("touchend", attemptUnlock, {
-        once: true,
-        capture: true,
-    });
-    document.addEventListener("click", attemptUnlock, {
-        once: true,
-        capture: true,
-    });
-}
-
-// Call this instead of initIOSAudio()
-setupAudioUnlock();
+import { toggleFullScreen } from "./fullscreen";
 
 const versionText = "Director's cut (" + (VERSION ? VERSION : "DEV") + ")";
 
@@ -267,7 +202,7 @@ const setState = async (state: GameState) => {
                 setState(GameState.Ready);
             } else {
                 // Final Winner
-                await waitForProgressInput(SFX_RESTART); // Wait for input to restart
+                await waitForProgressInput(); // Wait for input to restart
                 raceNumber = 1;
                 clearCharacterGradientCache();
                 setState(GameState.Start);
@@ -712,46 +647,6 @@ async function postInitActions() {
 
     raceNumber = 1;
     setState(GameState.Start);
-}
-
-// Function to request fullscreen and exit fullscreen
-async function toggleFullScreen(): Promise<void> {
-    const elem = document.documentElement as HTMLElement & {
-        mozRequestFullScreen?: () => Promise<void>;
-        webkitRequestFullscreen?: () => Promise<void>;
-    };
-
-    if (document.fullscreenElement) {
-        try {
-            await document.exitFullscreen();
-        } catch (err) {
-            if (err instanceof Error) {
-                console.error(
-                    `Error exiting fullscreen:${err.message} (${err.name})`,
-                );
-
-                return;
-            }
-        }
-    } else {
-        try {
-            if (elem.requestFullscreen) {
-                await elem.requestFullscreen();
-            } else if (elem.webkitRequestFullscreen) {
-                await elem.webkitRequestFullscreen();
-            } else if (elem.mozRequestFullScreen) {
-                await elem.mozRequestFullScreen();
-            }
-        } catch (err: unknown) {
-            if (err instanceof Error) {
-                console.error(
-                    `Error attempting to enable full-screen mode: ${err.message} (${err.name})`,
-                );
-
-                return;
-            }
-        }
-    }
 }
 
 export const init = async (): Promise<void> => {
