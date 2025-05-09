@@ -136,47 +136,6 @@ export const waitForTapAndPlaySound = (
     return waitForTap(area, soundToPlay);
 };
 
-// Add a function that can unlock audio on any touch for Android devices
-export const unlockAudioOnTouch = (soundToPlay?: number): void => {
-    const unlockHandler = (): void => {
-        // Try to play a sound to unlock audio
-        if (soundToPlay !== undefined) {
-            try {
-                console.log("Unlocking audio with sound ID:", soundToPlay);
-                playTune(soundToPlay);
-            } catch (err) {
-                console.error("Error unlocking audio:", err);
-            }
-        }
-
-        // Try to create and play a silent sound as backup unlock method
-        try {
-            const audioContext = new (window.AudioContext ||
-                window.AudioContext)();
-            audioContext
-                .resume()
-                .then(() => console.log("Audio context resumed"));
-
-            // Create a short silent buffer
-            const buffer = audioContext.createBuffer(1, 1, 22050);
-            const source = audioContext.createBufferSource();
-            source.buffer = buffer;
-            source.connect(audioContext.destination);
-            source.start(0);
-            console.log("Silent buffer played");
-        } catch (e) {
-            console.log("Audio context approach failed:", e);
-        }
-
-        // Remove the handler after first touch
-        document.removeEventListener("touchstart", unlockHandler);
-    };
-
-    // Add the handler to the document to catch any touch
-    document.addEventListener("touchstart", unlockHandler, { passive: false });
-    console.log("Audio unlock handler installed");
-};
-
 export const isTouching = (area: Area): boolean => {
     for (let i = 0; i < touchPositionsCount; i++) {
         if (includesPoint(area, touchPositions[i])) {
