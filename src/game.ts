@@ -30,6 +30,13 @@ import {
     cx,
     createFabricTexture,
     createPlateTexture,
+    initializeGraphics,
+    shouldRender,
+    createToggleButton,
+    createFullscreenButton,
+    createRestartButton,
+    createStartButton,
+    START_BUTTON_ID,
 } from "./graphics";
 import { renderText, TextSize } from "./text";
 import { sleep } from "./keyboard";
@@ -117,11 +124,6 @@ const platePattern = createPlateTexture();
 
 let counted = 0;
 
-const fullscreenButton = document.createElement("button");
-const restartButton = document.createElement("button");
-const startButton = document.createElement("button");
-const START_BUTTON_ID = "startButton";
-
 const setState = async (state: GameState) => {
     gameState = state;
 
@@ -188,13 +190,13 @@ const setState = async (state: GameState) => {
             randomWidhOffset = 1 + Math.random() * 0.6;
             randomHeighOffset = 1 + Math.random() * 0.3;
 
-            await waitForProgressInput(SFX_RESTART); // Wait for continue input
+            await waitForProgressInput(SFX_RESTART);
             raceNumber = 1;
             setState(GameState.Start);
             break;
         case GameState.GameFinished:
             radius = 1;
-            playTune(SFX_FINISHED); // Play finished tune
+            playTune(SFX_FINISHED);
             if (level && level.characters.length > 14) {
                 // Qualified
                 await waitForProgressInput(SFX_RACE);
@@ -202,7 +204,7 @@ const setState = async (state: GameState) => {
                 setState(GameState.Ready);
             } else {
                 // Final Winner
-                await waitForProgressInput(); // Wait for input to restart
+                await waitForProgressInput(SFX_START);
                 raceNumber = 1;
                 clearCharacterGradientCache();
                 setState(GameState.Start);
@@ -229,7 +231,10 @@ const gameLoop = (t: number): void => {
         lastTime = t - (deltaTime % TIME_STEP);
 
         update(t, cappedDeltaTime);
-        draw(t, cappedDeltaTime);
+
+        if (shouldRender(t)) {
+            draw(t, cappedDeltaTime);
+        }
     }
 };
 
@@ -645,6 +650,10 @@ async function postInitActions() {
         btn.style.display = "none";
     }
 
+    // Add the toggle button
+    const toggleBtn = createToggleButton();
+    document.body.appendChild(toggleBtn);
+
     raceNumber = 1;
     setState(GameState.Start);
 }
@@ -655,71 +664,15 @@ export const init = async (): Promise<void> => {
     canvas.style.outline = "none"; // Prevents outline when focused
 
     // --- Initial Setup ---
+    initializeGraphics();
     initializeControls();
     lastTime = performance.now();
     window.requestAnimationFrame(gameLoop);
 
-    // --- Button Styles ---
-    const top = "10px";
-    const zIndex = "10";
-    const size = "40px";
-    const color = "rgba(255, 255, 255, 0.4)";
-    const background = "black";
-    const border = "1px solid rgba(255, 255, 255, 0.2)";
-    const borderRadius = "4px";
-    const fontSize = "24px";
-    const lineHeight = "0";
-
-    // --- Configure Buttons ---
-    fullscreenButton.id = "fullscreenButton";
-    fullscreenButton.style.position = "absolute";
-    fullscreenButton.style.top = top;
-    fullscreenButton.style.right = "10px";
-    fullscreenButton.style.zIndex = zIndex;
-    fullscreenButton.textContent = "⛶";
-    startButton.style.fontFamily = "Impact";
-    fullscreenButton.style.width = size;
-    fullscreenButton.style.height = size;
-    fullscreenButton.style.color = color;
-    fullscreenButton.style.background = background;
-    fullscreenButton.style.border = border;
-    fullscreenButton.style.borderRadius = borderRadius;
-    fullscreenButton.style.fontSize = fontSize;
-    fullscreenButton.style.lineHeight = lineHeight;
-    fullscreenButton.style.display = hasTouchScreen ? "none" : "block";
-
-    restartButton.id = "restartButton";
-    restartButton.style.position = "absolute";
-    restartButton.style.top = top;
-    restartButton.style.right = "60px";
-    restartButton.style.zIndex = zIndex;
-    restartButton.textContent = "↺";
-    startButton.style.fontFamily = "Impact";
-    restartButton.style.width = size;
-    restartButton.style.height = size;
-    restartButton.style.color = color;
-    restartButton.style.background = background;
-    restartButton.style.border = border;
-    restartButton.style.borderRadius = borderRadius;
-    restartButton.style.fontSize = fontSize;
-    restartButton.style.lineHeight = lineHeight;
-    restartButton.style.display = "none";
-
-    startButton.id = START_BUTTON_ID;
-    startButton.style.position = "absolute";
-    startButton.textContent = "Tap the screen to continue█";
-    startButton.style.padding = "20vw 0 0 0";
-    startButton.style.fontFamily = "Courier New";
-    startButton.style.background = "transparent";
-    startButton.style.border = "none";
-    startButton.style.fontSize = "2vw";
-    startButton.style.top = "0";
-    startButton.style.bottom = "0";
-    startButton.style.left = "0";
-    startButton.style.right = "0";
-    startButton.style.zIndex = zIndex;
-    startButton.style.color = color;
-    startButton.style.display = "none";
+    // Create UI buttons
+    const fullscreenButton = createFullscreenButton(hasTouchScreen);
+    const restartButton = createRestartButton();
+    const startButton = createStartButton();
 
     // --- Add Buttons to DOM ---
     document.body.appendChild(restartButton);

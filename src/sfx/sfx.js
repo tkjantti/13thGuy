@@ -330,8 +330,10 @@ export const playTune = async (tune, vol) => {
             break;
         }
         case SFX_START: {
-            startTune.currentTime = 0;
-            FadeIn(startTune);
+            if (startTune.paused || startTune.volume != 1) {
+                startTune.currentTime = 0;
+                FadeIn(startTune);
+            }
             break;
         }
         case SFX_BOUNCE: {
