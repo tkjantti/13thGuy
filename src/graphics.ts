@@ -45,7 +45,7 @@ export const cx: CanvasRenderingContext2D = canvas.getContext("2d", {
 })!;
 
 // Target framerate for low-performance devices
-const LOW_PERFORMANCE_FPS = 30;
+const LOW_PERFORMANCE_FPS = 60;
 let lastFrameTime = 0;
 
 // Add this near the top with other variables
@@ -232,8 +232,7 @@ export function togglePerformanceMode(): void {
         performanceToggleButton.textContent = `GFX: ${currentPerformanceMode}`;
     }
 
-    // Log the change
-    console.log("Performance mode toggled to:", currentPerformanceMode);
+    canvas.focus();
 }
 
 // Add runtime performance monitoring
@@ -660,7 +659,7 @@ export const createToggleButton = () => {
     performanceToggleButton.style.background = buttonStyles.background;
     performanceToggleButton.style.border = buttonStyles.border;
     performanceToggleButton.style.borderRadius = buttonStyles.borderRadius;
-    performanceToggleButton.style.fontSize = "2vw";
+    performanceToggleButton.style.fontSize = "1.5vw";
     performanceToggleButton.style.lineHeight = buttonStyles.lineHeight;
     performanceToggleButton.style.zIndex = buttonStyles.zIndex;
 
