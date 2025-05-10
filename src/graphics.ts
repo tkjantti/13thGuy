@@ -22,10 +22,12 @@
  * SOFTWARE.
  */
 
-// Add deviceMemory property to Navigator interface
+// Update the global interface declarations at the top
 declare global {
     interface Navigator {
         deviceMemory?: number;
+        // Add proper typing for GPU property
+        gpu?: unknown;
     }
 
     interface Window {
@@ -39,6 +41,22 @@ declare global {
     }
 }
 
+export const isIPad =
+    /iPad/.test(navigator.userAgent) ||
+    (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+export const isSafari =
+    /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+export const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(
+    navigator.userAgent,
+);
+export const isIOS =
+    // Traditional iOS detection
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    // Modern iPad detection (iPadOS 13+ reports as Mac)
+    (navigator.userAgent.includes("Mac") && navigator.maxTouchPoints > 1);
+export const isAndroid = /Android/.test(navigator.userAgent);
+export const isDesktop = !isMobileDevice && !isIPad;
+
 export const canvas = document.querySelector("canvas") as HTMLCanvasElement;
 export const cx: CanvasRenderingContext2D = canvas.getContext("2d", {
     willReadFrequently: true,
@@ -51,50 +69,70 @@ let lastFrameTime = 0;
 // Add this near the top with other variables
 let performanceToggleButton: HTMLButtonElement | null = null;
 
+// Add these variables near the top with other state variables
+let hasCheckedRacePerformance = false;
+
+// Add this flag to track when we're in a race vs menus/start screens
+let isInRaceMode = false;
+
+/**
+ * Set whether the game is currently in race mode vs menus/start screens
+ * Call this when transitioning between game states
+ */
+export function setRaceMode(inRace: boolean): void {
+    isInRaceMode = inRace;
+    console.log(`Race mode set to: ${inRace ? "ACTIVE" : "INACTIVE"}`);
+}
+
 /**
  * Performance mode settings
  */
-export enum PerformanceMode {
+enum PerformanceMode {
+    AUTO = "auto", // New AUTO mode
     HIGH = "high",
     MEDIUM = "medium",
     LOW = "low",
 }
 
-const isIPad =
-    /iPad/.test(navigator.userAgent) ||
-    (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+// Change default to AUTO
+let currentPerformanceMode: PerformanceMode = PerformanceMode.AUTO;
 
-const isSafari =
-    /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+// Track whether AUTO has made a performance decision
+let autoModeEffectiveMode: PerformanceMode = PerformanceMode.HIGH;
 
-const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+// Change from const to let so we can set it
+let performanceTier: "high" | "medium" | "low";
 
-// Current performance mode setting
-let currentPerformanceMode: PerformanceMode = PerformanceMode.HIGH;
+/**
+ * Get effective performance mode (resolves AUTO to actual mode)
+ */
+function getEffectivePerformanceMode(): PerformanceMode {
+    if (currentPerformanceMode === PerformanceMode.AUTO) {
+        return autoModeEffectiveMode;
+    }
+    return currentPerformanceMode;
+}
 
 // Replace the detectLowPerformanceMode function
 export function detectLowPerformanceMode(): boolean {
-    // IMPORTANT: For iPad + Safari, we'll use a direct, synchronous approach
+    // IMPORTANT: For iPad + Safari, check ONLY for private mode
     if (isIPad && isSafari) {
-        // Direct test for private mode on Safari - this is synchronous and reliable
+        // Direct test for private mode on Safari
         try {
-            // The most reliable test for Safari private mode is localStorage
-            // If in private mode, this will throw an exception immediately
             window.localStorage.setItem("test", "test");
             window.localStorage.removeItem("test");
-
-            console.log("iPad Safari normal mode detected");
-            // If we reach here, it's not in private mode
+            // Normal mode for iPad - continue to more checks below
         } catch {
-            // If localStorage access throws an error on iPad Safari,
-            // it's almost certainly in private mode
+            // ONLY for iPad Safari in private mode, use LOW immediately
+            console.log(
+                "iPad Safari private mode - using LOW performance mode",
+            );
             return true;
         }
     }
 
-    // For other devices, use the standard detection logic
+    // For other devices and iPad Safari in normal mode:
     let isPrivateBrowsing = false;
-
     try {
         const testKey = "test_private";
         localStorage.setItem(testKey, testKey);
@@ -103,46 +141,168 @@ export function detectLowPerformanceMode(): boolean {
         isPrivateBrowsing = true;
     }
 
-    // Rest of your checking logic
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
+    // LESS AGGRESSIVE check for limited resources - only for truly low-end devices
     const hasLimitedResources =
         (typeof navigator.hardwareConcurrency !== "undefined" &&
-            navigator.hardwareConcurrency <= 2) ||
+            // Only consider devices with 1-2 cores as truly limited
+            navigator.hardwareConcurrency <= 1) ||
         (typeof navigator.deviceMemory !== "undefined" &&
-            navigator.deviceMemory < 2);
+            navigator.deviceMemory < 1);
 
     if ((isIOS && isPrivateBrowsing) || hasLimitedResources) {
         console.log(
-            "Limited resources or iOS private browsing - using low performance mode",
+            "Very limited resources or iOS private browsing - using LOW performance mode",
         );
         return true;
     }
 
-    // Better desktop performance detection
+    // Desktop detection - make it less aggressive about downgrading
     const isOlderDesktop =
-        navigator.hardwareConcurrency <= 4 &&
-        (!navigator.deviceMemory || navigator.deviceMemory <= 4) &&
+        navigator.hardwareConcurrency <= 3 && // More lenient
+        (!navigator.deviceMemory || navigator.deviceMemory <= 2) && // More lenient
         !isIOS &&
         !isIPad;
 
     if (isOlderDesktop) {
-        console.log("Older desktop detected - using medium performance mode");
-        // For desktop, consider returning false but setting MEDIUM mode instead of LOW
-        setPerformanceMode(PerformanceMode.MEDIUM);
+        console.log("Older desktop detected - using MEDIUM performance mode");
+        if (currentPerformanceMode === PerformanceMode.AUTO) {
+            // Just update the effective mode, preserve AUTO
+            autoModeEffectiveMode = PerformanceMode.MEDIUM;
+            updateToggleButtonText();
+        } else {
+            // For manual modes, change the actual mode
+            setPerformanceMode(PerformanceMode.MEDIUM);
+        }
         return false;
     }
 
     return false;
 }
 
-// Add frame throttling for low-performance devices
+// Replace getDevicePerformanceTier function with enhanced private browsing detection
+function getDevicePerformanceTier(): "high" | "medium" | "low" {
+    // Enhanced private browsing detection focused on Safari behavior
+    let isPrivateBrowsing = false;
+
+    // Method 1: Storage size detection (Safari private browsing has 0 quota)
+    function checkStorageQuota(): boolean {
+        if (navigator.storage && navigator.storage.estimate) {
+            try {
+                navigator.storage.estimate().then((estimate) => {
+                    console.log(
+                        `Storage quota: ${estimate.quota}, used: ${estimate.usage}`,
+                    );
+                    if (estimate.quota && estimate.quota < 10000000) {
+                        // Less than 10MB
+                        console.log("Private browsing likely (small quota)");
+                        return true;
+                    }
+                });
+            } catch {}
+        }
+        return false;
+    }
+
+    // Method 2: Safari specific localStorage test - check if data persists
+    function checkLocalStoragePersistence(): boolean {
+        const TEST_KEY = "private_test_" + Math.random();
+        const TEST_VALUE = "test_value_" + Date.now();
+
+        try {
+            localStorage.setItem(TEST_KEY, TEST_VALUE);
+            // Read back immediately
+            const readValue = localStorage.getItem(TEST_KEY);
+            localStorage.removeItem(TEST_KEY);
+
+            // In Safari private browsing, the data won't persist between access attempts
+            if (readValue !== TEST_VALUE) {
+                console.log(
+                    "Private browsing detected (non-persistent storage)",
+                );
+                return true;
+            }
+        } catch (e) {
+            console.log("Error accessing localStorage:", e);
+            return true;
+        }
+        return false;
+    }
+
+    // Run tests
+    isPrivateBrowsing = checkLocalStoragePersistence() || checkStorageQuota();
+
+    // Additional fallback check
+    if (!isPrivateBrowsing && (isSafari || isIOS || isIPad)) {
+        try {
+            const testKey = "safari_private_test";
+            localStorage.setItem(testKey, "1");
+            localStorage.removeItem(testKey);
+        } catch (e) {
+            console.log("Safari private browsing exception caught");
+            isPrivateBrowsing = true;
+        }
+    }
+
+    console.log(`Final private browsing detection: ${isPrivateBrowsing}`);
+
+    // Force LOW tier for ALL iOS devices in private mode
+    if (
+        (isIOS || isIPad) &&
+        (isPrivateBrowsing || (isSafari && checkIsSafariPrivateMode()))
+    ) {
+        console.log(
+            "iOS/iPad Safari private mode - forcing LOW performance tier",
+        );
+        return "low";
+    }
+
+    // Rest remains the same
+    if (
+        navigator.hardwareConcurrency > 4 ||
+        navigator.gpu !== undefined ||
+        (isIPad && navigator.hardwareConcurrency > 3 && !isPrivateBrowsing)
+    ) {
+        return isPrivateBrowsing ? "medium" : "high";
+    }
+
+    // Medium performance tier - decent devices
+    if (navigator.hardwareConcurrency >= 2) {
+        return "medium";
+    }
+
+    return "low";
+}
+
+// Add this helper function to detect Safari private mode specifically
+function checkIsSafariPrivateMode(): boolean {
+    const idb = window.indexedDB;
+    if (idb) {
+        try {
+            const test = idb.open("test");
+            test.onerror = () => {
+                console.log("Safari private mode detected via indexedDB");
+                return true;
+            };
+            return false;
+        } catch (e) {
+            console.log("Error testing indexedDB:", e);
+            return true;
+        }
+    }
+    return false;
+}
+
+// Update shouldRender
 export function shouldRender(timestamp: number): boolean {
-    if (currentPerformanceMode !== PerformanceMode.LOW) {
+    // Only skip frames during actual racing, not menu screens
+    if (
+        !isInRaceMode ||
+        getEffectivePerformanceMode() !== PerformanceMode.LOW
+    ) {
         return true;
     }
 
-    // Frame rate limiting for LOW performance mode
+    // Frame rate limiting for LOW performance mode during race
     const targetFrameTime = 1000 / LOW_PERFORMANCE_FPS;
     if (timestamp - lastFrameTime >= targetFrameTime) {
         lastFrameTime = timestamp;
@@ -157,6 +317,33 @@ export function shouldRender(timestamp: number): boolean {
 export function setPerformanceMode(mode: PerformanceMode): void {
     console.log(`Setting graphics performance mode to: ${mode}`);
     currentPerformanceMode = mode;
+
+    // Update the toggle button text whenever performance mode changes
+    updateToggleButtonText();
+}
+
+/**
+ * Update the toggle button text to match current performance mode
+ */
+function updateToggleButtonText(): void {
+    // Only update if button exists
+    if (performanceToggleButton) {
+        let displayMode;
+
+        // When in AUTO mode, show the effective mode in parentheses
+        if (currentPerformanceMode === PerformanceMode.AUTO) {
+            displayMode = `${currentPerformanceMode} (${autoModeEffectiveMode})`;
+        } else {
+            // For manual modes, just show the selected mode
+            displayMode = currentPerformanceMode;
+        }
+
+        if (isMobileDevice) {
+            performanceToggleButton.textContent = `GFX: ${displayMode}`;
+        } else {
+            performanceToggleButton.textContent = `[G] GFX: ${displayMode}`;
+        }
+    }
 }
 
 /**
@@ -168,60 +355,101 @@ export function getPerformanceMode(): PerformanceMode {
 
 /**
  * Auto-configure performance settings based on device capabilities
+ * This runs ONCE at startup
  */
 export function autoConfigurePerformance(): void {
-    if (detectLowPerformanceMode()) {
-        setPerformanceMode(PerformanceMode.LOW);
-    } else {
-        // Could add more detection for medium vs high
-        setPerformanceMode(PerformanceMode.HIGH);
+    // Keep currentPerformanceMode as AUTO
+    currentPerformanceMode = PerformanceMode.AUTO;
+
+    // Use performance tier to determine effective mode
+    switch (performanceTier) {
+        case "high":
+            autoModeEffectiveMode = PerformanceMode.HIGH;
+            break;
+        case "medium":
+            autoModeEffectiveMode = PerformanceMode.MEDIUM;
+            break;
+        case "low":
+            autoModeEffectiveMode = PerformanceMode.LOW;
+            break;
     }
+
+    // For debugging - log hardware info
+    console.log(
+        `Detected hardware: Cores: ${navigator.hardwareConcurrency}, Memory: ${navigator.deviceMemory || "unknown"} GB, GPU: ${navigator.gpu ? "yes" : "no"}`,
+    );
+    console.log(`Performance tier detected: ${performanceTier}`);
+    console.log(
+        `AUTO mode initialized with effective setting: ${autoModeEffectiveMode}`,
+    );
+    updateToggleButtonText();
 }
 
 /**
- * Initialize graphics settings
+ * Initialize graphics settings with one-time detection
  */
 export function initializeGraphics(): void {
     console.log("Initializing graphics with performance detection...");
+
+    // Determine performance tier first
+    performanceTier = getDevicePerformanceTier();
+    console.log(`Detected performance tier: ${performanceTier}`);
+
+    // THEN configure performance based on the detected tier
     autoConfigurePerformance();
 
     // Initialize keyboard shortcuts
     initializeKeyboardShortcuts();
 
-    // Special handling for iPad performance issues
-    if (isIPad && isSafari) {
-        // Add listener for performance issues
-        let frameDropCounter = 0;
-        let lastCheckTime = Date.now();
-
-        // Monitor for performance issues during gameplay
-        const checkPerformance = () => {
-            if (currentPerformanceMode !== PerformanceMode.LOW) {
-                const now = Date.now();
-                if (now - lastCheckTime > 5000) {
-                    // Check every 5 seconds
-                    if (frameDropCounter > 20) {
-                        console.log(
-                            "Performance issues detected - switching to LOW mode",
-                        );
-                        setPerformanceMode(PerformanceMode.LOW);
-                    }
-                    frameDropCounter = 0;
-                    lastCheckTime = now;
-                }
-            }
-            requestAnimationFrame(checkPerformance);
-        };
-
-        requestAnimationFrame(checkPerformance);
-    }
+    // Reset race performance check flag
+    hasCheckedRacePerformance = false;
 
     console.log("Performance mode set to:", currentPerformanceMode);
 }
 
-// Update the togglePerformanceMode function
+/**
+ * Check performance when race gets going (not just at start)
+ */
+export function checkPerformanceOnRaceStart(): void {
+    // Only check once per race, or if not in AUTO mode
+    if (
+        hasCheckedRacePerformance ||
+        currentPerformanceMode !== PerformanceMode.AUTO
+    ) {
+        return;
+    }
+
+    console.log("Scheduling performance check...");
+
+    // Delay the check to when the game is actively running
+    // This ensures we're measuring actual gameplay performance
+    setTimeout(() => {
+        console.log("Starting performance check for AUTO mode...");
+        hasCheckedRacePerformance = true;
+
+        // Use performance tier directly to determine which check to run
+        if (performanceTier === "high") {
+            performHighTierCheck();
+        } else if (performanceTier === "medium") {
+            performMediumTierCheck();
+        } else {
+            performLowTierCheck();
+        }
+    }, 3000); // Wait 3 seconds after the counting starts before checking
+}
+
+/**
+ * Reset race-specific performance tracking
+ * Call this when a race ends or when restarting
+ */
+export function resetRacePerformanceCheck(): void {
+    hasCheckedRacePerformance = false;
+}
+
+// Update the togglePerformanceMode function to use our new helper
 export function togglePerformanceMode(): void {
     const modes = [
+        PerformanceMode.AUTO, // Add AUTO to the cycle
         PerformanceMode.HIGH,
         PerformanceMode.MEDIUM,
         PerformanceMode.LOW,
@@ -232,61 +460,192 @@ export function togglePerformanceMode(): void {
     // Set mode directly
     currentPerformanceMode = modes[nextIndex];
 
-    // Update button text if it exists
-    if (performanceToggleButton) {
-        if (isMobileDevice) {
-            performanceToggleButton.textContent = `GFX: ${currentPerformanceMode}`;
-        } else {
-            performanceToggleButton.textContent = `[G] GFX: ${currentPerformanceMode}`;
+    // Reset auto mode decision when switching back to AUTO
+    if (currentPerformanceMode === PerformanceMode.AUTO) {
+        // Re-check performance if in race mode
+        if (isInRaceMode) {
+            hasCheckedRacePerformance = false;
+            checkPerformanceOnRaceStart();
         }
     }
+
+    // Update button text
+    updateToggleButtonText();
+
+    // Prevent audio issues
+    if (performanceToggleButton) {
+        performanceToggleButton.blur();
+    }
+
+    console.log("Performance mode toggled to:", currentPerformanceMode);
 }
 
-// Add runtime performance monitoring
-let lastFrameTimes: number[] = [];
-const MAX_SAMPLES = 60;
-let slowFrames = 0;
+/**
+ * Performance check for high-tier devices
+ * More sensitive detection to properly downgrade during serious lag
+ */
+function performHighTierCheck(): void {
+    console.log("Running performance check for HIGH tier device...");
 
-const checkPerformance = (timestamp: number) => {
-    const lastRender = lastFrameTimes.length
-        ? lastFrameTimes[lastFrameTimes.length - 1]
-        : 0;
-    const frameTime = timestamp - lastRender;
+    // More sensitive detection method using animationFrame for timing
+    let frameCount = 0;
+    let slowFrameCount = 0;
+    let verySlowFrameCount = 0;
+    const MAX_FRAMES = 20; // Check more frames for better detection
 
-    if (lastRender) {
-        // Count frames that are too slow (16.7ms = 60fps)
-        if (frameTime > 33) {
-            // Frame took > 33ms (< 30fps)
-            slowFrames++;
-        }
+    // Lower thresholds to catch more lag
+    const moderateLagThreshold = 20; // 20ms = moderate lag (more sensitive)
+    const severeLagThreshold = 80; // 80ms = severe lag (more sensitive)
 
-        // Every 60 frames, check performance
-        if (lastFrameTimes.length >= MAX_SAMPLES) {
-            if (
-                slowFrames > 10 &&
-                currentPerformanceMode !== PerformanceMode.LOW
-            ) {
+    // Use requestAnimationFrame to get actual render timings
+    let lastFrameTime = performance.now();
+
+    function checkFrame(timestamp: number) {
+        const frameDuration = timestamp - lastFrameTime;
+        lastFrameTime = timestamp;
+
+        // Skip first frame which might be artificially long
+        if (frameCount > 0) {
+            console.log(
+                `Frame ${frameCount} duration: ${frameDuration.toFixed(2)}ms`,
+            );
+
+            if (frameDuration > severeLagThreshold) {
+                verySlowFrameCount++;
+                slowFrameCount++;
                 console.log(
-                    "Performance issues detected - switching to lower mode",
+                    `SEVERE lag detected: ${frameDuration.toFixed(2)}ms`,
                 );
-                const nextMode =
-                    currentPerformanceMode === PerformanceMode.HIGH
-                        ? PerformanceMode.MEDIUM
-                        : PerformanceMode.LOW;
-                setPerformanceMode(nextMode);
+            } else if (frameDuration > moderateLagThreshold) {
+                slowFrameCount++;
+                console.log(
+                    `Moderate lag detected: ${frameDuration.toFixed(2)}ms`,
+                );
             }
 
-            // Reset measurements
-            lastFrameTimes = [];
-            slowFrames = 0;
+            if (frameCount >= MAX_FRAMES) {
+                // If 25% of frames have SEVERE lag, go straight to LOW
+                if (verySlowFrameCount >= 5) {
+                    console.log(
+                        `SEVERE performance issues detected (${verySlowFrameCount}/${MAX_FRAMES} very slow frames)`,
+                    );
+                    autoModeEffectiveMode = PerformanceMode.LOW;
+                    updateToggleButtonText();
+                }
+                // If 25% of frames have moderate lag, go to MEDIUM
+                else if (slowFrameCount >= 5) {
+                    console.log(
+                        `Moderate performance issues detected (${slowFrameCount}/${MAX_FRAMES} slow frames)`,
+                    );
+                    autoModeEffectiveMode = PerformanceMode.MEDIUM;
+                    updateToggleButtonText();
+
+                    // Run a follow-up check after 2 seconds to see if we need to go to LOW
+                    setTimeout(() => {
+                        performAdditionalCheck();
+                    }, 2000);
+                } else {
+                    console.log(
+                        `Performance acceptable (${slowFrameCount}/${MAX_FRAMES} slow frames)`,
+                    );
+                }
+                return;
+            }
         }
+
+        frameCount++;
+        requestAnimationFrame(checkFrame);
     }
 
-    lastFrameTimes.push(timestamp);
-    requestAnimationFrame(checkPerformance);
-};
+    // Secondary check to see if we need to further downgrade to LOW
+    function performAdditionalCheck() {
+        console.log("Performing follow-up performance check...");
 
-requestAnimationFrame(checkPerformance);
+        let additionalFrameCount = 0;
+        let additionalSlowFrameCount = 0;
+        const ADDITIONAL_MAX_FRAMES = 10;
+
+        function checkAdditionalFrame(timestamp: number) {
+            const frameDuration = timestamp - lastFrameTime;
+            lastFrameTime = timestamp;
+
+            if (additionalFrameCount > 0) {
+                console.log(
+                    `Additional frame ${additionalFrameCount} duration: ${frameDuration.toFixed(2)}ms`,
+                );
+
+                if (frameDuration > moderateLagThreshold) {
+                    additionalSlowFrameCount++;
+                }
+
+                if (additionalFrameCount >= ADDITIONAL_MAX_FRAMES) {
+                    // If still seeing lag in MEDIUM mode, drop to LOW
+                    if (additionalSlowFrameCount >= 3) {
+                        console.log(
+                            `Continued performance issues in MEDIUM mode (${additionalSlowFrameCount}/${ADDITIONAL_MAX_FRAMES} slow frames)`,
+                        );
+                        autoModeEffectiveMode = PerformanceMode.LOW;
+                        updateToggleButtonText();
+                    }
+                    return;
+                }
+            }
+
+            additionalFrameCount++;
+            requestAnimationFrame(checkAdditionalFrame);
+        }
+
+        lastFrameTime = performance.now();
+        requestAnimationFrame(checkAdditionalFrame);
+    }
+
+    // Start checking frames
+    requestAnimationFrame(checkFrame);
+}
+
+/**
+ * Performance check for medium-tier devices
+ * Balanced approach, may downgrade to LOW if necessary
+ */
+function performMediumTierCheck(): void {
+    console.log("Running performance check for MEDIUM tier device...");
+    const firstCheckTime = performance.now();
+
+    // Medium thresholds - reasonably balanced
+    const significantIssueThreshold = 150;
+
+    setTimeout(() => {
+        const now = performance.now();
+        const frameTime = now - firstCheckTime;
+        console.log(
+            `Medium tier check: Frame time = ${frameTime.toFixed(2)}ms`,
+        );
+
+        if (frameTime > significantIssueThreshold) {
+            console.log("Significant performance issues on medium-tier device");
+            autoModeEffectiveMode = PerformanceMode.LOW;
+            updateToggleButtonText();
+        } else {
+            console.log("Medium-tier device performance is acceptable");
+            // Keep MEDIUM mode
+        }
+    }, 300);
+}
+
+/**
+ * Performance check for low-tier devices
+ * Already using LOW settings, but confirm it's appropriate
+ */
+function performLowTierCheck(): void {
+    console.log("Running performance check for LOW tier device...");
+
+    // Low-tier devices start with LOW mode by default
+    autoModeEffectiveMode = PerformanceMode.LOW;
+    updateToggleButtonText();
+
+    // No additional checks needed - we assume LOW is appropriate
+    console.log("Set to LOW performance mode for low-tier device");
+}
 
 let scanlineCanvas: HTMLCanvasElement | null = null;
 let scanlineContext: CanvasRenderingContext2D | null = null;
@@ -309,9 +668,26 @@ const createScanlineCanvas = (
     }
 };
 
+// Update the visual effect functions to check race mode
+
 export const applyCRTEffect = (noisy = true): void => {
     const width = canvas.width;
     const height = canvas.height;
+
+    let effectiveMode;
+
+    // Get base effective mode (resolve AUTO first)
+    const baseMode = getEffectivePerformanceMode();
+
+    if (isInRaceMode) {
+        effectiveMode = baseMode;
+    } else {
+        // During menus: ensure better visuals
+        effectiveMode =
+            baseMode === PerformanceMode.LOW
+                ? PerformanceMode.MEDIUM
+                : baseMode;
+    }
 
     // Base opacity values to preserve your existing setup
     const baseOpacity = noisy ? 0.7 : 0.8;
@@ -319,27 +695,18 @@ export const applyCRTEffect = (noisy = true): void => {
     let noiseFactor = noisy ? 10 : 0;
 
     // Adjust effects based on performance mode
-    switch (currentPerformanceMode) {
+    switch (effectiveMode) {
         case PerformanceMode.LOW: {
-            // Even in LOW mode, apply a visible but simple effect
-            const gradient = cx.createRadialGradient(
-                width / 2,
-                height / 2,
-                height / 3,
-                width / 2,
-                height / 2,
-                height,
-            );
-            gradient.addColorStop(0, "rgba(0,0,0,0)");
-            gradient.addColorStop(1, "rgba(0,0,0,0.3)"); // Slightly darker
+            // Ultra-lightweight effect for LOW mode
+            // Skip the gradient entirely and use simple flat shading
 
-            cx.fillStyle = gradient;
+            // Just add a simple vignette effect (darkened corners)
+            cx.fillStyle = "rgba(0, 0, 0, 0.2)";
             cx.fillRect(0, 0, width, height);
 
-            // Add very simple scanlines (every 8px instead of 2px)
-            cx.globalAlpha = 0.15;
+            cx.globalAlpha = 0.05; // Even lower opacity
             cx.fillStyle = "#000";
-            for (let y = 0; y < height; y += 8) {
+            for (let y = 0; y < height; y += 2) {
                 cx.fillRect(0, y, width, 1);
             }
             cx.globalAlpha = 1.0;
@@ -388,7 +755,7 @@ export const applyCRTEffect = (noisy = true): void => {
     cx.putImageData(imageData, 0, 0);
 
     // Only apply scanlines in HIGH or MEDIUM mode
-    if ((currentPerformanceMode as PerformanceMode) !== PerformanceMode.LOW) {
+    if ((effectiveMode as PerformanceMode) !== PerformanceMode.LOW) {
         // Create scanline canvas if it doesn't exist
         if (
             !scanlineCanvas ||
@@ -424,9 +791,15 @@ const createGradient = () => {
     gradient.addColorStop(1, "rgba(0, 0, 0, 0.5)");
 };
 
+// Update applyGradient
 export const applyGradient = () => {
-    // Skip gradient entirely in LOW performance mode
-    if (currentPerformanceMode === PerformanceMode.LOW) {
+    // Only apply performance optimization during actual racing
+    const effectiveMode = isInRaceMode
+        ? getEffectivePerformanceMode()
+        : PerformanceMode.HIGH;
+
+    // Skip gradient entirely in LOW performance mode during race
+    if (effectiveMode === PerformanceMode.LOW) {
         return;
     }
 
@@ -438,10 +811,15 @@ export const applyGradient = () => {
     cx.fillRect(0, 0, canvas.width, canvas.height);
 };
 
-// Override applyGrayscale for performance
+// Update applyGrayscale
 export const applyGrayscale = () => {
+    // Only apply performance optimization during actual racing
+    const effectiveMode = isInRaceMode
+        ? getEffectivePerformanceMode()
+        : PerformanceMode.HIGH;
+
     // Use a much simpler effect in LOW mode
-    if (currentPerformanceMode === PerformanceMode.LOW) {
+    if (effectiveMode === PerformanceMode.LOW) {
         cx.globalAlpha = 0.5;
         cx.fillStyle = "rgba(0, 0, 0, 0.5)";
         cx.fillRect(0, 0, canvas.width, canvas.height);
@@ -629,12 +1007,8 @@ export function createRestartButton(): HTMLButtonElement {
 export function createStartButton(): HTMLButtonElement {
     const button = document.createElement("button");
 
-    // Button styling
     button.id = START_BUTTON_ID;
     button.style.position = "absolute";
-    button.textContent = "Tap the screen to continue█";
-    button.style.padding = "20vw 0 0 0";
-    button.style.fontFamily = "Courier New";
     button.style.background = "transparent";
     button.style.border = "none";
     button.style.fontSize = "2vw";
@@ -654,17 +1028,27 @@ export const createToggleButton = () => {
     performanceToggleButton = document.createElement("button");
 
     if (performanceToggleButton) {
-        if (isMobileDevice) {
-            performanceToggleButton.textContent = `GFX: ${currentPerformanceMode}`;
+        let displayMode;
+
+        // When in AUTO mode, show the effective mode in parentheses
+        if (currentPerformanceMode === PerformanceMode.AUTO) {
+            displayMode = `${currentPerformanceMode} (${autoModeEffectiveMode})`;
         } else {
-            performanceToggleButton.textContent = `[G] GFX: ${currentPerformanceMode}`;
+            // For manual modes, just show the selected mode
+            displayMode = currentPerformanceMode;
+        }
+
+        if (isMobileDevice) {
+            performanceToggleButton.textContent = `GFX: ${displayMode}`;
+        } else {
+            performanceToggleButton.textContent = `[G] GFX: ${displayMode}`;
         }
     }
 
     // Style the button
     performanceToggleButton.style.position = "absolute";
-    performanceToggleButton.style.bottom = "10px";
-    performanceToggleButton.style.right = "10px";
+    performanceToggleButton.style.top = "10px";
+    performanceToggleButton.style.left = isIPad ? "100px" : "10px";
     performanceToggleButton.style.fontFamily = "Impact";
     performanceToggleButton.style.height = buttonStyles.size;
     performanceToggleButton.style.color = buttonStyles.color;

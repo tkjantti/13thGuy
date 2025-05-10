@@ -35,6 +35,8 @@ import {
     goSfx
 } from "./sfxData.js";
 
+import { isIPad, isDesktop, isIOS  } from "../graphics.ts"
+
 import { zzfx } from "./sfxPlayer.js"
 import CPlayer from "./musicplayer.js";
 
@@ -49,20 +51,6 @@ export const SFX_GAMEOVER = "gameover";
 export const SFX_RESTART = "restart";
 export const SFX_COUNT = "count";
 export const SFX_GO = "go";
-
-// Replace the device detection code
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-    (navigator.userAgent.includes("Mac") && 
-    navigator.platform === "MacIntel" && 
-    navigator.maxTouchPoints > 1);
-const isAndroid = /Android/.test(navigator.userAgent);
-const isIPad = isIOS && (
-    /iPad/.test(navigator.userAgent) || 
-    (navigator.maxTouchPoints > 1 && navigator.platform === "MacIntel")
-);
-const isMobile = isIOS || isAndroid || /Mobi|Android/i.test(navigator.userAgent);
-// Modified desktop detection - iPads are never considered "desktop" for audio
-const isDesktop = !isMobile && !isIPad;
 
 const startTune = document.createElement("audio");
 const raceTune = document.createElement("audio");
@@ -349,7 +337,7 @@ export const playTune = async (tune, vol) => {
         }
         case SFX_GAMEOVER: {
             gameoverFx.volume = 1;
-            gameoverFx.play().catch(e => console.warn("gameoverFx play failed:", e));
+            gameoverFx.play();
             FadeOut(raceTune);
             break;
         }

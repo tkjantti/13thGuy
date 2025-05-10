@@ -37,6 +37,9 @@ import {
     createRestartButton,
     createStartButton,
     START_BUTTON_ID,
+    checkPerformanceOnRaceStart,
+    resetRacePerformanceCheck,
+    setRaceMode,
 } from "./graphics";
 import { renderText, TextSize } from "./text";
 import { sleep } from "./keyboard";
@@ -127,6 +130,10 @@ let counted = 0;
 const setState = async (state: GameState) => {
     gameState = state;
 
+    // Set race mode flag based on game state
+    // IMPORTANT: Only consider Running and Ready as race modes, not GameFinished/GameOver
+    setRaceMode(state === GameState.Running || state === GameState.Ready);
+
     const restartButton = document.getElementById("restartButton");
     if (restartButton) {
         restartButton.style.display =
@@ -182,6 +189,8 @@ const setState = async (state: GameState) => {
             }
             radius = maxRadius; // Reset radius for the animation
             readyCircleStartTime = drawTime;
+
+            checkPerformanceOnRaceStart();
             break;
 
         case GameState.GameOver:
@@ -195,6 +204,10 @@ const setState = async (state: GameState) => {
             setState(GameState.Start);
             break;
         case GameState.GameFinished:
+            // Make doubly sure we're not in race mode anymore
+            setRaceMode(false);
+            resetRacePerformanceCheck();
+
             radius = 1;
             playTune(SFX_FINISHED);
             if (level && level.characters.length > 14) {
