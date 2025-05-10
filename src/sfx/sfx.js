@@ -337,7 +337,9 @@ export const playTune = async (tune, vol) => {
         }
         case SFX_GAMEOVER: {
             gameoverFx.volume = 1;
-            gameoverFx.play();
+            gameoverFx.play().catch(e => {
+                console.warn("Failed to play gameoverFx:", e);
+            });
             FadeOut(raceTune);
             break;
         }
