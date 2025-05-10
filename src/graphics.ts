@@ -395,6 +395,11 @@ export function initializeGraphics(): void {
     performanceTier = getDevicePerformanceTier();
     console.log(`Detected performance tier: ${performanceTier}`);
 
+    // Run initial benchmark to more aggressively downgrade to MEDIUM if needed
+    if (performanceTier === "high") {
+        performInitialBenchmark();
+    }
+
     // THEN configure performance based on the detected tier
     autoConfigurePerformance();
 
@@ -405,6 +410,94 @@ export function initializeGraphics(): void {
     hasCheckedRacePerformance = false;
 
     console.log("Performance mode set to:", currentPerformanceMode);
+}
+
+/**
+ * Run a quick performance benchmark at game startup
+ * More aggressively downgrade to MEDIUM for borderline devices
+ */
+function performInitialBenchmark(): void {
+    console.log("Running initial performance benchmark...");
+
+    // Simple render test - create a canvas and do some operations
+    const benchmarkCanvas = document.createElement("canvas");
+    benchmarkCanvas.width = 400;
+    benchmarkCanvas.height = 400;
+    const benchmarkCtx = benchmarkCanvas.getContext("2d");
+
+    if (!benchmarkCtx) return;
+
+    // Measure time for a series of drawing operations
+    const startTime = performance.now();
+
+    // Perform moderately complex drawing operations
+    for (let i = 0; i < 50; i++) {
+        benchmarkCtx.clearRect(0, 0, 400, 400);
+        benchmarkCtx.save();
+
+        // Draw gradient
+        const gradient = benchmarkCtx.createRadialGradient(
+            200,
+            200,
+            10,
+            200,
+            200,
+            200,
+        );
+        gradient.addColorStop(0, "white");
+        gradient.addColorStop(1, "black");
+        benchmarkCtx.fillStyle = gradient;
+        benchmarkCtx.fillRect(0, 0, 400, 400);
+
+        // Draw some shapes
+        for (let j = 0; j < 20; j++) {
+            benchmarkCtx.fillStyle = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.5)`;
+            benchmarkCtx.beginPath();
+            benchmarkCtx.arc(
+                Math.random() * 400,
+                Math.random() * 400,
+                Math.random() * 50 + 10,
+                0,
+                Math.PI * 2,
+            );
+            benchmarkCtx.fill();
+        }
+
+        // Get image data and manipulate pixels
+        const imageData = benchmarkCtx.getImageData(0, 0, 400, 400);
+        const data = imageData.data;
+        for (let p = 0; p < data.length; p += 16) {
+            // Sample every 4th pixel
+            data[p] = data[p] * 0.9;
+            data[p + 1] = data[p + 1] * 0.9;
+            data[p + 2] = data[p + 2] * 0.9;
+        }
+        benchmarkCtx.putImageData(imageData, 0, 0);
+
+        benchmarkCtx.restore();
+    }
+
+    const endTime = performance.now();
+    const benchmarkTime = endTime - startTime;
+
+    console.log(`Initial benchmark completed in ${benchmarkTime.toFixed(2)}ms`);
+
+    // More aggressive threshold - if higher than this, use MEDIUM by default
+    // This threshold is lower than the in-race check
+    const benchmarkThreshold = 250; // ms - adjust based on testing
+
+    if (benchmarkTime > benchmarkThreshold) {
+        console.log(
+            `Initial benchmark indicates potential performance issues (${benchmarkTime.toFixed(2)}ms > ${benchmarkThreshold}ms)`,
+        );
+        console.log("Setting performance tier to MEDIUM as a precaution");
+        performanceTier = "medium";
+    } else {
+        console.log(
+            `Initial benchmark indicates good performance (${benchmarkTime.toFixed(2)}ms < ${benchmarkThreshold}ms)`,
+        );
+        console.log("Keeping performance tier as HIGH");
+    }
 }
 
 /**
@@ -494,8 +587,8 @@ function performHighTierCheck(): void {
     const MAX_FRAMES = 20; // Check more frames for better detection
 
     // Lower thresholds to catch more lag
-    const moderateLagThreshold = 20; // 20ms = moderate lag (more sensitive)
-    const severeLagThreshold = 80; // 80ms = severe lag (more sensitive)
+    const moderateLagThreshold = 50; // 50ms = moderate lag (more sensitive)
+    const severeLagThreshold = 120; // 120ms = severe lag (more sensitive)
 
     // Use requestAnimationFrame to get actual render timings
     let lastFrameTime = performance.now();
