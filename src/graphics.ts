@@ -658,7 +658,6 @@ export const createToggleButton = () => {
             performanceToggleButton.textContent = `GFX: ${currentPerformanceMode}`;
         } else {
             performanceToggleButton.textContent = `[G] GFX: ${currentPerformanceMode}`;
-            performanceToggleButton.style.pointerEvents = "none";
         }
     }
 
@@ -676,14 +675,12 @@ export const createToggleButton = () => {
     performanceToggleButton.style.lineHeight = buttonStyles.lineHeight;
     performanceToggleButton.style.zIndex = buttonStyles.zIndex;
 
-    // Add click listener with blur to prevent audio issues
-    if (isMobileDevice) {
-        performanceToggleButton.addEventListener("click", (e) => {
-            e.preventDefault();
-            togglePerformanceMode();
-            performanceToggleButton?.blur(); // Remove focus from button
-        });
-    }
+    // Add click listener with blur
+    performanceToggleButton.addEventListener("click", (e) => {
+        e.preventDefault();
+        togglePerformanceMode();
+        performanceToggleButton?.blur(); // Remove focus from button
+    });
 
     return performanceToggleButton;
 };

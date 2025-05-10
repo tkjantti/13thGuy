@@ -50,6 +50,20 @@ export const SFX_RESTART = "restart";
 export const SFX_COUNT = "count";
 export const SFX_GO = "go";
 
+// Replace the device detection code
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+    (navigator.userAgent.includes("Mac") && 
+    navigator.platform === "MacIntel" && 
+    navigator.maxTouchPoints > 1);
+const isAndroid = /Android/.test(navigator.userAgent);
+const isIPad = isIOS && (
+    /iPad/.test(navigator.userAgent) || 
+    (navigator.maxTouchPoints > 1 && navigator.platform === "MacIntel")
+);
+const isMobile = isIOS || isAndroid || /Mobi|Android/i.test(navigator.userAgent);
+// Modified desktop detection - iPads are never considered "desktop" for audio
+const isDesktop = !isMobile && !isIPad;
+
 const startTune = document.createElement("audio");
 const raceTune = document.createElement("audio");
 const gameoverFx = document.createElement("audio");
@@ -57,11 +71,22 @@ const gameoverFx = document.createElement("audio");
 export let audioContext;
 export let audioUnlocked = false;
 
+// Update the unlockAudio function
 export const unlockAudio = async () => {
     console.log("Attempting to unlock audio systems...");
     
     if (audioUnlocked) return true;
     
+    // IMPORTANT: Skip unlock only on true desktop browsers, never on iPad
+    if (isDesktop && !isIPad) {
+        console.log("Skipping audio unlock on desktop browser");
+        audioUnlocked = true;
+        return true;
+    }
+    
+    console.log("Running audio unlock for mobile/iPad device");
+    
+    // Original mobile unlock code continues below
     // 1. Try to unlock HTML Audio elements
     try {
         // Quick play attempt on the startTune element
@@ -90,9 +115,16 @@ export const unlockAudio = async () => {
     return true;
 };
 
-// Set up automatic audio unlocking on first interaction
+// Update the setupAudioUnlock function
 export const setupAudioUnlock = () => {
-    console.log("Setting up audio unlock for all mobile devices");
+    // Skip ONLY on true desktop browsers, never on iPad
+    if (isDesktop && !isIPad) {
+        console.log("Skipping audio unlock setup on desktop browser");
+        audioUnlocked = true;
+        return;
+    }
+    
+    console.log("Setting up audio unlock for mobile/iPad device");
 
     // Create a silent audio element as backup method
     const silentAudio = document.createElement("audio");
@@ -202,15 +234,11 @@ const FadeOut = (tune, vol = 0) => {
     }
 };
 
-// Check if we're on iOS
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    
 const FadeIn = (tune, vol = 1) => {
     if (tune._fadeInterval) {
         clearInterval(tune._fadeInterval);
         tune._fadeInterval = null;
     }
-
 
     let playPromise = Promise.resolve();
     if (tune.paused) {
@@ -294,11 +322,12 @@ const FadeOutIn = (tune1, tune2) => {
     }
 };
 
+// Update the playTune function too
 export const playTune = async (tune, vol) => {
     if (vol === 0) return;
     
-    // Always try to unlock audio context for zzfx
-    if (audioContext && audioContext.state !== "running") {
+    // Only try to unlock audio context on mobile devices
+    if (!isDesktop && audioContext && audioContext.state !== "running") {
         try {
             await audioContext.resume();
         } catch (e) {
