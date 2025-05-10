@@ -67,6 +67,8 @@ const isIPad =
 const isSafari =
     /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
 
+const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
 // Current performance mode setting
 let currentPerformanceMode: PerformanceMode = PerformanceMode.HIGH;
 
@@ -183,6 +185,9 @@ export function initializeGraphics(): void {
     console.log("Initializing graphics with performance detection...");
     autoConfigurePerformance();
 
+    // Initialize keyboard shortcuts
+    initializeKeyboardShortcuts();
+
     // Special handling for iPad performance issues
     if (isIPad && isSafari) {
         // Add listener for performance issues
@@ -229,10 +234,12 @@ export function togglePerformanceMode(): void {
 
     // Update button text if it exists
     if (performanceToggleButton) {
-        performanceToggleButton.textContent = `GFX: ${currentPerformanceMode}`;
+        if (isMobileDevice) {
+            performanceToggleButton.textContent = `GFX: ${currentPerformanceMode}`;
+        } else {
+            performanceToggleButton.textContent = `[G] GFX: ${currentPerformanceMode}`;
+        }
     }
-
-    canvas.focus();
 }
 
 // Add runtime performance monitoring
@@ -642,12 +649,18 @@ export function createStartButton(): HTMLButtonElement {
     return button;
 }
 
-// Update createToggleButton to store reference and set initial text
+// Replace the click listener in createToggleButton
 export const createToggleButton = () => {
     performanceToggleButton = document.createElement("button");
 
-    // Set initial text based on current mode
-    performanceToggleButton.textContent = `GFX: ${currentPerformanceMode}`;
+    if (performanceToggleButton) {
+        if (isMobileDevice) {
+            performanceToggleButton.textContent = `GFX: ${currentPerformanceMode}`;
+        } else {
+            performanceToggleButton.textContent = `[G] GFX: ${currentPerformanceMode}`;
+            performanceToggleButton.style.pointerEvents = "none";
+        }
+    }
 
     // Style the button
     performanceToggleButton.style.position = "absolute";
@@ -663,8 +676,32 @@ export const createToggleButton = () => {
     performanceToggleButton.style.lineHeight = buttonStyles.lineHeight;
     performanceToggleButton.style.zIndex = buttonStyles.zIndex;
 
-    // Add click listener
-    performanceToggleButton.addEventListener("click", togglePerformanceMode);
+    // Add click listener with blur to prevent audio issues
+    if (isMobileDevice) {
+        performanceToggleButton.addEventListener("click", (e) => {
+            e.preventDefault();
+            togglePerformanceMode();
+            performanceToggleButton?.blur(); // Remove focus from button
+        });
+    }
 
     return performanceToggleButton;
 };
+
+// Add this function to initialize keyboard shortcuts
+export function initializeKeyboardShortcuts(): void {
+    // Add keyboard listener for 'g' key on desktop
+    if (!isMobileDevice) {
+        document.addEventListener("keydown", (e) => {
+            // 'g' key for "Graphics"
+            if (e.key === "g" || e.key === "G") {
+                togglePerformanceMode();
+            }
+        });
+
+        // Add tooltip to button to show keyboard shortcut
+        if (performanceToggleButton) {
+            performanceToggleButton.textContent = `[G] GFX: ${currentPerformanceMode}`;
+        }
+    }
+}
