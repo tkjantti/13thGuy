@@ -1164,7 +1164,7 @@ export const createToggleButton = () => {
 
 // Add this function to initialize keyboard shortcuts
 export function initializeKeyboardShortcuts(): void {
-    // Add keyboard listener for 'g' key on desktop
+    // Add keyboard listener for keys on desktop
     if (!isMobileDevice) {
         document.addEventListener("keydown", (e) => {
             // 'g' key for "Graphics"
