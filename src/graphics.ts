@@ -1139,16 +1139,29 @@ export const createToggleButton = () => {
     }
 
     // Style the button
+    if (isDesktop) {
+        performanceToggleButton.style.top = "10px";
+        performanceToggleButton.style.left = "10px";
+        performanceToggleButton.style.height = buttonStyles.size;
+        performanceToggleButton.style.fontSize = buttonStyles.fontSize;
+        performanceToggleButton.style.background = buttonStyles.background;
+        performanceToggleButton.style.border = buttonStyles.border;
+        performanceToggleButton.style.borderRadius = buttonStyles.borderRadius;
+    } else {
+        performanceToggleButton.style.top = "60px";
+        performanceToggleButton.style.right = "10px";
+        performanceToggleButton.style.height = `${parseInt(buttonStyles.size) / 2}px`;
+        performanceToggleButton.style.padding = "20px 0"; // Add padding for touch target
+        performanceToggleButton.style.fontSize = `${parseInt(buttonStyles.fontSize) / 2}px`;
+        performanceToggleButton.style.background = "rgba(0, 0, 0, 0.2)";
+        performanceToggleButton.style.border = "none";
+    }
+
     performanceToggleButton.style.position = "absolute";
-    performanceToggleButton.style.top = "10px";
-    performanceToggleButton.style.left = isIPad ? "100px" : "10px";
+    performanceToggleButton.style.minWidth = "90px";
     performanceToggleButton.style.fontFamily = "Impact";
     performanceToggleButton.style.height = buttonStyles.size;
     performanceToggleButton.style.color = buttonStyles.color;
-    performanceToggleButton.style.background = buttonStyles.background;
-    performanceToggleButton.style.border = buttonStyles.border;
-    performanceToggleButton.style.borderRadius = buttonStyles.borderRadius;
-    performanceToggleButton.style.fontSize = buttonStyles.fontSize;
     performanceToggleButton.style.lineHeight = buttonStyles.lineHeight;
     performanceToggleButton.style.zIndex = buttonStyles.zIndex;
 
