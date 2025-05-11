@@ -1112,6 +1112,10 @@ export function createStartButton(): HTMLButtonElement {
     button.style.zIndex = buttonStyles.zIndex;
     button.style.color = buttonStyles.color;
     button.style.display = "none";
+    button.style.padding = "20vw 0 0 0";
+    button.style.fontFamily = "Courier New";
+    button.style.zIndex = buttonStyles.zIndex;
+    button.textContent = "Tap the screen to continue█";
 
     return button;
 }
