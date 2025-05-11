@@ -341,7 +341,7 @@ function updateToggleButtonText(): void {
         if (isMobileDevice) {
             performanceToggleButton.textContent = `GFX: ${displayMode}`;
         } else {
-            performanceToggleButton.textContent = `[G] GFX: ${displayMode}`;
+            performanceToggleButton.innerHTML = `<u>G</u>FX: ${displayMode}`;
         }
     }
 }
@@ -1134,7 +1134,7 @@ export const createToggleButton = () => {
         if (isMobileDevice) {
             performanceToggleButton.textContent = `GFX: ${displayMode}`;
         } else {
-            performanceToggleButton.textContent = `[G] GFX: ${displayMode}`;
+            performanceToggleButton.innerHTML = `<u>G</u>FX: ${displayMode}`;
         }
     }
 
@@ -1148,7 +1148,7 @@ export const createToggleButton = () => {
     performanceToggleButton.style.background = buttonStyles.background;
     performanceToggleButton.style.border = buttonStyles.border;
     performanceToggleButton.style.borderRadius = buttonStyles.borderRadius;
-    performanceToggleButton.style.fontSize = "1.5vw";
+    performanceToggleButton.style.fontSize = buttonStyles.fontSize;
     performanceToggleButton.style.lineHeight = buttonStyles.lineHeight;
     performanceToggleButton.style.zIndex = buttonStyles.zIndex;
 
@@ -1168,14 +1168,9 @@ export function initializeKeyboardShortcuts(): void {
     if (!isMobileDevice) {
         document.addEventListener("keydown", (e) => {
             // 'g' key for "Graphics"
-            if (e.key === "g" || e.key === "G") {
+            if (e.key === "g" || e.key === "m" || e.key === "F1") {
                 togglePerformanceMode();
             }
         });
-
-        // Add tooltip to button to show keyboard shortcut
-        if (performanceToggleButton) {
-            performanceToggleButton.textContent = `[G] GFX: ${currentPerformanceMode}`;
-        }
     }
 }
