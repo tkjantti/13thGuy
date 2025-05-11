@@ -330,11 +330,12 @@ function updateToggleButtonText(): void {
     if (performanceToggleButton) {
         let displayMode;
 
-        // When in AUTO mode, show the effective mode in parentheses
+        // When in AUTO mode, show the effective mode in parentheses with single letter
         if (currentPerformanceMode === PerformanceMode.AUTO) {
-            displayMode = `${currentPerformanceMode} (${autoModeEffectiveMode})`;
+            const shortEffectiveMode = getShortModeName(autoModeEffectiveMode);
+            displayMode = `auto (${shortEffectiveMode})`;
         } else {
-            // For manual modes, just show the selected mode
+            // For manual modes, just show the full selected mode name
             displayMode = currentPerformanceMode;
         }
 
@@ -497,6 +498,20 @@ function performInitialBenchmark(): void {
             `Initial benchmark indicates good performance (${benchmarkTime.toFixed(2)}ms < ${benchmarkThreshold}ms)`,
         );
         console.log("Keeping performance tier as HIGH");
+    }
+}
+
+// Get short mode abbreviation for modes
+function getShortModeName(mode: PerformanceMode): string {
+    switch (mode) {
+        case PerformanceMode.HIGH:
+            return "H";
+        case PerformanceMode.MEDIUM:
+            return "M";
+        case PerformanceMode.LOW:
+            return "L";
+        default:
+            return mode;
     }
 }
 
@@ -1129,10 +1144,11 @@ export const createToggleButton = () => {
 
         // When in AUTO mode, show the effective mode in parentheses
         if (currentPerformanceMode === PerformanceMode.AUTO) {
-            displayMode = `${currentPerformanceMode} (${autoModeEffectiveMode})`;
+            const shortEffectiveMode = getShortModeName(autoModeEffectiveMode);
+            displayMode = `auto (${shortEffectiveMode})`;
         } else {
-            // For manual modes, just show the selected mode
-            displayMode = currentPerformanceMode;
+            // For manual modes, show abbreviated mode name
+            displayMode = getShortModeName(currentPerformanceMode);
         }
 
         if (isMobileDevice) {
@@ -1142,7 +1158,7 @@ export const createToggleButton = () => {
         }
     }
 
-    // Style the button
+    // Style button (rest of the code remains unchanged)
     if (isDesktop) {
         performanceToggleButton.style.top = "10px";
         performanceToggleButton.style.left = "10px";
