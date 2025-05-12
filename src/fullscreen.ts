@@ -22,15 +22,121 @@
  * SOFTWARE.
  */
 
+import { isIOS } from "./deviceDetection";
+
 /**
- * Fullscreen functionality for the game
+ * Handles fullscreen toggling specifically for iOS devices
  */
+export async function toggleIOSFullScreen(): Promise<boolean> {
+    // Better iOS fullscreen state tracking
+    let isIOSInFullscreen = false;
+    const videoElement = document.getElementById(
+        "ios-fullscreen-video",
+    ) as HTMLVideoElement & {
+        webkitEnterFullscreen?: () => void;
+        webkitExitFullscreen?: () => void;
+        webkitDisplayingFullscreen?: boolean;
+    };
+
+    if (videoElement && videoElement.webkitDisplayingFullscreen) {
+        isIOSInFullscreen = true;
+    }
+
+    // If we need to exit fullscreen on iOS
+    if (isIOSInFullscreen) {
+        try {
+            // Try WebKit-specific exit method first
+            if (
+                videoElement &&
+                typeof videoElement.webkitExitFullscreen === "function"
+            ) {
+                videoElement.webkitExitFullscreen();
+            }
+
+            // iOS also exits fullscreen when video is paused
+            if (videoElement) {
+                videoElement.pause();
+                videoElement.currentTime = 0;
+            }
+
+            // Backup method - try standard approach
+            if (document.exitFullscreen) {
+                await document.exitFullscreen();
+            }
+
+            return true;
+        } catch (err) {
+            console.warn("iOS fullscreen exit failed:", err);
+            return false;
+        }
+    }
+
+    // Create or get the fullscreen video element
+    const fullscreenVideo =
+        (document.getElementById("ios-fullscreen-video") as HTMLVideoElement & {
+            webkitEnterFullscreen?: () => void;
+        }) || document.createElement("video");
+
+    if (!fullscreenVideo.id) {
+        fullscreenVideo.id = "ios-fullscreen-video";
+        fullscreenVideo.playsInline = true;
+        fullscreenVideo.setAttribute("playsinline", "playsinline");
+        fullscreenVideo.muted = true;
+        fullscreenVideo.setAttribute("muted", "muted");
+        fullscreenVideo.autoplay = false;
+        fullscreenVideo.loop = true;
+
+        // Set an extremely small size
+        fullscreenVideo.style.width = "1px";
+        fullscreenVideo.style.height = "1px";
+        fullscreenVideo.style.position = "absolute";
+        fullscreenVideo.style.opacity = "0.01";
+
+        // Simple 1x1 transparent video data URI
+        fullscreenVideo.src =
+            "data:video/mp4;base64,AAAAIGZ0eXBtcDQyAAAAAG1wNDJtcDQxaXNvbWlzbzIAAAACbWV0YQAAAAAAAAAoaGRscgAAAAxBVkMgQ29kaW5nAAAAQ2NvbHJzAAAAG3VpbnQCAAAAGFFSRwKCPQAAAEAAAAJNAAAAAP9tZGF0AAAAEgEH//4PMkXKj////jA9FbmQ=";
+
+        document.body.appendChild(fullscreenVideo);
+    }
+
+    // Enter fullscreen on iOS - ensure video plays first
+    try {
+        // iOS requires play to happen in direct response to user action
+        const playPromise = fullscreenVideo.play();
+
+        await playPromise;
+
+        // Small delay to ensure playback has started
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        if (typeof fullscreenVideo.webkitEnterFullscreen === "function") {
+            fullscreenVideo.webkitEnterFullscreen();
+            console.log("Requested iOS fullscreen mode");
+            return true;
+        }
+    } catch (err) {
+        console.warn("iOS fullscreen attempt failed:", err);
+    }
+
+    return false;
+}
 
 /**
  * Toggle between fullscreen and windowed mode
  * Works across different browsers with proper error handling
  */
 export async function toggleFullScreen(): Promise<void> {
+    // Check if we're on iOS
+    if (isIOS) {
+        // Use iOS-specific implementation
+        const success = await toggleIOSFullScreen();
+        if (success) {
+            return;
+        }
+        // Fall through to standard approach if iOS-specific failed
+    }
+
+    // Standard approach for non-iOS platforms
     const elem = document.documentElement as HTMLElement & {
         mozRequestFullScreen?: () => Promise<void>;
         webkitRequestFullscreen?: () => Promise<void>;
@@ -65,10 +171,19 @@ export async function toggleFullScreen(): Promise<void> {
             }
             console.log("Entered fullscreen mode");
         } catch (err: unknown) {
-            if (err instanceof Error) {
-                console.error(
-                    `Error attempting to enable fullscreen mode: ${err.message} (${err.name})`,
-                );
+            console.warn(
+                "Standard fullscreen failed, falling back to canvas positioning",
+                err instanceof Error ? err.message : err,
+            );
+            // Fallback to canvas positioning method if everything else fails
+            const canvas = document.querySelector("canvas");
+            if (canvas) {
+                canvas.style.position = "fixed";
+                canvas.style.top = "0";
+                canvas.style.left = "0";
+                canvas.style.width = "100%";
+                canvas.style.height = "100%";
+                canvas.style.zIndex = "1000";
             }
             return;
         }
