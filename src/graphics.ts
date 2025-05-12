@@ -186,21 +186,60 @@ function getDevicePerformanceTier(): "high" | "medium" | "low" {
 
     // Method 1: Storage size detection (Safari private browsing has 0 quota)
     function checkStorageQuota(): boolean {
+        isPrivateBrowsing = false;
+
         if (navigator.storage && navigator.storage.estimate) {
             try {
+                // Start the check (but don't wait for it)
                 navigator.storage.estimate().then((estimate) => {
                     console.log(
                         `Storage quota: ${estimate.quota}, used: ${estimate.usage}`,
                     );
+
+                    // If we detect private mode, log it and update the app state
                     if (estimate.quota && estimate.quota < 10000000) {
                         // Less than 10MB
-                        console.log("Private browsing likely (small quota)");
-                        return true;
+                        console.log(
+                            "Private browsing detected via storage quota!",
+                        );
+
+                        // If we're in HIGH mode and should be in a lower mode, fix it
+                        if (
+                            performanceTier === "high" &&
+                            autoModeEffectiveMode === PerformanceMode.HIGH
+                        ) {
+                            console.log(
+                                "Downgrading from quota detection result",
+                            );
+                            autoModeEffectiveMode = PerformanceMode.MEDIUM;
+                            updateToggleButtonText();
+                        }
+
+                        isPrivateBrowsing = true;
                     }
                 });
-            } catch {}
+
+                // Use other methods for immediate detection
+                return privateBrowsingFallbackCheck();
+            } catch (e) {
+                console.log("Error checking storage quota:", e);
+                return true; // Assume private if error
+            }
         }
+
         return false;
+    }
+
+    // Fallback method for immediate check
+    function privateBrowsingFallbackCheck(): boolean {
+        // Try localStorage
+        try {
+            localStorage.setItem("test", "test");
+            localStorage.removeItem("test");
+            return false;
+        } catch {
+            return true;
+        }
     }
 
     // Method 2: Safari specific localStorage test - check if data persists
@@ -1201,7 +1240,7 @@ export function initializeKeyboardShortcuts(): void {
     if (!isMobileDevice) {
         document.addEventListener("keydown", (e) => {
             // 'g' key for "Graphics"
-            if (e.key === "g" || e.key === "m" || e.key === "F1") {
+            if (e.code === "KeyG" || e.code === "F1") {
                 togglePerformanceMode();
             }
         });
