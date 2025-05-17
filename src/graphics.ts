@@ -36,19 +36,7 @@ import {
 } from "./performance";
 
 import { isDesktop } from "./deviceDetection";
-
-// Button style variables
-const buttonStyles = {
-    top: "10px",
-    zIndex: "10",
-    size: "40px",
-    color: "rgba(255, 255, 255, 0.4)",
-    background: "black",
-    border: "1px solid rgba(255, 255, 255, 0.2)",
-    borderRadius: "4px",
-    fontSize: "24px",
-    lineHeight: "0",
-};
+import { ButtonStyles, createButton } from "./HtmlButton";
 
 export const canvas = document.querySelector("canvas") as HTMLCanvasElement;
 export const cx: CanvasRenderingContext2D = canvas.getContext("2d", {
@@ -346,50 +334,18 @@ export const createPlateTexture = () => {
 export function createFullscreenButton(
     hasTouchScreen: boolean,
 ): HTMLButtonElement {
-    const button = document.createElement("button");
-
-    // Apply button styling
-    button.id = "fullscreenButton";
-    button.style.position = "absolute";
-    button.style.top = buttonStyles.top;
+    const button = createButton("fullscreenButton", "⛶");
+    button.style.top = "10px";
     button.style.right = "10px";
-    button.style.zIndex = buttonStyles.zIndex;
-    button.textContent = "⛶";
-    button.style.fontFamily = "Impact";
-    button.style.width = buttonStyles.size;
-    button.style.height = buttonStyles.size;
-    button.style.color = buttonStyles.color;
-    button.style.background = buttonStyles.background;
-    button.style.border = buttonStyles.border;
-    button.style.borderRadius = buttonStyles.borderRadius;
-    button.style.fontSize = buttonStyles.fontSize;
-    button.style.lineHeight = buttonStyles.lineHeight;
     button.style.display = hasTouchScreen ? "none" : "block";
-
     return button;
 }
 
 export function createRestartButton(): HTMLButtonElement {
-    const button = document.createElement("button");
-
-    // Button styling
-    button.id = "restartButton";
-    button.style.position = "absolute";
-    button.style.top = buttonStyles.top;
+    const button = createButton("restartButton", "↺");
+    button.style.top = "10px";
     button.style.right = "60px";
-    button.style.zIndex = buttonStyles.zIndex;
-    button.textContent = "↺";
-    button.style.fontFamily = "Impact";
-    button.style.width = buttonStyles.size;
-    button.style.height = buttonStyles.size;
-    button.style.color = buttonStyles.color;
-    button.style.background = buttonStyles.background;
-    button.style.border = buttonStyles.border;
-    button.style.borderRadius = buttonStyles.borderRadius;
-    button.style.fontSize = buttonStyles.fontSize;
-    button.style.lineHeight = buttonStyles.lineHeight;
     button.style.display = "none";
-
     return button;
 }
 
@@ -405,46 +361,33 @@ export function createStartButton(): HTMLButtonElement {
     button.style.bottom = "0";
     button.style.left = "0";
     button.style.right = "0";
-    button.style.zIndex = buttonStyles.zIndex;
-    button.style.color = buttonStyles.color;
+    button.style.zIndex = ButtonStyles.zIndex;
+    button.style.color = ButtonStyles.color;
     button.style.display = "none";
     button.style.padding = "20vw 0 0 0";
     button.style.fontFamily = "Courier New";
-    button.style.zIndex = buttonStyles.zIndex;
+    button.style.zIndex = ButtonStyles.zIndex;
     button.textContent = "Tap the screen to continue█";
 
     return button;
 }
 
 export const createToggleButton = () => {
-    const performanceToggleButton = document.createElement("button");
+    const performanceToggleButton = createButton("performanceToggleButton", "");
 
     // Style button
     if (isDesktop) {
         performanceToggleButton.style.top = "10px";
         performanceToggleButton.style.left = "10px";
-        performanceToggleButton.style.height = buttonStyles.size;
-        performanceToggleButton.style.fontSize = buttonStyles.fontSize;
-        performanceToggleButton.style.background = buttonStyles.background;
-        performanceToggleButton.style.border = buttonStyles.border;
-        performanceToggleButton.style.borderRadius = buttonStyles.borderRadius;
     } else {
         performanceToggleButton.style.top = "60px";
         performanceToggleButton.style.right = "10px";
-        performanceToggleButton.style.height = `${parseInt(buttonStyles.size) / 2}px`;
+        performanceToggleButton.style.height = `${parseInt(ButtonStyles.size) / 2}px`;
         performanceToggleButton.style.padding = "20px 0"; // Add padding for touch target
-        performanceToggleButton.style.fontSize = `${parseInt(buttonStyles.fontSize) / 2}px`;
+        performanceToggleButton.style.fontSize = `${parseInt(ButtonStyles.fontSize) / 2}px`;
         performanceToggleButton.style.background = "rgba(0, 0, 0, 0.2)";
         performanceToggleButton.style.border = "none";
     }
-
-    performanceToggleButton.style.position = "absolute";
-    performanceToggleButton.style.minWidth = "90px";
-    performanceToggleButton.style.fontFamily = "Impact";
-    performanceToggleButton.style.height = buttonStyles.size;
-    performanceToggleButton.style.color = buttonStyles.color;
-    performanceToggleButton.style.lineHeight = buttonStyles.lineHeight;
-    performanceToggleButton.style.zIndex = buttonStyles.zIndex;
 
     // Add click listener with blur
     performanceToggleButton.addEventListener("click", (e) => {
