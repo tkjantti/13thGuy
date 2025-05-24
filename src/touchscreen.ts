@@ -33,18 +33,6 @@ import {
     // @ts-ignore
 } from "./sfx/sfx.js";
 
-// An optimized data structure for keeping track of touches:
-// no new vector instances on every frame. Note that there is
-// a separate variable for the array count.
-const MAX_TOUCH_COUNT = 4;
-let touchPositionsCount: number = 0;
-const touchPositions: readonly VectorMutable[] = [
-    ...Array(MAX_TOUCH_COUNT),
-].map(() => ({
-    x: 0,
-    y: 0,
-}));
-
 export const hasTouchScreen = "ontouchstart" in window;
 
 export const initializeTouchscreen = (): void => {
@@ -64,27 +52,26 @@ export const initializeTouchscreen = (): void => {
     window.oncontextmenu = (e): void => {
         e.preventDefault();
     };
-
-    canvas.ontouchstart = (e: TouchEvent): void => {
-        e.preventDefault();
-        readTouchInput(e);
-    };
-    canvas.ontouchmove = (e: TouchEvent): void => {
-        e.preventDefault();
-        readTouchInput(e);
-    };
-    canvas.ontouchend = (e: TouchEvent): void => {
-        e.preventDefault();
-        readTouchInput(e);
-    };
 };
 
-const readTouchInput = (e: TouchEvent): void => {
-    touchPositionsCount = Math.min(e.touches.length, MAX_TOUCH_COUNT);
+export const listenTouch = (
+    button: HTMLButtonElement,
+    setTouch: (isTouching: boolean) => void,
+): void => {
+    const handleTouch = (event: TouchEvent) => {
+        event.preventDefault();
+        const touch = event.targetTouches[0];
+        setTouch(touch != null);
+    };
 
-    for (let i = 0; i < touchPositionsCount; i++) {
-        setCanvasPositionFromScreenPosition(touchPositions[i], e.touches[i]);
-    }
+    const handleEnd = (event: TouchEvent) => {
+        event.preventDefault();
+        setTouch(false);
+    };
+
+    button.addEventListener("touchstart", handleTouch);
+    button.addEventListener("touchmove", handleTouch);
+    button.addEventListener("touchend", handleEnd);
 };
 
 export const waitForTap = (
@@ -134,14 +121,4 @@ export const waitForTapAndPlaySound = (
     area?: Area,
 ): Promise<void> => {
     return waitForTap(area, soundToPlay);
-};
-
-export const isTouching = (area: Area): boolean => {
-    for (let i = 0; i < touchPositionsCount; i++) {
-        if (includesPoint(area, touchPositions[i])) {
-            return true;
-        }
-    }
-
-    return false;
 };
