@@ -71,7 +71,6 @@ import { playerColor } from "./Character";
 import { VERSION } from "./version";
 import {
     initializeControls,
-    renderTouchControls,
     renderWaitForProgressInput,
     updateControls,
     waitForProgressInput,
@@ -224,7 +223,6 @@ const setState = async (state: GameState) => {
             }
             break;
         case GameState.Running:
-            renderTouchControls();
             break;
         case GameState.Init:
             stopTune();
@@ -553,7 +551,6 @@ const draw = (t: number, dt: number): void => {
                 btn.style.display = "none";
             }
             applyCRTEffect(false);
-            renderTouchControls();
 
             break;
         }
