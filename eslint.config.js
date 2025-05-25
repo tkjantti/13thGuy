@@ -7,13 +7,13 @@ import globals from "globals";
 
 export default tseslint.config(
     {
-        ignores: ["dist/", "vite.config.js"]
+        ignores: ["dist/", "vite.config.js"],
     },
     {
         languageOptions: {
             globals: {
-                ...globals.browser
-            }
+                ...globals.browser,
+            },
         },
     },
     eslint.configs.recommended,
