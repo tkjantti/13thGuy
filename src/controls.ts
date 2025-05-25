@@ -54,6 +54,8 @@ interface TouchButtons {
     down: HTMLButtonElement;
 }
 
+let touchButtons: TouchButtons | undefined;
+
 let touchLeft: boolean;
 let touchRight: boolean;
 let touchUp: boolean;
@@ -61,6 +63,20 @@ let touchDown: boolean;
 
 const controls: Controls = {
     movement: { x: 0, y: 0 },
+};
+
+export const setTouchControlsVisibility = (isVisible: boolean): void => {
+    if (!touchButtons) {
+        return;
+    }
+
+    const { left, right, up, down } = touchButtons;
+    const displayStyle = isVisible ? "block" : "none";
+
+    left.style.display = displayStyle;
+    right.style.display = displayStyle;
+    up.style.display = displayStyle;
+    down.style.display = displayStyle;
 };
 
 export const updateControls = (): void => {
@@ -102,15 +118,17 @@ const initializeTouchButtons = (): void => {
         down: createControlButton("down", "▽"),
     };
 
-    document.body.appendChild(buttons.left);
-    document.body.appendChild(buttons.right);
-    document.body.appendChild(buttons.up);
-    document.body.appendChild(buttons.down);
+    const { left, right, up, down } = buttons;
 
-    listenTouch(buttons.left, (isTouching) => (touchLeft = isTouching));
-    listenTouch(buttons.right, (isTouching) => (touchRight = isTouching));
-    listenTouch(buttons.up, (isTouching) => (touchUp = isTouching));
-    listenTouch(buttons.down, (isTouching) => (touchDown = isTouching));
+    document.body.appendChild(left);
+    document.body.appendChild(right);
+    document.body.appendChild(up);
+    document.body.appendChild(down);
+
+    listenTouch(left, (isTouching) => (touchLeft = isTouching));
+    listenTouch(right, (isTouching) => (touchRight = isTouching));
+    listenTouch(up, (isTouching) => (touchUp = isTouching));
+    listenTouch(down, (isTouching) => (touchDown = isTouching));
 
     window.addEventListener(
         "resize",
@@ -118,9 +136,13 @@ const initializeTouchButtons = (): void => {
         false,
     );
     resizeTouchControls(buttons);
+
+    touchButtons = buttons;
 };
 
-const resizeTouchControls = ({ left, right, up, down }: TouchButtons): void => {
+const resizeTouchControls = (buttons: TouchButtons): void => {
+    const { left, right, up, down } = buttons;
+
     const horizontalButtenWidth = canvas.width * 0.1;
     const horizontalButtonHeight = canvas.height * 0.6;
     const verticalButtonWidth = horizontalButtenWidth;

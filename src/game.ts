@@ -72,6 +72,7 @@ import { VERSION } from "./version";
 import {
     initializeControls,
     renderWaitForProgressInput,
+    setTouchControlsVisibility,
     updateControls,
     waitForProgressInput,
 } from "./controls";
@@ -144,6 +145,8 @@ const setState = async (state: GameState) => {
         fullscreenButton.style.display =
             state !== GameState.Init || !hasTouchScreen ? "block" : "none";
     }
+
+    setTouchControlsVisibility(state === GameState.Running);
 
     maxRadius = 1280 * 2;
 
