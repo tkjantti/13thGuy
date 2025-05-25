@@ -143,11 +143,13 @@ const initializeTouchButtons = (): void => {
 const resizeTouchControls = (buttons: TouchButtons): void => {
     const { left, right, up, down } = buttons;
 
-    const horizontalButtenWidth = canvas.width * 0.1;
-    const horizontalButtonHeight = canvas.height * 0.6;
-    const verticalButtonWidth = horizontalButtenWidth;
-    const verticalButtonHeight = canvas.height * 0.3;
-    const bottomMargin = canvas.height * 0.1;
+    const buttonWidth = canvas.width * 0.1;
+    const buttonHeight = buttonWidth;
+    const horizontalButtonWidth = buttonWidth;
+    const horizontalButtonHeight = buttonHeight;
+    const verticalButtonWidth = buttonWidth;
+    const verticalButtonHeight = buttonHeight;
+    const bottomMargin = canvas.height * 0.2;
     const leftMargin = canvas.width * 0.03;
     const rightMargin = canvas.width * 0.05;
     const xGap = canvas.width * 0.01;
@@ -155,12 +157,12 @@ const resizeTouchControls = (buttons: TouchButtons): void => {
 
     left.style.left = `${leftMargin}px`;
     left.style.bottom = `${bottomMargin}px`;
-    left.style.width = `${horizontalButtenWidth}px`;
+    left.style.width = `${horizontalButtonWidth}px`;
     left.style.height = `${horizontalButtonHeight}px`;
 
-    right.style.left = `${leftMargin + horizontalButtenWidth + xGap}px`;
+    right.style.left = `${leftMargin + horizontalButtonWidth + xGap}px`;
     right.style.bottom = `${bottomMargin}px`;
-    right.style.width = `${horizontalButtenWidth}px`;
+    right.style.width = `${horizontalButtonWidth}px`;
     right.style.height = `${horizontalButtonHeight}px`;
 
     up.style.right = `${rightMargin}px`;
