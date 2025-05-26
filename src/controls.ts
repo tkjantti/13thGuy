@@ -42,6 +42,7 @@ export interface Controls {
 const createControlButton = (id: string, text: string): HTMLButtonElement => {
     const button = createButton(id, text);
     button.style.background = "rgba(50, 50, 50, 0.05)";
+    button.style.display = "none";
     return button;
 };
 
