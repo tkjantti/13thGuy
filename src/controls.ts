@@ -144,18 +144,37 @@ const initializeTouchButtons = (): void => {
 const resizeTouchControls = (buttons: TouchButtons): void => {
     const { left, right, up, down } = buttons;
 
-    const buttonWidth = canvas.width * 0.1;
+    const buttonWidth =
+        Math.max(
+            // horizontal screen
+            window.innerWidth * 0.85,
+            // vertical screen
+            window.innerHeight * 0.9,
+        ) * 0.1;
     const buttonHeight = buttonWidth;
+
     const horizontalButtonWidth = buttonWidth;
     const horizontalButtonHeight = buttonHeight;
     const verticalButtonWidth = buttonWidth;
     const verticalButtonHeight = buttonHeight;
-    const horizontalBottomMargin = canvas.height * 0.18;
-    const verticalBottomMargin = canvas.height * 0.14;
-    const leftMargin = canvas.width * 0.03;
-    const rightMargin = canvas.width * 0.06;
-    const xGap = canvas.width * 0.01;
-    const yGap = canvas.height * 0.02;
+
+    const xGap = buttonWidth * 0.1;
+    const yGap = buttonHeight * 0.1;
+
+    const horizontalBottomMargin = Math.max(
+        // horizontal screen
+        buttonHeight * 1.1,
+        // vertical screen
+        (window.innerHeight - canvas.height) / 2 - buttonHeight * 1.5,
+    );
+    const verticalBottomMargin = Math.max(
+        // horizontal screen
+        buttonHeight * 0.8,
+        // vertical screen
+        (window.innerHeight - canvas.height) / 2 - buttonHeight * 2 - 2 * yGap,
+    );
+    const leftMargin = buttonWidth * 0.2;
+    const rightMargin = buttonWidth * 0.6;
 
     left.style.left = `${leftMargin}px`;
     left.style.bottom = `${horizontalBottomMargin}px`;
