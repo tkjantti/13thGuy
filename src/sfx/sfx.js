@@ -92,9 +92,9 @@ export const unlockAudio = async () => {
         if (zzfxX && zzfxX.state !== "running") {
             await zzfxX.resume();
         }
-        console.log("Web Audio API context state:", audioContext?.state);
+        console.log("Web Audio API context state for zzfxX:", zzfxX?.state);
     } catch (e) {
-        console.warn("Web Audio API context resume failed:", e);
+        console.warn("Web Audio API context resume failed for zzfxX:", e);
     }
     
     audioUnlocked = true;
