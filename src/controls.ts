@@ -22,6 +22,13 @@
  * SOFTWARE.
  */
 
+import {
+    playTune,
+    SFX_KB,
+    // Ignore lint errors from JS import
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+} from "./sfx/sfx.js";
 import { Area } from "./Area";
 import { canvas, cx } from "./graphics";
 import { renderText, TextSize } from "./text";
@@ -31,7 +38,6 @@ import {
     initializeTouchscreen,
     isTouching,
     waitForTap,
-    waitForTapAndPlaySound,
 } from "./touchscreen";
 import { normalize, VectorMutable, ZERO_VECTOR } from "./Vector";
 
@@ -45,10 +51,10 @@ interface Button extends Area {
 
 let textAnimationCounter = 0;
 
-const leftButton: Button = { symbol: "◁", x: 0, y: 0, width: 0, height: 0 };
-const rightButton: Button = { symbol: "▷", x: 0, y: 0, width: 0, height: 0 };
-const upButton: Button = { symbol: "△", x: 0, y: 0, width: 0, height: 0 };
-const downButton: Button = { symbol: "▽", x: 0, y: 0, width: 0, height: 0 };
+const leftButton: Button = { symbol: "◀", x: 0, y: 0, width: 0, height: 0 };
+const rightButton: Button = { symbol: "▶", x: 0, y: 0, width: 0, height: 0 };
+const upButton: Button = { symbol: "▲", x: 0, y: 0, width: 0, height: 0 };
+const downButton: Button = { symbol: "▼", x: 0, y: 0, width: 0, height: 0 };
 
 const controls: Controls = {
     movement: { x: 0, y: 0 },
@@ -87,39 +93,33 @@ const resizeControls = (): void => {
     const yMargin = canvas.height * 0.02;
     const horizontalWidth = canvas.width * 0.1;
     const horizontalHeight = canvas.height * 0.6;
-    const top = canvas.height - horizontalHeight * 0.65 - 2 * yMargin;
+    const top = canvas.height - horizontalHeight - 2 * yMargin;
     const verticalWidth = horizontalWidth;
-    const verticalHeight = horizontalHeight / 3;
+    const verticalHeight = horizontalHeight / 2;
 
-    leftButton.x = xMargin;
-    leftButton.y = top + verticalHeight + yMargin;
+    leftButton.x = 0;
+    leftButton.y = top;
     leftButton.width = horizontalWidth;
-    leftButton.height = horizontalHeight / 3;
+    leftButton.height = horizontalHeight;
 
-    rightButton.x = horizontalWidth + 2 * xMargin;
-    rightButton.y = top + verticalHeight + yMargin;
+    rightButton.x = horizontalWidth + xMargin;
+    rightButton.y = top;
     rightButton.width = horizontalWidth;
-    rightButton.height = horizontalHeight / 3;
+    rightButton.height = horizontalHeight;
 
-    upButton.x = canvas.width - verticalWidth - xMargin;
+    upButton.x = canvas.width - verticalWidth;
     upButton.y = top;
     upButton.width = verticalWidth;
     upButton.height = verticalHeight;
 
-    downButton.x = canvas.width - verticalWidth - xMargin;
+    downButton.x = canvas.width - verticalWidth;
     downButton.y = top + verticalHeight + yMargin;
     downButton.width = verticalWidth;
     downButton.height = verticalHeight;
 };
 
-export const waitForProgressInput = async (
-    soundToPlay?: number,
-): Promise<void> => {
-    await (hasTouchScreen
-        ? soundToPlay
-            ? waitForTapAndPlaySound(soundToPlay)
-            : waitForTap()
-        : waitForEnter(soundToPlay));
+export const waitForProgressInput = async (): Promise<void> => {
+    await (hasTouchScreen ? waitForTap() : waitForEnter());
 };
 
 export const renderWaitForProgressInput = (
@@ -158,15 +158,11 @@ export const renderTouchControls = (): void => {
 };
 
 const renderButton = (button: Button, symbolWidth: number): void => {
-    cx.strokeStyle = "rgba(255, 255, 255, 0.2)";
-    cx.lineWidth = 2;
-    cx.strokeRect(button.x, button.y, button.width, button.height);
-
-    cx.fillStyle = "rgba(255, 255, 255, 0.4)";
+    cx.fillRect(button.x, button.y, button.width, button.height);
     cx.fillText(
         button.symbol,
         button.x + button.width / 2 - symbolWidth / 2,
-        button.y + button.height / 2 + symbolWidth * 0.45,
+        button.y + button.height / 2 + symbolWidth * 0.25,
         symbolWidth,
     );
 };
