@@ -22,45 +22,71 @@
  * SOFTWARE.
  */
 
-import { Area } from "./Area";
-import { canvas, cx } from "./graphics";
+import { canvas } from "./graphics";
 import { renderText, TextSize } from "./text";
 import { getKeys, initializeKeyboard, waitForEnter } from "./keyboard";
 import {
     hasTouchScreen,
     initializeTouchscreen,
-    isTouching,
+    listenTouch,
     waitForTap,
     waitForTapAndPlaySound,
 } from "./touchscreen";
 import { normalize, VectorMutable, ZERO_VECTOR } from "./Vector";
+import { createButton } from "./HtmlButton";
 
 export interface Controls {
     movement: VectorMutable;
 }
 
-interface Button extends Area {
-    readonly symbol: string;
-}
+const createControlButton = (id: string, text: string): HTMLButtonElement => {
+    const button = createButton(id, text);
+    button.style.background = "rgba(50, 50, 50, 0.05)";
+    button.style.display = "none";
+    return button;
+};
 
 let textAnimationCounter = 0;
 
-const leftButton: Button = { symbol: "◁", x: 0, y: 0, width: 0, height: 0 };
-const rightButton: Button = { symbol: "▷", x: 0, y: 0, width: 0, height: 0 };
-const upButton: Button = { symbol: "△", x: 0, y: 0, width: 0, height: 0 };
-const downButton: Button = { symbol: "▽", x: 0, y: 0, width: 0, height: 0 };
+interface TouchButtons {
+    left: HTMLButtonElement;
+    right: HTMLButtonElement;
+    up: HTMLButtonElement;
+    down: HTMLButtonElement;
+}
+
+let touchButtons: TouchButtons | undefined;
+
+let touchLeft: boolean;
+let touchRight: boolean;
+let touchUp: boolean;
+let touchDown: boolean;
 
 const controls: Controls = {
     movement: { x: 0, y: 0 },
 };
 
+export const setTouchControlsVisibility = (isVisible: boolean): void => {
+    if (!touchButtons) {
+        return;
+    }
+
+    const { left, right, up, down } = touchButtons;
+    const displayStyle = isVisible ? "block" : "none";
+
+    left.style.display = displayStyle;
+    right.style.display = displayStyle;
+    up.style.display = displayStyle;
+    down.style.display = displayStyle;
+};
+
 export const updateControls = (): void => {
     const keys = getKeys();
 
-    const left = keys.ArrowLeft || keys.KeyA || isTouching(leftButton);
-    const right = keys.ArrowRight || keys.KeyD || isTouching(rightButton);
-    const up = keys.ArrowUp || keys.KeyW || isTouching(upButton);
-    const down = keys.ArrowDown || keys.KeyS || isTouching(downButton);
+    const left = keys.ArrowLeft || keys.KeyA || touchLeft;
+    const right = keys.ArrowRight || keys.KeyD || touchRight;
+    const up = keys.ArrowUp || keys.KeyW || touchUp;
+    const down = keys.ArrowDown || keys.KeyS || touchDown;
 
     const dx = left ? -1 : right ? 1 : 0;
     const dy = up ? -1 : down ? 1 : 0;
@@ -78,38 +104,97 @@ export const updateControls = (): void => {
 export const initializeControls = (): void => {
     initializeKeyboard();
     initializeTouchscreen();
-    resizeControls();
-    window.addEventListener("resize", resizeControls, false);
+    initializeTouchButtons();
 };
 
-const resizeControls = (): void => {
-    const xMargin = canvas.width * 0.01;
-    const yMargin = canvas.height * 0.02;
-    const horizontalWidth = canvas.width * 0.1;
-    const horizontalHeight = canvas.height * 0.6;
-    const top = canvas.height - horizontalHeight * 0.65 - 2 * yMargin;
-    const verticalWidth = horizontalWidth;
-    const verticalHeight = horizontalHeight / 3;
+const initializeTouchButtons = (): void => {
+    if (!hasTouchScreen) {
+        return;
+    }
 
-    leftButton.x = xMargin;
-    leftButton.y = top + verticalHeight + yMargin;
-    leftButton.width = horizontalWidth;
-    leftButton.height = horizontalHeight / 3;
+    const buttons: TouchButtons = {
+        left: createControlButton("left", "◁"),
+        right: createControlButton("right", "▷"),
+        up: createControlButton("up", "△"),
+        down: createControlButton("down", "▽"),
+    };
 
-    rightButton.x = horizontalWidth + 2 * xMargin;
-    rightButton.y = top + verticalHeight + yMargin;
-    rightButton.width = horizontalWidth;
-    rightButton.height = horizontalHeight / 3;
+    const { left, right, up, down } = buttons;
 
-    upButton.x = canvas.width - verticalWidth - xMargin;
-    upButton.y = top;
-    upButton.width = verticalWidth;
-    upButton.height = verticalHeight;
+    document.body.appendChild(left);
+    document.body.appendChild(right);
+    document.body.appendChild(up);
+    document.body.appendChild(down);
 
-    downButton.x = canvas.width - verticalWidth - xMargin;
-    downButton.y = top + verticalHeight + yMargin;
-    downButton.width = verticalWidth;
-    downButton.height = verticalHeight;
+    listenTouch(left, (isTouching) => (touchLeft = isTouching));
+    listenTouch(right, (isTouching) => (touchRight = isTouching));
+    listenTouch(up, (isTouching) => (touchUp = isTouching));
+    listenTouch(down, (isTouching) => (touchDown = isTouching));
+
+    window.addEventListener(
+        "resize",
+        () => resizeTouchControls(buttons),
+        false,
+    );
+    resizeTouchControls(buttons);
+
+    touchButtons = buttons;
+};
+
+const resizeTouchControls = (buttons: TouchButtons): void => {
+    const { left, right, up, down } = buttons;
+
+    const buttonWidth =
+        Math.max(
+            // horizontal screen
+            window.innerWidth * 0.85,
+            // vertical screen
+            window.innerHeight * 0.9,
+        ) * 0.1;
+    const buttonHeight = buttonWidth;
+
+    const horizontalButtonWidth = buttonWidth;
+    const horizontalButtonHeight = buttonHeight;
+    const verticalButtonWidth = buttonWidth;
+    const verticalButtonHeight = buttonHeight;
+
+    const xGap = buttonWidth * 0.1;
+    const yGap = buttonHeight * 0.1;
+
+    const horizontalBottomMargin = Math.max(
+        // horizontal screen
+        buttonHeight * 1.1,
+        // vertical screen
+        (window.innerHeight - canvas.height) / 2 - buttonHeight * 1.5,
+    );
+    const verticalBottomMargin = Math.max(
+        // horizontal screen
+        buttonHeight * 0.8,
+        // vertical screen
+        (window.innerHeight - canvas.height) / 2 - buttonHeight * 2 - 2 * yGap,
+    );
+    const leftMargin = buttonWidth * 0.2;
+    const rightMargin = buttonWidth * 0.6;
+
+    left.style.left = `${leftMargin}px`;
+    left.style.bottom = `${horizontalBottomMargin}px`;
+    left.style.width = `${horizontalButtonWidth}px`;
+    left.style.height = `${horizontalButtonHeight}px`;
+
+    right.style.left = `${leftMargin + horizontalButtonWidth + xGap}px`;
+    right.style.bottom = `${horizontalBottomMargin}px`;
+    right.style.width = `${horizontalButtonWidth}px`;
+    right.style.height = `${horizontalButtonHeight}px`;
+
+    up.style.right = `${rightMargin}px`;
+    up.style.bottom = `${verticalBottomMargin + verticalButtonHeight + yGap}px`;
+    up.style.width = `${verticalButtonWidth}px`;
+    up.style.height = `${verticalButtonHeight}px`;
+
+    down.style.right = `${rightMargin}px`;
+    down.style.bottom = `${verticalBottomMargin}px`;
+    down.style.width = `${verticalButtonWidth}px`;
+    down.style.height = `${verticalButtonHeight}px`;
 };
 
 export const waitForProgressInput = async (
@@ -138,36 +223,6 @@ export const renderWaitForProgressInput = (
         true,
         0,
         text,
-    );
-};
-
-export const renderTouchControls = (): void => {
-    if (!hasTouchScreen) {
-        return;
-    }
-
-    cx.save();
-    const symbolWidth = leftButton.width / 2;
-    cx.font = symbolWidth + "px Impact";
-    cx.fillStyle = "rgba(200, 200, 200, 0.2)";
-    renderButton(leftButton, symbolWidth);
-    renderButton(rightButton, symbolWidth);
-    renderButton(upButton, symbolWidth);
-    renderButton(downButton, symbolWidth);
-    cx.restore();
-};
-
-const renderButton = (button: Button, symbolWidth: number): void => {
-    cx.strokeStyle = "rgba(255, 255, 255, 0.2)";
-    cx.lineWidth = 2;
-    cx.strokeRect(button.x, button.y, button.width, button.height);
-
-    cx.fillStyle = "rgba(255, 255, 255, 0.4)";
-    cx.fillText(
-        button.symbol,
-        button.x + button.width / 2 - symbolWidth / 2,
-        button.y + button.height / 2 + symbolWidth * 0.45,
-        symbolWidth,
     );
 };
 

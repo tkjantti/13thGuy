@@ -32,12 +32,12 @@ import {
     gameoverSfx,
     teleportSfx,
     countSfx,
-    goSfx
+    goSfx,
 } from "./sfxData.js";
 
-import { isIPad, isDesktop, isIOS  } from "../deviceDetection.ts"
+import { isIPad, isDesktop, isIOS } from "../deviceDetection.ts";
 
-import { zzfx } from "./sfxPlayer.js"
+import { zzfx } from "./sfxPlayer.js";
 import CPlayer from "./musicplayer.js";
 
 export const SFX_START = "start";
@@ -62,31 +62,33 @@ export let audioUnlocked = false;
 // Update the unlockAudio function
 export const unlockAudio = async () => {
     console.log("Attempting to unlock audio systems...");
-    
+
     if (audioUnlocked) return true;
-    
+
     // IMPORTANT: Skip unlock only on true desktop browsers, never on iPad
     if (isDesktop && !isIPad) {
         console.log("Skipping audio unlock on desktop browser");
         audioUnlocked = true;
         return true;
     }
-    
+
     console.log("Running audio unlock for mobile/iPad device");
-    
+
     // Original mobile unlock code continues below
     // 1. Try to unlock HTML Audio elements
     try {
         // Quick play attempt on the startTune element
         startTune.volume = 0.1;
-        await startTune.play().catch(e => console.log("First unlock attempt:", e));
+        await startTune
+            .play()
+            .catch((e) => console.log("First unlock attempt:", e));
         startTune.pause();
         startTune.currentTime = 0;
         console.log("HTML Audio unlocked successfully");
     } catch (e) {
         console.warn("HTML Audio unlock attempt failed:", e);
     }
-    
+
     // 2. Make sure zzfx audio context is created and resumed
     try {
         // Get the audio context used by zzfx
@@ -98,7 +100,7 @@ export const unlockAudio = async () => {
     } catch (e) {
         console.warn("Web Audio API context resume failed:", e);
     }
-    
+
     audioUnlocked = true;
     return true;
 };
@@ -111,14 +113,14 @@ export const setupAudioUnlock = () => {
         audioUnlocked = true;
         return;
     }
-    
+
     console.log("Setting up audio unlock for mobile/iPad device");
 
     // Create a silent audio element as backup method
     const silentAudio = document.createElement("audio");
     silentAudio.setAttribute(
         "src",
-        "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjIwLjEwMAAAAAAAAAAAAAAA//tUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABGwD///////////////////////////////////////////8AAAA8TEFNRTMuMTAwA8MAAAAAAAAAABQgJAUHQQAB9AAAARvMPHBz//////////////////////////////////////////////////////////////////8AAAA"
+        "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjIwLjEwMAAAAAAAAAAAAAAA//tUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABGwD///////////////////////////////////////////8AAAA8TEFNRTMuMTAwA8MAAAAAAAAAABQgJAUHQQAB9AAAARvMPHBz//////////////////////////////////////////////////////////////////8AAAA",
     );
     silentAudio.setAttribute("playsinline", "playsinline");
     silentAudio.volume = 0.1; // Higher volume to ensure it registers
@@ -192,7 +194,7 @@ export const initMusicPlayer = (audioTrack, tune, isLooped) => {
 export const initialize = () => {
     // Set up audio unlock automatically
     setupAudioUnlock();
-    
+
     return Promise.all([
         initMusicPlayer(startTune, song1, true),
         initMusicPlayer(raceTune, song2, true),
@@ -208,7 +210,10 @@ const FadeOut = (tune, vol = 0) => {
     var currentVolume = tune.volume;
     if (currentVolume > vol) {
         tune._fadeInterval = setInterval(function () {
-            currentVolume = Math.max(vol, parseFloat(currentVolume) - 0.1).toFixed(1);
+            currentVolume = Math.max(
+                vol,
+                parseFloat(currentVolume) - 0.1,
+            ).toFixed(1);
             tune.volume = currentVolume;
             if (currentVolume <= vol) {
                 if (vol === 0) tune.pause();
@@ -232,45 +237,52 @@ const FadeIn = (tune, vol = 1) => {
     if (tune.paused) {
         // Key change: Start with a small audible volume on iOS
         tune.volume = isIOS ? 0.1 : 0;
-        
+
         // Add playsinline for iOS (just to be safe)
         tune.setAttribute("playsinline", "playsinline");
         playPromise = tune.play();
     }
 
-    playPromise.then(() => {
-        // Start from current volume
-        var currentVolume = parseFloat(tune.volume);
-        
-        if (currentVolume < vol) {
-            if (tune._fadeInterval) clearInterval(tune._fadeInterval);
+    playPromise
+        .then(() => {
+            // Start from current volume
+            var currentVolume = parseFloat(tune.volume);
 
-            tune._fadeInterval = setInterval(function () {
-                currentVolume = Math.min(vol, parseFloat(currentVolume) + 0.1).toFixed(1);
-                tune.volume = currentVolume;
+            if (currentVolume < vol) {
+                if (tune._fadeInterval) clearInterval(tune._fadeInterval);
 
-                if (parseFloat(currentVolume) >= vol) {
-                    tune.volume = vol;
-                    clearInterval(tune._fadeInterval);
-                    tune._fadeInterval = null;
-                }
-            }, 100);
-        } else {
-            tune.volume = vol;
-        }
-    }).catch(e => {
-        console.warn("FadeIn play() failed:", e);
-        // Try one more time with higher volume on any failure
-        if (tune.paused) {
-            tune.volume = 1;
-            tune.play().catch(err => console.error("Second play attempt failed:", err));
-        }
-        
-        if (tune._fadeInterval) {
-            clearInterval(tune._fadeInterval);
-            tune._fadeInterval = null;
-        }
-    });
+                tune._fadeInterval = setInterval(function () {
+                    currentVolume = Math.min(
+                        vol,
+                        parseFloat(currentVolume) + 0.1,
+                    ).toFixed(1);
+                    tune.volume = currentVolume;
+
+                    if (parseFloat(currentVolume) >= vol) {
+                        tune.volume = vol;
+                        clearInterval(tune._fadeInterval);
+                        tune._fadeInterval = null;
+                    }
+                }, 100);
+            } else {
+                tune.volume = vol;
+            }
+        })
+        .catch((e) => {
+            console.warn("FadeIn play() failed:", e);
+            // Try one more time with higher volume on any failure
+            if (tune.paused) {
+                tune.volume = 1;
+                tune.play().catch((err) =>
+                    console.error("Second play attempt failed:", err),
+                );
+            }
+
+            if (tune._fadeInterval) {
+                clearInterval(tune._fadeInterval);
+                tune._fadeInterval = null;
+            }
+        });
 };
 
 const FadeOutIn = (tune1, tune2) => {
@@ -286,7 +298,10 @@ const FadeOutIn = (tune1, tune2) => {
     var currentVolume = tune1.volume;
     if (currentVolume > 0) {
         tune1._fadeInterval = setInterval(function () {
-            currentVolume = Math.max(0, parseFloat(currentVolume) - 0.1).toFixed(1);
+            currentVolume = Math.max(
+                0,
+                parseFloat(currentVolume) - 0.1,
+            ).toFixed(1);
             tune1.volume = currentVolume;
 
             if (currentVolume <= 0.1) {
@@ -313,7 +328,7 @@ const FadeOutIn = (tune1, tune2) => {
 // Update the playTune function too
 export const playTune = async (tune, vol) => {
     if (vol === 0) return;
-    
+
     // Only try to unlock audio context on mobile devices
     if (!isDesktop && audioContext && audioContext.state !== "running") {
         try {
@@ -330,14 +345,14 @@ export const playTune = async (tune, vol) => {
             break;
         }
         case SFX_FINISHED: {
-            zzfx(0.04,...finishSfx);
+            zzfx(0.04, ...finishSfx);
             startTune.currentTime = 0;
             FadeOutIn(raceTune, startTune);
             break;
         }
         case SFX_GAMEOVER: {
             gameoverFx.volume = 1;
-            gameoverFx.play().catch(e => {
+            gameoverFx.play().catch((e) => {
                 console.warn("Failed to play gameoverFx:", e);
             });
             FadeOut(raceTune);
@@ -368,7 +383,7 @@ export const playTune = async (tune, vol) => {
             break;
         }
         case SFX_TELEPORT: {
-            zzfx(vol,...teleportSfx);
+            zzfx(vol, ...teleportSfx);
             break;
         }
         case SFX_COUNT: {
@@ -376,7 +391,7 @@ export const playTune = async (tune, vol) => {
             break;
         }
         case SFX_GO: {
-            zzfx(0.5,...goSfx);
+            zzfx(0.5, ...goSfx);
             break;
         }
     }
@@ -393,7 +408,7 @@ export const stopTune = (tune) => {
         tunesToStop.push(startTune, raceTune, gameoverFx);
     }
 
-    tunesToStop.forEach(audioEl => {
+    tunesToStop.forEach((audioEl) => {
         if (audioEl._fadeInterval) {
             clearInterval(audioEl._fadeInterval);
             audioEl._fadeInterval = null;
