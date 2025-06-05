@@ -2,4 +2,6 @@ build
 coverage
 package.json
 package-lock.json
-*.js
+src/sfx/sfxData.js
+src/sfx/musicplayer.js
+src/sfx/sfxPlayer.js

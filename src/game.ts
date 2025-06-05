@@ -71,8 +71,8 @@ import { playerColor } from "./Character";
 import { VERSION } from "./version";
 import {
     initializeControls,
-    renderTouchControls,
     renderWaitForProgressInput,
+    setTouchControlsVisibility,
     updateControls,
     waitForProgressInput,
 } from "./controls";
@@ -145,6 +145,8 @@ const setState = async (state: GameState) => {
         fullscreenButton.style.display =
             state !== GameState.Init || !hasTouchScreen ? "block" : "none";
     }
+
+    setTouchControlsVisibility(state === GameState.Running);
 
     maxRadius = 1280 * 2;
 
@@ -224,7 +226,6 @@ const setState = async (state: GameState) => {
             }
             break;
         case GameState.Running:
-            renderTouchControls();
             break;
         case GameState.Init:
             stopTune();
@@ -553,7 +554,6 @@ const draw = (t: number, dt: number): void => {
                 btn.style.display = "none";
             }
             applyCRTEffect(false);
-            renderTouchControls();
 
             break;
         }
