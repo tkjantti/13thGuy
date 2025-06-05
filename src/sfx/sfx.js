@@ -37,7 +37,7 @@ import {
 
 import { isIPad, isDesktop, isIOS } from "../deviceDetection.ts";
 
-import { zzfx } from "./sfxPlayer.js";
+import { zzfx, zzfxX } from "./sfxPlayer.js"
 import CPlayer from "./musicplayer.js";
 
 export const SFX_START = "start";
@@ -91,14 +91,12 @@ export const unlockAudio = async () => {
 
     // 2. Make sure zzfx audio context is created and resumed
     try {
-        // Get the audio context used by zzfx
-        audioContext = zzfx.getAudioContext();
-        if (audioContext && audioContext.state !== "running") {
-            await audioContext.resume();
+        if (zzfxX && zzfxX.state !== "running") {
+            await zzfxX.resume();
         }
-        console.log("Web Audio API context state:", audioContext?.state);
+        console.log("Web Audio API context state for zzfxX:", zzfxX?.state);
     } catch (e) {
-        console.warn("Web Audio API context resume failed:", e);
+        console.warn("Web Audio API context resume failed for zzfxX:", e);
     }
 
     audioUnlocked = true;
