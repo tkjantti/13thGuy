@@ -23,7 +23,7 @@
  */
 
 import { Block } from "./TrackElement";
-import { Vector } from "./Vector";
+import { Vector } from "./core/Vector";
 
 /*
  * Interface for navigating in a grid-like level.

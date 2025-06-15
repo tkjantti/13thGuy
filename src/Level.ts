@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { Area, overlap } from "./Area";
+import { Area, overlap } from "./core/Area";
 import { Camera } from "./Camera";
 import { Character, CHARACTER_DIMENSIONS, FALL_TIME } from "./Character";
 import { GameObject } from "./GameObject";
@@ -40,7 +40,7 @@ import {
     TrackElementType,
     TT,
 } from "./TrackElement";
-import { Vector, ZERO_VECTOR } from "./Vector";
+import { length, Vector, ZERO_VECTOR } from "./core/Vector";
 import {
     playTune,
     SFX_BOUNCE,
@@ -50,9 +50,8 @@ import {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
 } from "./sfx/sfx.js";
-import { randomMinMax } from "./random";
+import { randomMinMax } from "./core/random";
 import { BLOCK_HEIGHT } from "./TrackElement";
-import { length } from "./Vector";
 
 const TRACK_VISIBLE_HEIGHT = 70;
 

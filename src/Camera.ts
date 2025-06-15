@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { Area, Dimensions } from "./Area";
+import { Area, Dimensions } from "./core/Area";
 import { easeInOutExpo } from "./easings";
 import { GameObject } from "./GameObject";
 

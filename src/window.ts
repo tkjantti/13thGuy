@@ -23,7 +23,7 @@
  */
 
 import { canvas } from "./graphics";
-import { VectorMutable } from "./Vector";
+import { VectorMutable } from "./core/Vector";
 
 let canvasScale = 1;
 

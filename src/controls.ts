@@ -32,7 +32,7 @@ import {
     waitForTap,
     waitForTapAndPlaySound,
 } from "./touchscreen";
-import { normalize, VectorMutable, ZERO_VECTOR } from "./Vector";
+import { normalize, VectorMutable, ZERO_VECTOR } from "./core/Vector";
 import { createButton } from "./HtmlButton";
 
 export interface Controls {

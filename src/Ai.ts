@@ -22,13 +22,13 @@
  * SOFTWARE.
  */
 
-import { getCenter } from "./Area";
+import { getCenter } from "./core/Area";
 import { GameObject } from "./GameObject";
 import { CHARACTER_MAX_RUN_SPEED } from "./physics";
-import { random } from "./random";
+import { random } from "./core/random";
 import { Block, BLOCK_COUNT, BLOCK_WIDTH, BlockType } from "./TrackElement";
 import { Map } from "./Map";
-import { normalize, Vector, ZERO_VECTOR } from "./Vector";
+import { normalize, Vector, ZERO_VECTOR } from "./core/Vector";
 
 const VERTICAL_FORWARD = -1;
 const VERTICAL_BACKWARD = 1;
