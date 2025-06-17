@@ -23,7 +23,7 @@
  */
 
 import { Area, overlap } from "./core/Area";
-import { Camera } from "./Camera";
+import { Camera } from "./core/Camera";
 import { Character, CHARACTER_DIMENSIONS, FALL_TIME } from "./Character";
 import { GameObject } from "./GameObject";
 import { canvas, cx } from "./graphics";

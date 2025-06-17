@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { easeInOutQuad, easeInOutSine } from "./easings";
+import { easeInOutQuad, easeInOutSine } from "./core/easings";
 import { triangle } from "./sequences";
 
 export enum CharacterAnimation {

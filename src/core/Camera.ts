@@ -22,9 +22,8 @@
  * SOFTWARE.
  */
 
-import { Area, Dimensions } from "./core/Area";
+import { Area, Dimensions } from "./Area";
 import { easeInOutExpo } from "./easings";
-import { GameObject } from "./GameObject";
 
 export interface Transition {
     startY: number;
@@ -43,7 +42,7 @@ export class Camera {
     // area.
     yAdjust: number = 0;
 
-    private target: GameObject | null = null;
+    private target: Area | null = null;
     private transition: Transition | null = null;
 
     constructor(
@@ -65,7 +64,7 @@ export class Camera {
         };
     }
 
-    follow(target: GameObject): void {
+    follow(target: Area): void {
         this.target = target;
     }
 
@@ -99,12 +98,12 @@ export class Camera {
         }
     }
 
-    private followFrame(o: GameObject): void {
+    private followFrame(gameObject: Area): void {
         const viewAreaWidth = this.view.width / this.zoom;
         const viewAreaHeight = this.view.height / this.zoom;
 
         if (viewAreaWidth < this.level.width) {
-            let x = o.x + o.width;
+            let x = gameObject.x + gameObject.width;
 
             // Keep camera within level in x-direction.
             if (x - viewAreaWidth / 2 < this.level.x) {
@@ -121,6 +120,6 @@ export class Camera {
             this.x = 0;
         }
 
-        this.y = o.y + viewAreaHeight * this.yAdjust;
+        this.y = gameObject.y + viewAreaHeight * this.yAdjust;
     }
 }

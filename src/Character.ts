@@ -30,7 +30,7 @@ import {
     renderCharacter,
 } from "./CharacterAnimation";
 import { getControls } from "./controls";
-import { easeInQuad } from "./easings";
+import { easeInQuad } from "./core/easings";
 import { GameObject } from "./GameObject";
 import { cx } from "./graphics";
 import { random } from "./core/random";
