@@ -35,7 +35,7 @@ import {
     goSfx,
 } from "./sfxData.js";
 
-import { isIPad, isDesktop, isIOS } from "../deviceDetection.ts";
+import { isIPad, isDesktop, isIOS } from "../core/deviceDetection";
 
 import { zzfx, zzfxX } from "./sfxPlayer.js"
 import CPlayer from "./musicplayer.js";

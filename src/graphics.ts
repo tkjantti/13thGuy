@@ -35,7 +35,7 @@ import {
     getIsInRaceMode,
 } from "./performance";
 
-import { isDesktop } from "./deviceDetection";
+import { isDesktop } from "./core/deviceDetection";
 import { ButtonStyles, createButton } from "./HtmlButton";
 
 export const canvas = document.querySelector("canvas") as HTMLCanvasElement;

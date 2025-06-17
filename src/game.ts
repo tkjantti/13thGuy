@@ -77,7 +77,7 @@ import {
     waitForProgressInput,
 } from "./controls";
 import { hasTouchScreen } from "./touchscreen";
-import { toggleFullScreen } from "./fullscreen";
+import { toggleFullScreen } from "./core/fullscreen";
 
 const versionText = "Director's cut (" + (VERSION ? VERSION : "DEV") + ")";
 

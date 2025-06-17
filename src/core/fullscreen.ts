@@ -146,7 +146,6 @@ export async function toggleFullScreen(): Promise<void> {
     if (document.fullscreenElement) {
         try {
             await document.exitFullscreen();
-            console.log("Exited fullscreen mode");
         } catch (err) {
             if (err instanceof Error) {
                 console.error(
@@ -169,7 +168,6 @@ export async function toggleFullScreen(): Promise<void> {
             } else if (elem.msRequestFullscreen) {
                 await elem.msRequestFullscreen();
             }
-            console.log("Entered fullscreen mode");
         } catch (err: unknown) {
             console.warn(
                 "Standard fullscreen failed, falling back to canvas positioning",

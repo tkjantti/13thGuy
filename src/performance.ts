@@ -1,5 +1,10 @@
 // Import device detection from a shared utility file
-import { isIPad, isSafari, isIOS, isMobileDevice } from "./deviceDetection";
+import {
+    isIPad,
+    isSafari,
+    isIOS,
+    isMobileDevice,
+} from "./core/deviceDetection";
 
 declare global {
     interface Navigator {
