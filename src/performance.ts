@@ -86,7 +86,7 @@ export function detectPrivateBrowsing(): {
             window.localStorage.setItem("ipad_private_test", "test");
             window.localStorage.removeItem("ipad_private_test");
             console.log("iPad Safari NOT in private mode");
-        } catch (e) {
+        } catch {
             console.log("iPad Safari private mode detected");
             result.isPrivate = true;
             result.isIpadSafariPrivate = true;
@@ -100,7 +100,7 @@ export function detectPrivateBrowsing(): {
             localStorage.setItem("ios_private_test", "test");
             localStorage.removeItem("ios_private_test");
             console.log("iOS NOT in private mode");
-        } catch (e) {
+        } catch {
             console.log("iOS private mode detected");
             result.isPrivate = true;
             result.isIOSPrivate = true;
@@ -112,7 +112,7 @@ export function detectPrivateBrowsing(): {
     try {
         localStorage.setItem("private_test", "private_test");
         localStorage.removeItem("private_test");
-    } catch (e) {
+    } catch {
         console.log("Private browsing detected via localStorage exception");
         result.isPrivate = true;
         return result;
@@ -147,7 +147,7 @@ export function detectPrivateBrowsing(): {
                 );
                 result.isPrivate = true;
             }
-        } catch (e) {
+        } catch {
             // Already handled by general localStorage test
         }
     }
