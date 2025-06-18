@@ -29,14 +29,10 @@ import {
     setRaceMode,
     initializeGraphics,
     togglePerformanceMode,
-    setPerformanceToggleButton,
     checkPerformanceOnRaceStart,
     resetRacePerformanceCheck,
     getIsInRaceMode,
 } from "./performance";
-
-import { isDesktop } from "./core/deviceDetection";
-import { ButtonStyles, createButton } from "./HtmlButton";
 
 export const canvas = document.querySelector("canvas") as HTMLCanvasElement;
 export const cx: CanvasRenderingContext2D = canvas.getContext("2d", {
@@ -46,8 +42,6 @@ export const cx: CanvasRenderingContext2D = canvas.getContext("2d", {
 let scanlineCanvas: HTMLCanvasElement | null = null;
 let scanlineContext: CanvasRenderingContext2D | null = null;
 let gradient: CanvasGradient;
-
-export const START_BUTTON_ID = "startButton";
 
 // Create scanline canvas for visual effects
 const createScanlineCanvas = (
@@ -328,78 +322,6 @@ export const createPlateTexture = () => {
     offscreenCtx.putImageData(imageData, 0, 0);
 
     return offscreenCtx.createPattern(offscreenCanvas, "repeat");
-};
-
-// Button creation functions
-export function createFullscreenButton(
-    hasTouchScreen: boolean,
-): HTMLButtonElement {
-    const button = createButton("fullscreenButton", "⛶");
-    button.style.top = "10px";
-    button.style.right = "10px";
-    button.style.display = hasTouchScreen ? "none" : "block";
-    return button;
-}
-
-export function createRestartButton(): HTMLButtonElement {
-    const button = createButton("restartButton", "↺");
-    button.style.top = "10px";
-    button.style.right = "60px";
-    button.style.display = "none";
-    return button;
-}
-
-export function createStartButton(): HTMLButtonElement {
-    const button = document.createElement("button");
-
-    button.id = START_BUTTON_ID;
-    button.style.position = "absolute";
-    button.style.background = "transparent";
-    button.style.border = "none";
-    button.style.fontSize = "2vw";
-    button.style.top = "0";
-    button.style.bottom = "0";
-    button.style.left = "0";
-    button.style.right = "0";
-    button.style.zIndex = ButtonStyles.zIndex;
-    button.style.color = ButtonStyles.color;
-    button.style.display = "none";
-    button.style.padding = "20vw 0 0 0";
-    button.style.fontFamily = "Courier New";
-    button.style.zIndex = ButtonStyles.zIndex;
-    button.textContent = "Tap the screen to continue█";
-
-    return button;
-}
-
-export const createToggleButton = () => {
-    const performanceToggleButton = createButton("performanceToggleButton", "");
-
-    // Style button
-    if (isDesktop) {
-        performanceToggleButton.style.top = "10px";
-        performanceToggleButton.style.left = "10px";
-    } else {
-        performanceToggleButton.style.top = "60px";
-        performanceToggleButton.style.right = "10px";
-        performanceToggleButton.style.height = `${parseInt(ButtonStyles.size) / 2}px`;
-        performanceToggleButton.style.padding = "20px 0"; // Add padding for touch target
-        performanceToggleButton.style.fontSize = `${parseInt(ButtonStyles.fontSize) / 2}px`;
-        performanceToggleButton.style.background = "rgba(0, 0, 0, 0.2)";
-        performanceToggleButton.style.border = "none";
-    }
-
-    // Add click listener with blur
-    performanceToggleButton.addEventListener("click", (e) => {
-        e.preventDefault();
-        togglePerformanceMode();
-        performanceToggleButton.blur(); // Remove focus from button
-    });
-
-    // Store the button in the performance module
-    setPerformanceToggleButton(performanceToggleButton);
-
-    return performanceToggleButton;
 };
 
 // Re-export performance functions that need to be accessible from outside

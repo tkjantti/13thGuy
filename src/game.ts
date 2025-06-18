@@ -32,11 +32,6 @@ import {
     createPlateTexture,
     initializeGraphics,
     shouldRender,
-    createToggleButton,
-    createFullscreenButton,
-    createRestartButton,
-    createStartButton,
-    START_BUTTON_ID,
     checkPerformanceOnRaceStart,
     resetRacePerformanceCheck,
     setRaceMode,
@@ -78,6 +73,15 @@ import {
 } from "./controls";
 import { hasTouchScreen } from "./touchscreen";
 import { toggleFullScreen } from "./core/fullscreen";
+import {
+    createFullscreenButton,
+    createRestartButton,
+    createStartButton,
+    createPerformanceToggleButton,
+    START_BUTTON_ID,
+    RESTART_BUTTON_ID,
+    FULLSCREEN_BUTTON_ID,
+} from "./buttons";
 
 const versionText = "Director's cut (" + (VERSION ? VERSION : "DEV") + ")";
 
@@ -134,13 +138,13 @@ const setState = async (state: GameState) => {
     // IMPORTANT: Only consider Running and Ready as race modes, not GameFinished/GameOver
     setRaceMode(state === GameState.Running || state === GameState.Ready);
 
-    const restartButton = document.getElementById("restartButton");
+    const restartButton = document.getElementById(RESTART_BUTTON_ID);
     if (restartButton) {
         restartButton.style.display =
             state !== GameState.Init ? "block" : "none";
     }
 
-    const fullscreenButton = document.getElementById("fullscreenButton");
+    const fullscreenButton = document.getElementById(FULLSCREEN_BUTTON_ID);
     if (fullscreenButton) {
         fullscreenButton.style.display =
             state !== GameState.Init || !hasTouchScreen ? "block" : "none";
@@ -664,7 +668,7 @@ async function postInitActions() {
     }
 
     // Add the toggle button
-    const toggleBtn = createToggleButton();
+    const toggleBtn = createPerformanceToggleButton();
     document.body.appendChild(toggleBtn);
 
     raceNumber = 1;
