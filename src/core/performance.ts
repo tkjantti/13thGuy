@@ -1,6 +1,6 @@
 // Import device detection from a shared utility file
 import { isIPad, isSafari, isIOS, isMobileDevice } from "./deviceDetection";
-import { PerformanceMode } from "./PerformanceMode";
+import { GraphicsDetailMode } from "./GraphicsDetailMode";
 
 declare global {
     interface Navigator {
@@ -20,10 +20,17 @@ declare global {
     }
 }
 
+/**
+ * Either a specific graphics detail mode or "auto", which means that
+ * the details mode is set automatically.
+ */
+
+export type PerformanceMode = GraphicsDetailMode | "auto";
+
 // Performance state
-let currentPerformanceMode: PerformanceMode = PerformanceMode.AUTO;
-let autoModeEffectiveMode: PerformanceMode = PerformanceMode.HIGH;
-export let performanceTier: "high" | "medium" | "low";
+let currentPerformanceMode: PerformanceMode = "auto";
+let autoModeEffectiveMode: GraphicsDetailMode = GraphicsDetailMode.HIGH;
+let performanceTier: "high" | "medium" | "low";
 let hasCheckedRacePerformance = false;
 let isInRaceMode = false;
 let performanceToggleButton: HTMLButtonElement | null = null;
@@ -41,10 +48,10 @@ export function setRaceMode(inRace: boolean): void {
 }
 
 /**
- * Get effective performance mode (resolves AUTO to actual mode)
+ * Get effective graphics detail mode (resolves AUTO to actual mode)
  */
-export function getEffectivePerformanceMode(): PerformanceMode {
-    if (currentPerformanceMode === PerformanceMode.AUTO) {
+export function getEffectiveGraphicsDetailMode(): GraphicsDetailMode {
+    if (currentPerformanceMode === "auto") {
         return autoModeEffectiveMode;
     }
     return currentPerformanceMode;
@@ -150,9 +157,9 @@ export function detectPrivateBrowsing(): {
                     );
                     if (
                         performanceTier === "high" &&
-                        autoModeEffectiveMode === PerformanceMode.HIGH
+                        autoModeEffectiveMode === GraphicsDetailMode.HIGH
                     ) {
-                        autoModeEffectiveMode = PerformanceMode.MEDIUM;
+                        autoModeEffectiveMode = GraphicsDetailMode.MEDIUM;
                         updateToggleButtonText();
                     }
                 }
@@ -246,11 +253,11 @@ export function detectLowPerformanceMode(): boolean {
 
     if (isOlderDesktop) {
         console.log("Older desktop detected - using MEDIUM performance mode");
-        if (currentPerformanceMode === PerformanceMode.AUTO) {
-            autoModeEffectiveMode = PerformanceMode.MEDIUM;
+        if (currentPerformanceMode === "auto") {
+            autoModeEffectiveMode = GraphicsDetailMode.MEDIUM;
             updateToggleButtonText();
         } else {
-            setPerformanceMode(PerformanceMode.MEDIUM);
+            setPerformanceMode(GraphicsDetailMode.MEDIUM);
         }
         return false;
     }
@@ -265,7 +272,7 @@ export function shouldRender(timestamp: number): boolean {
     // Only skip frames during actual racing, not menu screens
     if (
         !isInRaceMode ||
-        getEffectivePerformanceMode() !== PerformanceMode.LOW
+        getEffectiveGraphicsDetailMode() !== GraphicsDetailMode.LOW
     ) {
         return true;
     }
@@ -288,7 +295,7 @@ function updateToggleButtonText(): void {
         let displayMode;
 
         // When in AUTO mode, show the effective mode in parentheses with single letter
-        if (currentPerformanceMode === PerformanceMode.AUTO) {
+        if (currentPerformanceMode === "auto") {
             const shortEffectiveMode = getShortModeName(autoModeEffectiveMode);
             displayMode = `auto (${shortEffectiveMode})`;
         } else {
@@ -305,15 +312,15 @@ function updateToggleButtonText(): void {
 }
 
 /**
- * Get short mode abbreviation for modes
+ * Get short mode abbreviation for graphics detail modes.
  */
-function getShortModeName(mode: PerformanceMode): string {
+function getShortModeName(mode: GraphicsDetailMode): string {
     switch (mode) {
-        case PerformanceMode.HIGH:
+        case GraphicsDetailMode.HIGH:
             return "H";
-        case PerformanceMode.MEDIUM:
+        case GraphicsDetailMode.MEDIUM:
             return "M";
-        case PerformanceMode.LOW:
+        case GraphicsDetailMode.LOW:
             return "L";
         default:
             return mode;
@@ -352,18 +359,18 @@ export function setPerformanceToggleButton(button: HTMLButtonElement): void {
  */
 export function autoConfigurePerformance(): void {
     // Keep currentPerformanceMode as AUTO
-    currentPerformanceMode = PerformanceMode.AUTO;
+    currentPerformanceMode = "auto";
 
     // Use performance tier to determine effective mode
     switch (performanceTier) {
         case "high":
-            autoModeEffectiveMode = PerformanceMode.HIGH;
+            autoModeEffectiveMode = GraphicsDetailMode.HIGH;
             break;
         case "medium":
-            autoModeEffectiveMode = PerformanceMode.MEDIUM;
+            autoModeEffectiveMode = GraphicsDetailMode.MEDIUM;
             break;
         case "low":
-            autoModeEffectiveMode = PerformanceMode.LOW;
+            autoModeEffectiveMode = GraphicsDetailMode.LOW;
             break;
     }
 
@@ -497,10 +504,7 @@ function performInitialBenchmark(): void {
  */
 export function checkPerformanceOnRaceStart(): void {
     // Only check once per race, or if not in AUTO mode
-    if (
-        hasCheckedRacePerformance ||
-        currentPerformanceMode !== PerformanceMode.AUTO
-    ) {
+    if (hasCheckedRacePerformance || currentPerformanceMode !== "auto") {
         return;
     }
 
@@ -579,7 +583,7 @@ function performHighTierCheck(): void {
                     console.log(
                         `SEVERE performance issues detected (${verySlowFrameCount}/${MAX_FRAMES} very slow frames)`,
                     );
-                    autoModeEffectiveMode = PerformanceMode.LOW;
+                    autoModeEffectiveMode = GraphicsDetailMode.LOW;
                     updateToggleButtonText();
                 }
                 // If 25% of frames have moderate lag, go to MEDIUM
@@ -587,7 +591,7 @@ function performHighTierCheck(): void {
                     console.log(
                         `Moderate performance issues detected (${slowFrameCount}/${MAX_FRAMES} slow frames)`,
                     );
-                    autoModeEffectiveMode = PerformanceMode.MEDIUM;
+                    autoModeEffectiveMode = GraphicsDetailMode.MEDIUM;
                     updateToggleButtonText();
 
                     // Run a follow-up check after 2 seconds to see if we need to go to LOW
@@ -634,7 +638,7 @@ function performHighTierCheck(): void {
                         console.log(
                             `Continued performance issues in MEDIUM mode (${additionalSlowFrameCount}/${ADDITIONAL_MAX_FRAMES} slow frames)`,
                         );
-                        autoModeEffectiveMode = PerformanceMode.LOW;
+                        autoModeEffectiveMode = GraphicsDetailMode.LOW;
                         updateToggleButtonText();
                     }
                     return;
@@ -672,7 +676,7 @@ function performMediumTierCheck(): void {
 
         if (frameTime > significantIssueThreshold) {
             console.log("Significant performance issues on medium-tier device");
-            autoModeEffectiveMode = PerformanceMode.LOW;
+            autoModeEffectiveMode = GraphicsDetailMode.LOW;
             updateToggleButtonText();
         } else {
             console.log("Medium-tier device performance is acceptable");
@@ -688,7 +692,7 @@ function performLowTierCheck(): void {
     console.log("Running performance check for LOW tier device...");
 
     // Low-tier devices start with LOW mode by default
-    autoModeEffectiveMode = PerformanceMode.LOW;
+    autoModeEffectiveMode = GraphicsDetailMode.LOW;
     updateToggleButtonText();
 
     // No additional checks needed - we assume LOW is appropriate
@@ -699,11 +703,11 @@ function performLowTierCheck(): void {
  * Toggle between performance modes
  */
 export function togglePerformanceMode(): void {
-    const modes = [
-        PerformanceMode.AUTO, // Add AUTO to the cycle
-        PerformanceMode.HIGH,
-        PerformanceMode.MEDIUM,
-        PerformanceMode.LOW,
+    const modes: PerformanceMode[] = [
+        "auto", // Add AUTO to the cycle
+        GraphicsDetailMode.HIGH,
+        GraphicsDetailMode.MEDIUM,
+        GraphicsDetailMode.LOW,
     ];
     const currentIndex = modes.indexOf(currentPerformanceMode);
     const nextIndex = (currentIndex + 1) % modes.length;
@@ -712,7 +716,7 @@ export function togglePerformanceMode(): void {
     currentPerformanceMode = modes[nextIndex];
 
     // Reset auto mode decision when switching back to AUTO
-    if (currentPerformanceMode === PerformanceMode.AUTO) {
+    if (currentPerformanceMode === "auto") {
         // Re-check performance if in race mode
         if (isInRaceMode) {
             hasCheckedRacePerformance = false;

@@ -1,4 +1,4 @@
-import { PerformanceMode } from "./PerformanceMode";
+import { GraphicsDetailMode } from "./GraphicsDetailMode";
 
 let scanlineCanvas: HTMLCanvasElement | null = null;
 let scanlineContext: CanvasRenderingContext2D | null = null;
@@ -24,7 +24,7 @@ const createScanlineCanvas = (
 export const applyCRT = (
     canvas: HTMLCanvasElement,
     cx: CanvasRenderingContext2D,
-    performanceMode: PerformanceMode,
+    detailMode: GraphicsDetailMode,
     noisy = true,
 ): void => {
     const width = canvas.width;
@@ -35,9 +35,9 @@ export const applyCRT = (
     let opacity = baseOpacity;
     let noiseFactor = noisy ? 10 : 0;
 
-    // Adjust effects based on performance mode
-    switch (performanceMode) {
-        case PerformanceMode.LOW: {
+    // Adjust effects based on detail mode
+    switch (detailMode) {
+        case GraphicsDetailMode.LOW: {
             // Ultra-lightweight effect for LOW mode
             // Skip the gradient entirely and use simple flat shading
 
@@ -54,13 +54,13 @@ export const applyCRT = (
             return;
         }
 
-        case PerformanceMode.MEDIUM:
+        case GraphicsDetailMode.MEDIUM:
             // Medium mode - lighter effects, no noise
             opacity = baseOpacity * 0.7;
             noiseFactor = 0; // Disable noise in medium mode
             break;
 
-        case PerformanceMode.HIGH:
+        case GraphicsDetailMode.HIGH:
         default:
             // Full effects - use original values
             break;
@@ -96,8 +96,8 @@ export const applyCRT = (
     cx.putImageData(imageData, 0, 0);
 
     if (
-        performanceMode === PerformanceMode.HIGH ||
-        performanceMode === PerformanceMode.MEDIUM
+        detailMode === GraphicsDetailMode.HIGH ||
+        detailMode === GraphicsDetailMode.MEDIUM
     ) {
         // Create scanline canvas if it doesn't exist
         if (
