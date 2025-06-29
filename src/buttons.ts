@@ -27,7 +27,7 @@ import { ButtonStyles, createButton } from "./core/HtmlButton";
 import {
     setPerformanceToggleButton,
     togglePerformanceMode,
-} from "./performance";
+} from "./core/performance";
 
 export const START_BUTTON_ID = "startButton";
 export const RESTART_BUTTON_ID = "restartButton";

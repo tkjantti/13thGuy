@@ -1,10 +1,6 @@
 // Import device detection from a shared utility file
-import {
-    isIPad,
-    isSafari,
-    isIOS,
-    isMobileDevice,
-} from "./core/deviceDetection";
+import { isIPad, isSafari, isIOS, isMobileDevice } from "./deviceDetection";
+import { PerformanceMode } from "./PerformanceMode";
 
 declare global {
     interface Navigator {
@@ -22,16 +18,6 @@ declare global {
         ) => void;
         TEMPORARY?: number;
     }
-}
-
-/**
- * Performance mode settings
- */
-export enum PerformanceMode {
-    AUTO = "auto",
-    HIGH = "high",
-    MEDIUM = "medium",
-    LOW = "low",
 }
 
 // Performance state
