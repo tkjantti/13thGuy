@@ -21,7 +21,7 @@ const createScanlineCanvas = (
     }
 };
 
-export const applyCRT = (
+export const renderCRTEffect = (
     canvas: HTMLCanvasElement,
     cx: CanvasRenderingContext2D,
     detailMode: GraphicsDetailMode,

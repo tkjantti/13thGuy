@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { applyCRT } from "./core/CRTEffect";
+import { renderCRTEffect } from "./core/CRTEffect";
 import {
     getEffectiveGraphicsDetailMode,
     shouldRender,
@@ -34,29 +34,12 @@ import {
     getIsInRaceMode,
 } from "./core/performance";
 import { GraphicsDetailMode } from "./core/GraphicsDetailMode";
+import { renderGradient } from "./core/gradient";
 
 export const canvas = document.querySelector("canvas") as HTMLCanvasElement;
 export const cx: CanvasRenderingContext2D = canvas.getContext("2d", {
     willReadFrequently: true,
 })!;
-
-let gradient: CanvasGradient;
-
-// Create gradient for visual effects
-const createGradient = () => {
-    const width = canvas.width;
-    const height = canvas.height;
-    gradient = cx.createRadialGradient(
-        width / 2,
-        height / 2,
-        0, // Inner circle
-        width / 2,
-        height / 2,
-        width / 2, // Outer circle
-    );
-    gradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
-    gradient.addColorStop(1, "rgba(0, 0, 0, 0.5)");
-};
 
 // Visual effects
 export const applyCRTEffect = (noisy = true): void => {
@@ -76,7 +59,7 @@ export const applyCRTEffect = (noisy = true): void => {
                 : baseMode;
     }
 
-    applyCRT(canvas, cx, effectiveMode, noisy);
+    renderCRTEffect(canvas, cx, effectiveMode, noisy);
 };
 
 // Apply gradient effect with performance optimization
@@ -91,12 +74,7 @@ export const applyGradient = () => {
         return;
     }
 
-    // Original gradient code
-    if (!gradient) {
-        createGradient();
-    }
-    cx.fillStyle = gradient;
-    cx.fillRect(0, 0, canvas.width, canvas.height);
+    return renderGradient(canvas, cx);
 };
 
 // Apply grayscale effect with performance optimization
