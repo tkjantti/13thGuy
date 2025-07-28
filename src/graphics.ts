@@ -35,6 +35,7 @@ import {
 } from "./core/performance";
 import { GraphicsDetailMode } from "./core/GraphicsDetailMode";
 import { renderGradient } from "./core/gradient";
+import { renderGrayscale } from "./core/grayscale";
 
 export const canvas = document.querySelector("canvas") as HTMLCanvasElement;
 export const cx: CanvasRenderingContext2D = canvas.getContext("2d", {
@@ -84,34 +85,7 @@ export const applyGrayscale = () => {
         ? getEffectiveGraphicsDetailMode()
         : GraphicsDetailMode.HIGH;
 
-    // Use a much simpler effect in LOW mode
-    if (effectiveMode === GraphicsDetailMode.LOW) {
-        cx.globalAlpha = 0.5;
-        cx.fillStyle = "rgba(0, 0, 0, 0.5)";
-        cx.fillRect(0, 0, canvas.width, canvas.height);
-        cx.globalAlpha = 1.0;
-        return;
-    }
-
-    // Original grayscale code for other modes
-    const imageData = cx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-
-    // Loop through each pixel
-    for (let i = 0; i < data.length; i += 4) {
-        const red = data[i];
-        const green = data[i + 1];
-        const blue = data[i + 2];
-
-        // Calculate the grayscale value
-        const grayscale = red * 0.3 + green * 0.59 + blue * 0.11;
-
-        // Set the pixel values to the grayscale value
-        data[i] = data[i + 1] = data[i + 2] = grayscale * 0.7;
-    }
-
-    // Put the modified image data back onto the canvas
-    cx.putImageData(imageData, 0, 0);
+    renderGrayscale(canvas, cx, effectiveMode);
 };
 
 // Texture creation functions

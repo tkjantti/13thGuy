@@ -22,23 +22,39 @@
  * SOFTWARE.
  */
 
-// Browser/device detection
-export const isIPad =
-    /iPad/.test(navigator.userAgent) ||
-    (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+import { GraphicsDetailMode } from "./GraphicsDetailMode";
 
-export const isSafari =
-    /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+export const renderGrayscale = (
+    canvas: HTMLCanvasElement,
+    cx: CanvasRenderingContext2D,
+    detailMode: GraphicsDetailMode,
+) => {
+    // Use a much simpler effect in LOW mode
+    if (detailMode === GraphicsDetailMode.LOW) {
+        cx.globalAlpha = 0.5;
+        cx.fillStyle = "rgba(0, 0, 0, 0.5)";
+        cx.fillRect(0, 0, canvas.width, canvas.height);
+        cx.globalAlpha = 1.0;
+        return;
+    }
 
-export const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(
-    navigator.userAgent,
-);
+    // Original grayscale code for other modes
+    const imageData = cx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
 
-export const isIOS =
-    // Traditional iOS detection
-    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    // Modern iPad detection (iPadOS 13+ reports as Mac)
-    (navigator.userAgent.includes("Mac") && navigator.maxTouchPoints > 1);
+    // Loop through each pixel
+    for (let i = 0; i < data.length; i += 4) {
+        const red = data[i];
+        const green = data[i + 1];
+        const blue = data[i + 2];
 
-export const isAndroid = /Android/.test(navigator.userAgent);
-export const isDesktop = !isMobileDevice && !isIPad;
+        // Calculate the grayscale value
+        const grayscale = red * 0.3 + green * 0.59 + blue * 0.11;
+
+        // Set the pixel values to the grayscale value
+        data[i] = data[i + 1] = data[i + 2] = grayscale * 0.7;
+    }
+
+    // Put the modified image data back onto the canvas
+    cx.putImageData(imageData, 0, 0);
+};
