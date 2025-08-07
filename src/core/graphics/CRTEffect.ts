@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { GraphicsDetailMode } from "./GraphicsDetailMode";
+import { GraphicsDetailLevel } from "./GraphicsDetailLevel";
 
 let scanlineCanvas: HTMLCanvasElement | null = null;
 let scanlineContext: CanvasRenderingContext2D | null = null;
@@ -48,7 +48,7 @@ const createScanlineCanvas = (
 export const renderCRTEffect = (
     canvas: HTMLCanvasElement,
     cx: CanvasRenderingContext2D,
-    detailMode: GraphicsDetailMode,
+    detailLevel: GraphicsDetailLevel,
     noisy = true,
 ): void => {
     const width = canvas.width;
@@ -59,10 +59,10 @@ export const renderCRTEffect = (
     let opacity = baseOpacity;
     let noiseFactor = noisy ? 10 : 0;
 
-    // Adjust effects based on detail mode
-    switch (detailMode) {
-        case GraphicsDetailMode.LOW: {
-            // Ultra-lightweight effect for LOW mode
+    // Adjust effects based on detail level
+    switch (detailLevel) {
+        case GraphicsDetailLevel.LOW: {
+            // Ultra-lightweight effect for LOW level
             // Skip the gradient entirely and use simple flat shading
 
             // Just add a simple vignette effect (darkened corners)
@@ -78,19 +78,19 @@ export const renderCRTEffect = (
             return;
         }
 
-        case GraphicsDetailMode.MEDIUM:
-            // Medium mode - lighter effects, no noise
+        case GraphicsDetailLevel.MEDIUM:
+            // Medium level - lighter effects, no noise
             opacity = baseOpacity * 0.7;
-            noiseFactor = 0; // Disable noise in medium mode
+            noiseFactor = 0; // Disable noise in medium level
             break;
 
-        case GraphicsDetailMode.HIGH:
+        case GraphicsDetailLevel.HIGH:
         default:
             // Full effects - use original values
             break;
     }
 
-    // Only process image data if we're not in LOW mode (handled above)
+    // Only process image data if we're not in LOW level (handled above)
     const imageData = cx.getImageData(0, 0, width, height);
     const data = imageData.data;
 
@@ -120,8 +120,8 @@ export const renderCRTEffect = (
     cx.putImageData(imageData, 0, 0);
 
     if (
-        detailMode === GraphicsDetailMode.HIGH ||
-        detailMode === GraphicsDetailMode.MEDIUM
+        detailLevel === GraphicsDetailLevel.HIGH ||
+        detailLevel === GraphicsDetailLevel.MEDIUM
     ) {
         // Create scanline canvas if it doesn't exist
         if (

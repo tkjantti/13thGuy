@@ -24,7 +24,7 @@
 
 import { renderCRTEffect } from "./core/graphics/CRTEffect";
 import {
-    getEffectiveGraphicsDetailMode,
+    getEffectiveGraphicsDetailLevel,
     shouldRender,
     setRaceMode,
     initializeGraphics,
@@ -33,7 +33,7 @@ import {
     resetRacePerformanceCheck,
     getIsInRaceMode,
 } from "./core/gameplay/performance";
-import { GraphicsDetailMode } from "./core/graphics/GraphicsDetailMode";
+import { GraphicsDetailLevel } from "./core/graphics/GraphicsDetailLevel";
 import { renderGradient } from "./core/graphics/gradient";
 import { renderGrayscale } from "./core/graphics/grayscale";
 
@@ -44,34 +44,33 @@ export const cx: CanvasRenderingContext2D = canvas.getContext("2d", {
 
 // Visual effects
 export const applyCRTEffect = (noisy = true): void => {
-    let effectiveMode;
+    let effectiveLevel: GraphicsDetailLevel;
 
-    // Get base detail mode (resolve AUTO first)
-    const baseMode = getEffectiveGraphicsDetailMode();
+    // Get base detail level (resolve AUTO first)
+    const baseLevel = getEffectiveGraphicsDetailLevel();
 
     if (getIsInRaceMode()) {
-        // Changed from isInRaceMode
-        effectiveMode = baseMode;
+        effectiveLevel = baseLevel;
     } else {
         // During menus: ensure better visuals
-        effectiveMode =
-            baseMode === GraphicsDetailMode.LOW
-                ? GraphicsDetailMode.MEDIUM
-                : baseMode;
+        effectiveLevel =
+            baseLevel === GraphicsDetailLevel.LOW
+                ? GraphicsDetailLevel.MEDIUM
+                : baseLevel;
     }
 
-    renderCRTEffect(canvas, cx, effectiveMode, noisy);
+    renderCRTEffect(canvas, cx, effectiveLevel, noisy);
 };
 
 // Apply gradient effect with performance optimization
 export const applyGradient = () => {
     // Only apply performance optimization during actual racing
-    const effectiveMode = getIsInRaceMode() // Changed from isInRaceMode
-        ? getEffectiveGraphicsDetailMode()
-        : GraphicsDetailMode.HIGH;
+    const effectiveLevel = getIsInRaceMode() // Changed from isInRaceMode
+        ? getEffectiveGraphicsDetailLevel()
+        : GraphicsDetailLevel.HIGH;
 
     // Skip gradient entirely in LOW detail mode during race
-    if (effectiveMode === GraphicsDetailMode.LOW) {
+    if (effectiveLevel === GraphicsDetailLevel.LOW) {
         return;
     }
 
@@ -81,11 +80,11 @@ export const applyGradient = () => {
 // Apply grayscale effect with performance optimization
 export const applyGrayscale = () => {
     // Only apply performance optimization during actual racing
-    const effectiveMode = getIsInRaceMode() // Changed from isInRaceMode
-        ? getEffectiveGraphicsDetailMode()
-        : GraphicsDetailMode.HIGH;
+    const effectiveLevel = getIsInRaceMode() // Changed from isInRaceMode
+        ? getEffectiveGraphicsDetailLevel()
+        : GraphicsDetailLevel.HIGH;
 
-    renderGrayscale(canvas, cx, effectiveMode);
+    renderGrayscale(canvas, cx, effectiveLevel);
 };
 
 // Texture creation functions

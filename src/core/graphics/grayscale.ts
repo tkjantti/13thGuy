@@ -22,15 +22,15 @@
  * SOFTWARE.
  */
 
-import { GraphicsDetailMode } from "./GraphicsDetailMode";
+import { GraphicsDetailLevel } from "./GraphicsDetailLevel";
 
 export const renderGrayscale = (
     canvas: HTMLCanvasElement,
     cx: CanvasRenderingContext2D,
-    detailMode: GraphicsDetailMode,
+    detailLevel: GraphicsDetailLevel,
 ) => {
-    // Use a much simpler effect in LOW mode
-    if (detailMode === GraphicsDetailMode.LOW) {
+    // Use a much simpler effect in LOW level
+    if (detailLevel === GraphicsDetailLevel.LOW) {
         cx.globalAlpha = 0.5;
         cx.fillStyle = "rgba(0, 0, 0, 0.5)";
         cx.fillRect(0, 0, canvas.width, canvas.height);
@@ -38,7 +38,7 @@ export const renderGrayscale = (
         return;
     }
 
-    // Original grayscale code for other modes
+    // Original grayscale code for other levels
     const imageData = cx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
 

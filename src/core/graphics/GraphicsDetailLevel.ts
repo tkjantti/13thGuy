@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-export enum GraphicsDetailMode {
+export enum GraphicsDetailLevel {
     HIGH = "high",
     MEDIUM = "medium",
     LOW = "low",
