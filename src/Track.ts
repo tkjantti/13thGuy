@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-import { add, Vector } from "./core/Vector";
-import { Area, overlap } from "./core/Area";
+import { add, Vector } from "./core/math/Vector";
+import { Area, overlap } from "./core/math/Area";
 import { GameObject } from "./GameObject";
 import {
     Block,

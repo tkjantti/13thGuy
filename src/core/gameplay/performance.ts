@@ -23,8 +23,13 @@
  */
 
 // Import device detection from a shared utility file
-import { isIPad, isSafari, isIOS, isMobileDevice } from "./deviceDetection";
-import { GraphicsDetailMode } from "./GraphicsDetailMode";
+import {
+    isIPad,
+    isSafari,
+    isIOS,
+    isMobileDevice,
+} from "../platform/deviceDetection";
+import { GraphicsDetailMode } from "../graphics/GraphicsDetailMode";
 
 declare global {
     interface Navigator {

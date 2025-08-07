@@ -22,12 +22,12 @@
  * SOFTWARE.
  */
 
-import { isDesktop } from "./core/deviceDetection";
-import { ButtonStyles, createButton } from "./core/HtmlButton";
+import { isDesktop } from "./core/platform/deviceDetection";
+import { ButtonStyles, createButton } from "./core/UI/HtmlButton";
 import {
     setPerformanceToggleButton,
     togglePerformanceMode,
-} from "./core/performance";
+} from "./core/gameplay/performance";
 
 export const START_BUTTON_ID = "startButton";
 export const RESTART_BUTTON_ID = "restartButton";

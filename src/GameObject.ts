@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-import { Area } from "./core/Area";
-import { Vector } from "./core/Vector";
+import { Area } from "./core/math/Area";
+import { Vector } from "./core/math/Vector";
 
 export interface GameObject extends Area {
     x: number;

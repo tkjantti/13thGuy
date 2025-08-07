@@ -72,7 +72,7 @@ import {
     waitForProgressInput,
 } from "./controls";
 import { hasTouchScreen } from "./touchscreen";
-import { toggleFullScreen } from "./core/fullscreen";
+import { toggleFullScreen } from "./core/graphics/fullscreen.js";
 import {
     createFullscreenButton,
     createRestartButton,

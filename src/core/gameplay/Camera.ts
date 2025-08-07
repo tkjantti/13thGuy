@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-import { Area, Dimensions } from "./Area";
-import { easeInOutExpo } from "./easings";
+import { Area, Dimensions } from "../math/Area";
+import { easeInOutExpo } from "../math/easings";
 
 export interface Transition {
     startY: number;

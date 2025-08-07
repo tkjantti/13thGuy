@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { isIOS } from "./deviceDetection";
+import { isIOS } from "../platform/deviceDetection";
 
 /**
  * Handles fullscreen toggling specifically for iOS devices

@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { renderCRTEffect } from "./core/CRTEffect";
+import { renderCRTEffect } from "./core/graphics/CRTEffect";
 import {
     getEffectiveGraphicsDetailMode,
     shouldRender,
@@ -32,10 +32,10 @@ import {
     checkPerformanceOnRaceStart,
     resetRacePerformanceCheck,
     getIsInRaceMode,
-} from "./core/performance";
-import { GraphicsDetailMode } from "./core/GraphicsDetailMode";
-import { renderGradient } from "./core/gradient";
-import { renderGrayscale } from "./core/grayscale";
+} from "./core/gameplay/performance";
+import { GraphicsDetailMode } from "./core/graphics/GraphicsDetailMode";
+import { renderGradient } from "./core/graphics/gradient";
+import { renderGrayscale } from "./core/graphics/grayscale";
 
 export const canvas = document.querySelector("canvas") as HTMLCanvasElement;
 export const cx: CanvasRenderingContext2D = canvas.getContext("2d", {

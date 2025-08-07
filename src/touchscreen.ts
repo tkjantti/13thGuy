@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
-import { Area, includesPoint } from "./core/Area";
+import { Area, includesPoint } from "./core/math/Area.js";
 import { canvas } from "./graphics";
-import { VectorMutable } from "./core/Vector";
+import { VectorMutable } from "./core/math/Vector.js";
 import { setCanvasPositionFromScreenPosition } from "./window";
 import {
     SFX_KB,
