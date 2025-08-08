@@ -22,10 +22,10 @@
  * SOFTWARE.
  */
 
-import { Area, includesArea, overlap } from "./Area";
+import { Area, includesArea, overlap } from "./core/math/Area";
 import { GameObject } from "./GameObject";
 import { Obstacle } from "./Obstacle";
-import { random } from "./random";
+import { random } from "./core/math/random";
 
 export const ELEMENT_HEIGHT = 16;
 

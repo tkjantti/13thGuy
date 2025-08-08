@@ -35,7 +35,7 @@ import {
     subtract,
     Vector,
     ZERO_VECTOR,
-} from "./Vector";
+} from "./core/math/Vector";
 import { GameObject } from "./GameObject";
 
 /*

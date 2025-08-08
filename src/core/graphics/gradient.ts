@@ -22,25 +22,36 @@
  * SOFTWARE.
  */
 
-import { Block } from "./TrackElement";
-import { Vector } from "./core/math/Vector";
+let gradient: CanvasGradient;
 
-/*
- * Interface for navigating in a grid-like level.
- */
-export interface Map {
-    /*
-     * Returns block at the given grid position.
-     */
-    getBlock(row: number, col: number): Block;
+const createGradient = (
+    canvas: HTMLCanvasElement,
+    cx: CanvasRenderingContext2D,
+): CanvasGradient => {
+    const width = canvas.width;
+    const height = canvas.height;
 
-    /*
-     * Returns block that contains the given position.
-     */
-    getBlockAt(position: Vector): Block;
+    const result = cx.createRadialGradient(
+        width / 2,
+        height / 2,
+        0, // Inner circle
+        width / 2,
+        height / 2,
+        width / 2, // Outer circle
+    );
 
-    /*
-     * Dynamically checks if the grid position can be walked on.
-     */
-    isFree(row: number, col: number): boolean;
-}
+    result.addColorStop(0, "rgba(255, 255, 255, 0.3)");
+    result.addColorStop(1, "rgba(0, 0, 0, 0.5)");
+    return result;
+};
+
+export const renderGradient = (
+    canvas: HTMLCanvasElement,
+    cx: CanvasRenderingContext2D,
+) => {
+    if (!gradient) {
+        gradient = createGradient(canvas, cx);
+    }
+    cx.fillStyle = gradient;
+    cx.fillRect(0, 0, canvas.width, canvas.height);
+};

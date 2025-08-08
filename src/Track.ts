@@ -22,7 +22,8 @@
  * SOFTWARE.
  */
 
-import { Area, overlap } from "./Area";
+import { add, Vector } from "./core/math/Vector";
+import { Area, overlap } from "./core/math/Area";
 import { GameObject } from "./GameObject";
 import {
     Block,
@@ -38,7 +39,6 @@ import {
     TT,
 } from "./TrackElement";
 import { Map } from "./Map";
-import { add, Vector } from "./Vector";
 
 const RAFT_SPEED = 0.005;
 const RAFT_DOCK_TIME = 2000;

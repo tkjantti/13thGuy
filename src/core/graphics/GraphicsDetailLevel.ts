@@ -22,25 +22,8 @@
  * SOFTWARE.
  */
 
-import { Block } from "./TrackElement";
-import { Vector } from "./core/math/Vector";
-
-/*
- * Interface for navigating in a grid-like level.
- */
-export interface Map {
-    /*
-     * Returns block at the given grid position.
-     */
-    getBlock(row: number, col: number): Block;
-
-    /*
-     * Returns block that contains the given position.
-     */
-    getBlockAt(position: Vector): Block;
-
-    /*
-     * Dynamically checks if the grid position can be walked on.
-     */
-    isFree(row: number, col: number): boolean;
+export enum GraphicsDetailLevel {
+    HIGH = "high",
+    MEDIUM = "medium",
+    LOW = "low",
 }

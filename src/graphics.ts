@@ -22,229 +22,69 @@
  * SOFTWARE.
  */
 
+import { renderCRTEffect } from "./core/graphics/CRTEffect";
 import {
-    PerformanceMode,
-    getEffectivePerformanceMode,
+    getEffectiveGraphicsDetailLevel,
     shouldRender,
     setRaceMode,
     initializeGraphics,
     togglePerformanceMode,
-    setPerformanceToggleButton,
     checkPerformanceOnRaceStart,
     resetRacePerformanceCheck,
     getIsInRaceMode,
-} from "./performance";
-
-import { isDesktop } from "./deviceDetection";
-import { ButtonStyles, createButton } from "./HtmlButton";
+} from "./core/gameplay/performance";
+import { GraphicsDetailLevel } from "./core/graphics/GraphicsDetailLevel";
+import { renderGradient } from "./core/graphics/gradient";
+import { renderGrayscale } from "./core/graphics/grayscale";
 
 export const canvas = document.querySelector("canvas") as HTMLCanvasElement;
 export const cx: CanvasRenderingContext2D = canvas.getContext("2d", {
     willReadFrequently: true,
 })!;
 
-let scanlineCanvas: HTMLCanvasElement | null = null;
-let scanlineContext: CanvasRenderingContext2D | null = null;
-let gradient: CanvasGradient;
-
-export const START_BUTTON_ID = "startButton";
-
-// Create scanline canvas for visual effects
-const createScanlineCanvas = (
-    width: number,
-    height: number,
-    opacity: number,
-): void => {
-    scanlineCanvas = document.createElement("canvas");
-    scanlineCanvas.width = width;
-    scanlineCanvas.height = height;
-    scanlineContext = scanlineCanvas.getContext("2d");
-
-    if (scanlineContext) {
-        scanlineContext.fillStyle = `rgba(0, 0, 0, ${1 - opacity})`;
-        for (let y = 0; y < height; y += 2) {
-            scanlineContext.fillRect(0, y, width, 1);
-        }
-    }
-};
-
-// Create gradient for visual effects
-const createGradient = () => {
-    const width = canvas.width;
-    const height = canvas.height;
-    gradient = cx.createRadialGradient(
-        width / 2,
-        height / 2,
-        0, // Inner circle
-        width / 2,
-        height / 2,
-        width / 2, // Outer circle
-    );
-    gradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
-    gradient.addColorStop(1, "rgba(0, 0, 0, 0.5)");
-};
-
 // Visual effects
 export const applyCRTEffect = (noisy = true): void => {
-    const width = canvas.width;
-    const height = canvas.height;
+    let effectiveLevel: GraphicsDetailLevel;
 
-    let effectiveMode;
-
-    // Get base effective mode (resolve AUTO first)
-    const baseMode = getEffectivePerformanceMode();
+    // Get base detail level (resolve AUTO first)
+    const baseLevel = getEffectiveGraphicsDetailLevel();
 
     if (getIsInRaceMode()) {
-        // Changed from isInRaceMode
-        effectiveMode = baseMode;
+        effectiveLevel = baseLevel;
     } else {
         // During menus: ensure better visuals
-        effectiveMode =
-            baseMode === PerformanceMode.LOW
-                ? PerformanceMode.MEDIUM
-                : baseMode;
+        effectiveLevel =
+            baseLevel === GraphicsDetailLevel.LOW
+                ? GraphicsDetailLevel.MEDIUM
+                : baseLevel;
     }
 
-    // Base opacity values to preserve your existing setup
-    const baseOpacity = noisy ? 0.7 : 0.8;
-    let opacity = baseOpacity;
-    let noiseFactor = noisy ? 10 : 0;
-
-    // Adjust effects based on performance mode
-    switch (effectiveMode) {
-        case PerformanceMode.LOW: {
-            // Ultra-lightweight effect for LOW mode
-            // Skip the gradient entirely and use simple flat shading
-
-            // Just add a simple vignette effect (darkened corners)
-            cx.fillStyle = "rgba(0, 0, 0, 0.2)";
-            cx.fillRect(0, 0, width, height);
-
-            cx.globalAlpha = 0.05; // Even lower opacity
-            cx.fillStyle = "#000";
-            for (let y = 0; y < height; y += 2) {
-                cx.fillRect(0, y, width, 1);
-            }
-            cx.globalAlpha = 1.0;
-            return;
-        }
-
-        case PerformanceMode.MEDIUM:
-            // Medium mode - lighter effects, no noise
-            opacity = baseOpacity * 0.7;
-            noiseFactor = 0; // Disable noise in medium mode
-            break;
-
-        case PerformanceMode.HIGH:
-        default:
-            // Full effects - use original values
-            break;
-    }
-
-    // Only process image data if we're not in LOW mode (handled above)
-    const imageData = cx.getImageData(0, 0, width, height);
-    const data = imageData.data;
-
-    // Precompute noise values if noisy is true
-    const noiseValues =
-        noisy && noiseFactor > 0 ? new Float32Array(width * height) : null;
-    if (noisy && noiseValues && noiseFactor > 0) {
-        for (let i = 0; i < noiseValues.length; i++) {
-            noiseValues[i] = (Math.random() - 0.5) * noiseFactor;
-        }
-    }
-
-    // Apply noise
-    if (noisy && noiseValues && noiseFactor > 0) {
-        for (let y = 0; y < height; y++) {
-            const yOffset = y * width;
-            for (let x = 0; x < width; x++) {
-                const index = (yOffset + x) * 4;
-                const noise = noiseValues[yOffset + x];
-                data[index] += noise;
-                data[index + 1] += noise;
-                data[index + 2] += noise;
-            }
-        }
-    }
-
-    cx.putImageData(imageData, 0, 0);
-
-    // Only apply scanlines in HIGH or MEDIUM mode
-    if ((effectiveMode as PerformanceMode) !== PerformanceMode.LOW) {
-        // Create scanline canvas if it doesn't exist
-        if (
-            !scanlineCanvas ||
-            scanlineCanvas.width !== width ||
-            scanlineCanvas.height !== height
-        ) {
-            createScanlineCanvas(width, height, opacity);
-        }
-
-        // Blend the scanline pattern with the main canvas
-        if (scanlineContext && scanlineCanvas) {
-            cx.globalAlpha = opacity;
-            cx.drawImage(scanlineCanvas, 0, 0);
-            cx.globalAlpha = 1.0; // Reset alpha
-        }
-    }
+    renderCRTEffect(canvas, cx, effectiveLevel, noisy);
 };
 
 // Apply gradient effect with performance optimization
 export const applyGradient = () => {
     // Only apply performance optimization during actual racing
-    const effectiveMode = getIsInRaceMode() // Changed from isInRaceMode
-        ? getEffectivePerformanceMode()
-        : PerformanceMode.HIGH;
+    const effectiveLevel = getIsInRaceMode() // Changed from isInRaceMode
+        ? getEffectiveGraphicsDetailLevel()
+        : GraphicsDetailLevel.HIGH;
 
-    // Skip gradient entirely in LOW performance mode during race
-    if (effectiveMode === PerformanceMode.LOW) {
+    // Skip gradient entirely in LOW detail mode during race
+    if (effectiveLevel === GraphicsDetailLevel.LOW) {
         return;
     }
 
-    // Original gradient code
-    if (!gradient) {
-        createGradient();
-    }
-    cx.fillStyle = gradient;
-    cx.fillRect(0, 0, canvas.width, canvas.height);
+    return renderGradient(canvas, cx);
 };
 
 // Apply grayscale effect with performance optimization
 export const applyGrayscale = () => {
     // Only apply performance optimization during actual racing
-    const effectiveMode = getIsInRaceMode() // Changed from isInRaceMode
-        ? getEffectivePerformanceMode()
-        : PerformanceMode.HIGH;
+    const effectiveLevel = getIsInRaceMode() // Changed from isInRaceMode
+        ? getEffectiveGraphicsDetailLevel()
+        : GraphicsDetailLevel.HIGH;
 
-    // Use a much simpler effect in LOW mode
-    if (effectiveMode === PerformanceMode.LOW) {
-        cx.globalAlpha = 0.5;
-        cx.fillStyle = "rgba(0, 0, 0, 0.5)";
-        cx.fillRect(0, 0, canvas.width, canvas.height);
-        cx.globalAlpha = 1.0;
-        return;
-    }
-
-    // Original grayscale code for other modes
-    const imageData = cx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-
-    // Loop through each pixel
-    for (let i = 0; i < data.length; i += 4) {
-        const red = data[i];
-        const green = data[i + 1];
-        const blue = data[i + 2];
-
-        // Calculate the grayscale value
-        const grayscale = red * 0.3 + green * 0.59 + blue * 0.11;
-
-        // Set the pixel values to the grayscale value
-        data[i] = data[i + 1] = data[i + 2] = grayscale * 0.7;
-    }
-
-    // Put the modified image data back onto the canvas
-    cx.putImageData(imageData, 0, 0);
+    renderGrayscale(canvas, cx, effectiveLevel);
 };
 
 // Texture creation functions
@@ -330,81 +170,8 @@ export const createPlateTexture = () => {
     return offscreenCtx.createPattern(offscreenCanvas, "repeat");
 };
 
-// Button creation functions
-export function createFullscreenButton(
-    hasTouchScreen: boolean,
-): HTMLButtonElement {
-    const button = createButton("fullscreenButton", "⛶");
-    button.style.top = "10px";
-    button.style.right = "10px";
-    button.style.display = hasTouchScreen ? "none" : "block";
-    return button;
-}
-
-export function createRestartButton(): HTMLButtonElement {
-    const button = createButton("restartButton", "↺");
-    button.style.top = "10px";
-    button.style.right = "60px";
-    button.style.display = "none";
-    return button;
-}
-
-export function createStartButton(): HTMLButtonElement {
-    const button = document.createElement("button");
-
-    button.id = START_BUTTON_ID;
-    button.style.position = "absolute";
-    button.style.background = "transparent";
-    button.style.border = "none";
-    button.style.fontSize = "2vw";
-    button.style.top = "0";
-    button.style.bottom = "0";
-    button.style.left = "0";
-    button.style.right = "0";
-    button.style.zIndex = ButtonStyles.zIndex;
-    button.style.color = ButtonStyles.color;
-    button.style.display = "none";
-    button.style.padding = "20vw 0 0 0";
-    button.style.fontFamily = "Courier New";
-    button.style.zIndex = ButtonStyles.zIndex;
-    button.textContent = "Tap the screen to continue█";
-
-    return button;
-}
-
-export const createToggleButton = () => {
-    const performanceToggleButton = createButton("performanceToggleButton", "");
-
-    // Style button
-    if (isDesktop) {
-        performanceToggleButton.style.top = "10px";
-        performanceToggleButton.style.left = "10px";
-    } else {
-        performanceToggleButton.style.top = "60px";
-        performanceToggleButton.style.right = "10px";
-        performanceToggleButton.style.height = `${parseInt(ButtonStyles.size) / 2}px`;
-        performanceToggleButton.style.padding = "20px 0"; // Add padding for touch target
-        performanceToggleButton.style.fontSize = `${parseInt(ButtonStyles.fontSize) / 2}px`;
-        performanceToggleButton.style.background = "rgba(0, 0, 0, 0.2)";
-        performanceToggleButton.style.border = "none";
-    }
-
-    // Add click listener with blur
-    performanceToggleButton.addEventListener("click", (e) => {
-        e.preventDefault();
-        togglePerformanceMode();
-        performanceToggleButton.blur(); // Remove focus from button
-    });
-
-    // Store the button in the performance module
-    setPerformanceToggleButton(performanceToggleButton);
-
-    return performanceToggleButton;
-};
-
 // Re-export performance functions that need to be accessible from outside
 export {
-    PerformanceMode,
     setRaceMode,
     shouldRender,
     initializeGraphics,

@@ -1,5 +1,35 @@
+/*
+ * Copyright (c) 2024 - 2025 Tero Jäntti, Sami Heikkinen
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use, copy,
+ * modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 // Import device detection from a shared utility file
-import { isIPad, isSafari, isIOS, isMobileDevice } from "./deviceDetection";
+import {
+    isIPad,
+    isSafari,
+    isIOS,
+    isMobileDevice,
+} from "../platform/deviceDetection";
+import { GraphicsDetailLevel } from "../graphics/GraphicsDetailLevel";
 
 declare global {
     interface Navigator {
@@ -20,19 +50,16 @@ declare global {
 }
 
 /**
- * Performance mode settings
+ * Either a specific graphics detail level or "auto", which means that
+ * the detail level is set automatically.
  */
-export enum PerformanceMode {
-    AUTO = "auto",
-    HIGH = "high",
-    MEDIUM = "medium",
-    LOW = "low",
-}
+
+export type PerformanceMode = GraphicsDetailLevel | "auto";
 
 // Performance state
-let currentPerformanceMode: PerformanceMode = PerformanceMode.AUTO;
-let autoModeEffectiveMode: PerformanceMode = PerformanceMode.HIGH;
-export let performanceTier: "high" | "medium" | "low";
+let currentPerformanceMode: PerformanceMode = "auto";
+let autoModeEffectiveMode: GraphicsDetailLevel = GraphicsDetailLevel.HIGH;
+let performanceTier: "high" | "medium" | "low";
 let hasCheckedRacePerformance = false;
 let isInRaceMode = false;
 let performanceToggleButton: HTMLButtonElement | null = null;
@@ -50,10 +77,10 @@ export function setRaceMode(inRace: boolean): void {
 }
 
 /**
- * Get effective performance mode (resolves AUTO to actual mode)
+ * Get effective graphics detail level (resolves AUTO to actual detail level)
  */
-export function getEffectivePerformanceMode(): PerformanceMode {
-    if (currentPerformanceMode === PerformanceMode.AUTO) {
+export function getEffectiveGraphicsDetailLevel(): GraphicsDetailLevel {
+    if (currentPerformanceMode === "auto") {
         return autoModeEffectiveMode;
     }
     return currentPerformanceMode;
@@ -81,7 +108,7 @@ export function detectPrivateBrowsing(): {
             window.localStorage.setItem("ipad_private_test", "test");
             window.localStorage.removeItem("ipad_private_test");
             console.log("iPad Safari NOT in private mode");
-        } catch (e) {
+        } catch {
             console.log("iPad Safari private mode detected");
             result.isPrivate = true;
             result.isIpadSafariPrivate = true;
@@ -95,7 +122,7 @@ export function detectPrivateBrowsing(): {
             localStorage.setItem("ios_private_test", "test");
             localStorage.removeItem("ios_private_test");
             console.log("iOS NOT in private mode");
-        } catch (e) {
+        } catch {
             console.log("iOS private mode detected");
             result.isPrivate = true;
             result.isIOSPrivate = true;
@@ -107,7 +134,7 @@ export function detectPrivateBrowsing(): {
     try {
         localStorage.setItem("private_test", "private_test");
         localStorage.removeItem("private_test");
-    } catch (e) {
+    } catch {
         console.log("Private browsing detected via localStorage exception");
         result.isPrivate = true;
         return result;
@@ -142,7 +169,7 @@ export function detectPrivateBrowsing(): {
                 );
                 result.isPrivate = true;
             }
-        } catch (e) {
+        } catch {
             // Already handled by general localStorage test
         }
     }
@@ -159,9 +186,9 @@ export function detectPrivateBrowsing(): {
                     );
                     if (
                         performanceTier === "high" &&
-                        autoModeEffectiveMode === PerformanceMode.HIGH
+                        autoModeEffectiveMode === GraphicsDetailLevel.HIGH
                     ) {
-                        autoModeEffectiveMode = PerformanceMode.MEDIUM;
+                        autoModeEffectiveMode = GraphicsDetailLevel.MEDIUM;
                         updateToggleButtonText();
                     }
                 }
@@ -255,11 +282,11 @@ export function detectLowPerformanceMode(): boolean {
 
     if (isOlderDesktop) {
         console.log("Older desktop detected - using MEDIUM performance mode");
-        if (currentPerformanceMode === PerformanceMode.AUTO) {
-            autoModeEffectiveMode = PerformanceMode.MEDIUM;
+        if (currentPerformanceMode === "auto") {
+            autoModeEffectiveMode = GraphicsDetailLevel.MEDIUM;
             updateToggleButtonText();
         } else {
-            setPerformanceMode(PerformanceMode.MEDIUM);
+            setPerformanceMode(GraphicsDetailLevel.MEDIUM);
         }
         return false;
     }
@@ -274,7 +301,7 @@ export function shouldRender(timestamp: number): boolean {
     // Only skip frames during actual racing, not menu screens
     if (
         !isInRaceMode ||
-        getEffectivePerformanceMode() !== PerformanceMode.LOW
+        getEffectiveGraphicsDetailLevel() !== GraphicsDetailLevel.LOW
     ) {
         return true;
     }
@@ -297,7 +324,7 @@ function updateToggleButtonText(): void {
         let displayMode;
 
         // When in AUTO mode, show the effective mode in parentheses with single letter
-        if (currentPerformanceMode === PerformanceMode.AUTO) {
+        if (currentPerformanceMode === "auto") {
             const shortEffectiveMode = getShortModeName(autoModeEffectiveMode);
             displayMode = `auto (${shortEffectiveMode})`;
         } else {
@@ -314,15 +341,15 @@ function updateToggleButtonText(): void {
 }
 
 /**
- * Get short mode abbreviation for modes
+ * Get short mode abbreviation for graphics detail level.
  */
-function getShortModeName(mode: PerformanceMode): string {
+function getShortModeName(mode: GraphicsDetailLevel): string {
     switch (mode) {
-        case PerformanceMode.HIGH:
+        case GraphicsDetailLevel.HIGH:
             return "H";
-        case PerformanceMode.MEDIUM:
+        case GraphicsDetailLevel.MEDIUM:
             return "M";
-        case PerformanceMode.LOW:
+        case GraphicsDetailLevel.LOW:
             return "L";
         default:
             return mode;
@@ -361,18 +388,18 @@ export function setPerformanceToggleButton(button: HTMLButtonElement): void {
  */
 export function autoConfigurePerformance(): void {
     // Keep currentPerformanceMode as AUTO
-    currentPerformanceMode = PerformanceMode.AUTO;
+    currentPerformanceMode = "auto";
 
     // Use performance tier to determine effective mode
     switch (performanceTier) {
         case "high":
-            autoModeEffectiveMode = PerformanceMode.HIGH;
+            autoModeEffectiveMode = GraphicsDetailLevel.HIGH;
             break;
         case "medium":
-            autoModeEffectiveMode = PerformanceMode.MEDIUM;
+            autoModeEffectiveMode = GraphicsDetailLevel.MEDIUM;
             break;
         case "low":
-            autoModeEffectiveMode = PerformanceMode.LOW;
+            autoModeEffectiveMode = GraphicsDetailLevel.LOW;
             break;
     }
 
@@ -506,10 +533,7 @@ function performInitialBenchmark(): void {
  */
 export function checkPerformanceOnRaceStart(): void {
     // Only check once per race, or if not in AUTO mode
-    if (
-        hasCheckedRacePerformance ||
-        currentPerformanceMode !== PerformanceMode.AUTO
-    ) {
+    if (hasCheckedRacePerformance || currentPerformanceMode !== "auto") {
         return;
     }
 
@@ -588,7 +612,7 @@ function performHighTierCheck(): void {
                     console.log(
                         `SEVERE performance issues detected (${verySlowFrameCount}/${MAX_FRAMES} very slow frames)`,
                     );
-                    autoModeEffectiveMode = PerformanceMode.LOW;
+                    autoModeEffectiveMode = GraphicsDetailLevel.LOW;
                     updateToggleButtonText();
                 }
                 // If 25% of frames have moderate lag, go to MEDIUM
@@ -596,7 +620,7 @@ function performHighTierCheck(): void {
                     console.log(
                         `Moderate performance issues detected (${slowFrameCount}/${MAX_FRAMES} slow frames)`,
                     );
-                    autoModeEffectiveMode = PerformanceMode.MEDIUM;
+                    autoModeEffectiveMode = GraphicsDetailLevel.MEDIUM;
                     updateToggleButtonText();
 
                     // Run a follow-up check after 2 seconds to see if we need to go to LOW
@@ -643,7 +667,7 @@ function performHighTierCheck(): void {
                         console.log(
                             `Continued performance issues in MEDIUM mode (${additionalSlowFrameCount}/${ADDITIONAL_MAX_FRAMES} slow frames)`,
                         );
-                        autoModeEffectiveMode = PerformanceMode.LOW;
+                        autoModeEffectiveMode = GraphicsDetailLevel.LOW;
                         updateToggleButtonText();
                     }
                     return;
@@ -681,7 +705,7 @@ function performMediumTierCheck(): void {
 
         if (frameTime > significantIssueThreshold) {
             console.log("Significant performance issues on medium-tier device");
-            autoModeEffectiveMode = PerformanceMode.LOW;
+            autoModeEffectiveMode = GraphicsDetailLevel.LOW;
             updateToggleButtonText();
         } else {
             console.log("Medium-tier device performance is acceptable");
@@ -697,7 +721,7 @@ function performLowTierCheck(): void {
     console.log("Running performance check for LOW tier device...");
 
     // Low-tier devices start with LOW mode by default
-    autoModeEffectiveMode = PerformanceMode.LOW;
+    autoModeEffectiveMode = GraphicsDetailLevel.LOW;
     updateToggleButtonText();
 
     // No additional checks needed - we assume LOW is appropriate
@@ -708,11 +732,11 @@ function performLowTierCheck(): void {
  * Toggle between performance modes
  */
 export function togglePerformanceMode(): void {
-    const modes = [
-        PerformanceMode.AUTO, // Add AUTO to the cycle
-        PerformanceMode.HIGH,
-        PerformanceMode.MEDIUM,
-        PerformanceMode.LOW,
+    const modes: PerformanceMode[] = [
+        "auto", // Add AUTO to the cycle
+        GraphicsDetailLevel.HIGH,
+        GraphicsDetailLevel.MEDIUM,
+        GraphicsDetailLevel.LOW,
     ];
     const currentIndex = modes.indexOf(currentPerformanceMode);
     const nextIndex = (currentIndex + 1) % modes.length;
@@ -721,7 +745,7 @@ export function togglePerformanceMode(): void {
     currentPerformanceMode = modes[nextIndex];
 
     // Reset auto mode decision when switching back to AUTO
-    if (currentPerformanceMode === PerformanceMode.AUTO) {
+    if (currentPerformanceMode === "auto") {
         // Re-check performance if in race mode
         if (isInRaceMode) {
             hasCheckedRacePerformance = false;

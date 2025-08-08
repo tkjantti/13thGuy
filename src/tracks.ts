@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { random } from "./random";
+import { random } from "./core/math/random";
 import { TT } from "./TrackElement";
 
 const simpleTrack1: readonly TT[] = [

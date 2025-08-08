@@ -24,7 +24,7 @@
 
 import { GameObject } from "./GameObject";
 import { cx } from "./graphics";
-import { Vector, ZERO_VECTOR } from "./Vector";
+import { Vector, ZERO_VECTOR } from "./core/math/Vector";
 
 export class Obstacle implements GameObject {
     static WIDTH = 10;

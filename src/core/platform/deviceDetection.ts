@@ -22,25 +22,23 @@
  * SOFTWARE.
  */
 
-import { Block } from "./TrackElement";
-import { Vector } from "./core/math/Vector";
+// Browser/device detection
+export const isIPad =
+    /iPad/.test(navigator.userAgent) ||
+    (navigator.userAgent.includes("Mac") && "ontouchend" in document);
 
-/*
- * Interface for navigating in a grid-like level.
- */
-export interface Map {
-    /*
-     * Returns block at the given grid position.
-     */
-    getBlock(row: number, col: number): Block;
+export const isSafari =
+    /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
 
-    /*
-     * Returns block that contains the given position.
-     */
-    getBlockAt(position: Vector): Block;
+export const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(
+    navigator.userAgent,
+);
 
-    /*
-     * Dynamically checks if the grid position can be walked on.
-     */
-    isFree(row: number, col: number): boolean;
-}
+export const isIOS =
+    // Traditional iOS detection
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    // Modern iPad detection (iPadOS 13+ reports as Mac)
+    (navigator.userAgent.includes("Mac") && navigator.maxTouchPoints > 1);
+
+export const isAndroid = /Android/.test(navigator.userAgent);
+export const isDesktop = !isMobileDevice && !isIPad;

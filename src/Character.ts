@@ -23,20 +23,20 @@
  */
 
 import { Ai } from "./Ai";
-import { Dimensions } from "./Area";
+import { Dimensions } from "./core/math/Area";
 import {
     CharacterAnimation,
     CharacterFacingDirection,
     renderCharacter,
 } from "./CharacterAnimation";
 import { getControls } from "./controls";
-import { easeInQuad } from "./easings";
+import { easeInQuad } from "./core/math/easings";
 import { GameObject } from "./GameObject";
 import { cx } from "./graphics";
-import { random } from "./random";
+import { random } from "./core/math/random";
 import { mirrorHorizontally } from "./rendering";
 import { Track } from "./Track";
-import { isZero, Vector, ZERO_VECTOR } from "./Vector";
+import { isZero, Vector, ZERO_VECTOR } from "./core/math/Vector";
 
 export const FALL_TIME: number = 500;
 export const DROP_TIME: number = 1000;

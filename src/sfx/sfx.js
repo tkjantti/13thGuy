@@ -35,9 +35,9 @@ import {
     goSfx,
 } from "./sfxData.js";
 
-import { isIPad, isDesktop, isIOS } from "../deviceDetection.ts";
+import { isIPad, isDesktop, isIOS } from "../core/platform/deviceDetection";
 
-import { zzfx, zzfxX } from "./sfxPlayer.js"
+import { zzfx, zzfxX } from "./sfxPlayer.js";
 import CPlayer from "./musicplayer.js";
 
 export const SFX_START = "start";
