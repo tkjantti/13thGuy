@@ -1,4 +1,4 @@
-# 13th Guy
+# 13th Guy by FROST𖤓SUN
 
 Solo play platform battle royale game (similar to Fall Guys without multiplayer), where you race against computer
 opponents.
