@@ -83,7 +83,7 @@ import {
     FULLSCREEN_BUTTON_ID,
 } from "./buttons";
 
-const versionText = "Director's cut (" + (VERSION ? VERSION : "DEV") + ")";
+const versionText = VERSION ? VERSION : "DEV";
 
 const TIME_STEP = 1000 / 60;
 const MAX_FRAME = TIME_STEP * 5;
@@ -567,10 +567,34 @@ const draw = (t: number, dt: number): void => {
 };
 
 const Logo = () => {
-    renderText(versionText, TextSize.Tiny, "Impact", 0.5, 2.3, false);
+    renderText(
+        "FROST𖤓SUN",
+        TextSize.Small,
+        "Impact",
+        1,
+        4,
+        false,
+        0,
+        "FROST𖤓SUN",
+        ["#ACD5F3", "orange"],
+    );
 
-    renderText("Don't be the", TextSize.Small, "Impact", 1, -1.8, true, -0.9);
+    renderText("presents", TextSize.Tiny, "Impact", 0.5, 5.25, false);
+
+    renderText("Don't be the", TextSize.Small, "Impact", 1, -1.8, true, -0.7);
     renderText("❌ 13TH GUY", TextSize.Xl, "Impact", 1, 1.8);
+
+    renderText(
+        "Director's cut",
+        TextSize.Small,
+        "Impact",
+        0.5,
+        3.8,
+        true,
+        -0.1,
+    );
+
+    renderText(versionText, TextSize.Tiny, "Impact", 0.5, 34, false);
 };
 
 const drawStartScreen = (t: number, wait: boolean, z: number): void => {

@@ -44,26 +44,42 @@ export const renderText = (
     textSize: TextSize,
     fontName: string,
     alpha = 1,
-    yAdjust = 0, // Y position in relative "rem" units
+    yAdjust = 0, // Relative "rem" units
     centerY = true,
     xAdjust = 0,
-    referenceText?: string, // Text size is taken from this text
+    referenceText?: string, // Optional reference text for sizing
+    color: string | [string, string] = "white", // One color or a pair for gradient
 ) => {
     cx.save();
+
     const fontSize = scaleFontSize(textSize);
     const remUnitSize = scaleFontSize(TextSize.Tiny);
-    cx.globalAlpha = alpha > 0 ? alpha : 0;
-    cx.fillStyle = "white";
-    cx.font = fontSize + "px " + fontName;
-    const textWidth = cx.measureText(referenceText ?? text).width;
-    const yAdjustAbsolute = yAdjust * remUnitSize;
+    cx.globalAlpha = Math.max(alpha, 0);
+    cx.font = `${fontSize}px ${fontName}`;
+
+    const actualText = referenceText ?? text;
+    const metrics = cx.measureText(actualText);
+    const ascent = metrics.actualBoundingBoxAscent ?? fontSize * 0.8;
+    const descent = metrics.actualBoundingBoxDescent ?? fontSize * 0.2;
+
+    const textWidth = metrics.width;
     const xAdjustAbsolute = xAdjust * remUnitSize;
+    const yAdjustAbsolute = yAdjust * remUnitSize;
+    const x = (canvas.width - textWidth) / 2 + xAdjustAbsolute;
+    const y = (centerY ? canvas.height / 2 : 0) + yAdjustAbsolute;
 
-    cx.fillText(
-        text,
-        (canvas.width - textWidth) / 2 + xAdjustAbsolute,
-        (centerY ? canvas.height / 2 : 0) + yAdjustAbsolute,
-    );
+    if (Array.isArray(color) && color.length === 2) {
+        const top = y - ascent;
+        const bottom = y + descent;
+        const gradient = cx.createLinearGradient(0, top, 0, bottom);
+        gradient.addColorStop(0.2, color[0]);
+        gradient.addColorStop(1, color[1]);
+        cx.fillStyle = gradient;
+    } else {
+        cx.fillStyle = color;
+    }
 
+    cx.textBaseline = "alphabetic";
+    cx.fillText(text, x, y);
     cx.restore();
 };
