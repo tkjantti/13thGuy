@@ -42,7 +42,7 @@ import { Level, State } from "./Level";
 import { getFirstTrack, getSecondTrack, getThirdTrack } from "./tracks";
 
 import {
-    initialize,
+    initializeAudio,
     playTune,
     stopTune,
     SFX_START,
@@ -52,7 +52,7 @@ import {
     SFX_RESTART,
     SFX_COUNT,
     SFX_GO,
-} from "./sfx/sfx";
+} from "./audio";
 import {
     CharacterAnimation,
     CharacterFacingDirection,
@@ -69,7 +69,7 @@ import {
     waitForProgressInput,
 } from "./controls";
 import { hasTouchScreen } from "./touchscreen";
-import { toggleFullScreen } from "./core/graphics/fullscreen.js";
+import { toggleFullScreen } from "./core/graphics/fullscreen";
 import {
     createFullscreenButton,
     createRestartButton,
@@ -730,7 +730,7 @@ export const init = async (): Promise<void> => {
     });
 
     // --- Final Initial Load Steps ---
-    await initialize();
+    await initializeAudio();
     setState(GameState.Init);
 
     // --- Conditional Logic for First Interaction ---

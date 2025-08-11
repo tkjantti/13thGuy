@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { playTune, SFX_KB } from "./sfx/sfx";
+import { playTune, SFX_KB } from "./audio";
 
 // These must match the definitions in KeyboardEvent.code
 export type Key =

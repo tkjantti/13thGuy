@@ -171,7 +171,7 @@ export const setupAudioUnlock = (): void => {
     });
 };
 
-export const initialize = () => {
+export const initializeAudio = () => {
     // Set up audio unlock automatically
     setupAudioUnlock();
 

@@ -22,11 +22,11 @@
  * SOFTWARE.
  */
 
-import { Area, includesPoint } from "./core/math/Area.js";
+import { Area, includesPoint } from "./core/math/Area";
 import { canvas } from "./graphics";
-import { VectorMutable } from "./core/math/Vector.js";
+import { VectorMutable } from "./core/math/Vector";
 import { setCanvasPositionFromScreenPosition } from "./window";
-import { SFX_KB, playTune } from "./sfx/sfx";
+import { SFX_KB, playTune } from "./audio";
 
 export const hasTouchScreen = "ontouchstart" in window;
 

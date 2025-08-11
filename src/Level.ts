@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-import { Area, overlap } from "./core/math/Area.js";
-import { Camera } from "./core/gameplay/Camera.js";
+import { Area, overlap } from "./core/math/Area";
+import { Camera } from "./core/gameplay/Camera";
 import { Character, CHARACTER_DIMENSIONS, FALL_TIME } from "./Character";
 import { GameObject } from "./GameObject";
 import { canvas, cx } from "./graphics";
@@ -40,9 +40,9 @@ import {
     TrackElementType,
     TT,
 } from "./TrackElement";
-import { length, Vector, ZERO_VECTOR } from "./core/math/Vector.js";
-import { playTune, SFX_BOUNCE, SFX_HIT, SFX_TELEPORT } from "./sfx/sfx";
-import { randomMinMax } from "./core/math/random.js";
+import { length, Vector, ZERO_VECTOR } from "./core/math/Vector";
+import { playTune, SFX_BOUNCE, SFX_HIT, SFX_TELEPORT } from "./audio";
+import { randomMinMax } from "./core/math/random";
 import { BLOCK_HEIGHT } from "./TrackElement";
 
 const TRACK_VISIBLE_HEIGHT = 70;
