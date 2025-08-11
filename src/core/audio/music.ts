@@ -24,7 +24,7 @@
 
 // @ts-expect-error Library module
 import CPlayer from "./musicplayer.js";
-import { isIOS } from "../core/platform/deviceDetection";
+import { isIOS } from "../platform/deviceDetection";
 
 export interface Tune extends HTMLAudioElement {
     _fadeInterval?: number;

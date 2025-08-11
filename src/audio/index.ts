@@ -36,10 +36,9 @@ import {
     // @ts-expect-error JS code exported by a tool
 } from "./sfxData.js";
 
-import { isIPad, isDesktop } from "../core/platform/deviceDetection";
-
 // @ts-expect-error Library module
-import { zzfx, zzfxX } from "./sfxPlayer.js";
+import { zzfx } from "../core/audio/sfxPlayer.js";
+import { setupAudioUnlock } from "../core/audio/unlock";
 import {
     createTune,
     FadeIn,
@@ -47,7 +46,7 @@ import {
     FadeOutIn,
     initTune,
     stopTune,
-} from "./music";
+} from "../core/audio/music";
 
 export enum Sound {
     Start = "start",
@@ -67,115 +66,8 @@ const startTune = createTune();
 const raceTune = createTune();
 const gameoverFx = createTune();
 
-export let audioUnlocked = false;
-
-// Update the unlockAudio function
-export const unlockAudio = async (): Promise<void> => {
-    console.log("Attempting to unlock audio systems...");
-
-    if (audioUnlocked) return;
-
-    // IMPORTANT: Skip unlock only on true desktop browsers, never on iPad
-    if (isDesktop && !isIPad) {
-        console.log("Skipping audio unlock on desktop browser");
-        audioUnlocked = true;
-        return;
-    }
-
-    console.log("Running audio unlock for mobile/iPad device");
-
-    // Original mobile unlock code continues below
-    // 1. Try to unlock HTML Audio elements
-    try {
-        // Quick play attempt on the startTune element
-        startTune.volume = 0.1;
-        await startTune
-            .play()
-            .catch((e) => console.log("First unlock attempt:", e));
-        startTune.pause();
-        startTune.currentTime = 0;
-        console.log("HTML Audio unlocked successfully");
-    } catch (e) {
-        console.warn("HTML Audio unlock attempt failed:", e);
-    }
-
-    // 2. Make sure zzfx audio context is created and resumed
-    try {
-        if (zzfxX && zzfxX.state !== "running") {
-            await zzfxX.resume();
-        }
-        console.log("Web Audio API context state for zzfxX:", zzfxX?.state);
-    } catch (e) {
-        console.warn("Web Audio API context resume failed for zzfxX:", e);
-    }
-
-    audioUnlocked = true;
-};
-
-// Update the setupAudioUnlock function
-export const setupAudioUnlock = (): void => {
-    // Skip ONLY on true desktop browsers, never on iPad
-    if (isDesktop && !isIPad) {
-        console.log("Skipping audio unlock setup on desktop browser");
-        audioUnlocked = true;
-        return;
-    }
-
-    console.log("Setting up audio unlock for mobile/iPad device");
-
-    // Create a silent audio element as backup method
-    const silentAudio = document.createElement("audio");
-    silentAudio.setAttribute(
-        "src",
-        "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjIwLjEwMAAAAAAAAAAAAAAA//tUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABGwD///////////////////////////////////////////8AAAA8TEFNRTMuMTAwA8MAAAAAAAAAABQgJAUHQQAB9AAAARvMPHBz//////////////////////////////////////////////////////////////////8AAAA",
-    );
-    silentAudio.setAttribute("playsinline", "playsinline");
-    silentAudio.volume = 0.1; // Higher volume to ensure it registers
-
-    // Function to attempt unlocking audio
-    const attemptUnlock = async () => {
-        console.log("Attempting to unlock audio systems from event handler");
-
-        // 1. Try to play the silent sound
-        try {
-            silentAudio
-                .play()
-                .catch((e) => console.log("Silent audio error:", e));
-        } catch (e) {
-            console.log("Silent audio exception:", e);
-        }
-
-        // 2. Call our comprehensive unlockAudio function
-        try {
-            await unlockAudio();
-        } catch (e) {
-            console.log("sfx unlockAudio error:", e);
-        }
-
-        // Remove event listeners after attempting unlock
-        document.removeEventListener("touchstart", attemptUnlock, true);
-        document.removeEventListener("touchend", attemptUnlock, true);
-        document.removeEventListener("click", attemptUnlock, true);
-    };
-
-    // Add listeners in capture phase to handle them first
-    document.addEventListener("touchstart", attemptUnlock, {
-        once: true,
-        capture: true,
-    });
-    document.addEventListener("touchend", attemptUnlock, {
-        once: true,
-        capture: true,
-    });
-    document.addEventListener("click", attemptUnlock, {
-        once: true,
-        capture: true,
-    });
-};
-
 export const initializeAudio = () => {
-    // Set up audio unlock automatically
-    setupAudioUnlock();
+    setupAudioUnlock(startTune);
 
     return Promise.all([
         initTune(startTune, song1, true),

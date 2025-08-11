@@ -3,5 +3,5 @@ coverage
 package.json
 package-lock.json
 src/audio/sfxData.js
-src/audio/musicplayer.js
-src/audio/sfxPlayer.js
+src/core/audio/musicplayer.js
+src/core/audio/sfxPlayer.js
