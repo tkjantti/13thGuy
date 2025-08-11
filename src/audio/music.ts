@@ -33,7 +33,7 @@ export interface Tune extends HTMLAudioElement {
 
 export const createTune = (): Tune => document.createElement("audio") as Tune;
 
-export const initMusicPlayer = (
+export const initTune = (
     audioTrack: Tune,
     tune: unknown,
     isLooped: boolean,
@@ -60,6 +60,20 @@ export const initMusicPlayer = (
             }
         }, 0);
     });
+};
+
+export const stopTune = (tune: Tune): void => {
+    if (tune._fadeInterval) {
+        clearInterval(tune._fadeInterval);
+        tune._fadeInterval = undefined;
+    }
+    if (tune._fadeOutInTimeout) {
+        clearTimeout(tune._fadeOutInTimeout);
+        tune._fadeOutInTimeout = undefined;
+    }
+
+    tune.pause();
+    tune.currentTime = 0;
 };
 
 const roundToFractionDigits = (x: number, fractionDigits: number): number =>

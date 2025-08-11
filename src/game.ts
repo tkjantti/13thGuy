@@ -41,7 +41,7 @@ import { sleep } from "./keyboard";
 import { Level, State } from "./Level";
 import { getFirstTrack, getSecondTrack, getThirdTrack } from "./tracks";
 
-import { initializeAudio, playSound, stopTune, Sound } from "./audio";
+import { initializeAudio, playSound, stopAllTunes, Sound } from "./audio";
 import {
     CharacterAnimation,
     CharacterFacingDirection,
@@ -218,7 +218,7 @@ const setState = async (state: GameState) => {
         case GameState.Running:
             break;
         case GameState.Init:
-            stopTune();
+            stopAllTunes();
             break;
         default:
             break;

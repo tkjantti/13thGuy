@@ -45,8 +45,8 @@ import {
     FadeIn,
     FadeOut,
     FadeOutIn,
-    initMusicPlayer,
-    Tune,
+    initTune,
+    stopTune,
 } from "./music";
 
 export enum Sound {
@@ -178,9 +178,9 @@ export const initializeAudio = () => {
     setupAudioUnlock();
 
     return Promise.all([
-        initMusicPlayer(startTune, song1, true),
-        initMusicPlayer(raceTune, song2, true),
-        initMusicPlayer(gameoverFx, gameoverSfx, false),
+        initTune(startTune, song1, true),
+        initTune(raceTune, song2, true),
+        initTune(gameoverFx, gameoverSfx, false),
     ]);
 };
 
@@ -249,28 +249,8 @@ export const playSound = async (
     }
 };
 
-export const stopTune = (tune?: string): void => {
-    const tunesToStop: Tune[] = [];
-
-    if (tune === Sound.Race) {
-        tunesToStop.push(raceTune);
-    } else if (tune === Sound.Start) {
-        tunesToStop.push(startTune);
-    } else {
-        tunesToStop.push(startTune, raceTune, gameoverFx);
-    }
-
-    tunesToStop.forEach((audioEl) => {
-        if (audioEl._fadeInterval) {
-            clearInterval(audioEl._fadeInterval);
-            audioEl._fadeInterval = undefined;
-        }
-        if (audioEl._fadeOutInTimeout) {
-            clearTimeout(audioEl._fadeOutInTimeout);
-            audioEl._fadeOutInTimeout = undefined;
-        }
-
-        audioEl.pause();
-        audioEl.currentTime = 0;
-    });
+export const stopAllTunes = (): void => {
+    stopTune(startTune);
+    stopTune(raceTune);
+    stopTune(gameoverFx);
 };
