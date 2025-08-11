@@ -41,7 +41,7 @@ import {
     TT,
 } from "./TrackElement";
 import { length, Vector, ZERO_VECTOR } from "./core/math/Vector";
-import { playTune, SFX_BOUNCE, SFX_HIT, SFX_TELEPORT } from "./audio";
+import { playSound, Sound } from "./audio";
 import { randomMinMax } from "./core/math/random";
 import { BLOCK_HEIGHT } from "./TrackElement";
 
@@ -181,9 +181,9 @@ export class Level implements Area {
         this.checkGameState();
     }
 
-    private playWithVolumeByDistance(sound: string, y: number): void {
+    private playWithVolumeByDistance(sound: Sound, y: number): void {
         const yDistance = Math.abs(y - this.player.y);
-        playTune(
+        playSound(
             sound,
             Math.max(0, Math.min(1, 1 - yDistance / maxSfxDistance)),
         );
@@ -247,7 +247,7 @@ export class Level implements Area {
                 if (calculateCollisionBetweenCharacters(c, other)) {
                     // Check if character is the player or the velocity is bit larger in any direction to prevent too much sfx plays
                     if (!c.ai || length(c.velocity) > 0.3)
-                        this.playWithVolumeByDistance(SFX_HIT, c.y);
+                        this.playWithVolumeByDistance(Sound.Hit, c.y);
                 }
             }
         }
@@ -266,7 +266,7 @@ export class Level implements Area {
 
                     // Basic distance check if sound should be played
                     if (calculateCollisionToObstacle(c, o)) {
-                        this.playWithVolumeByDistance(SFX_BOUNCE, o.y);
+                        this.playWithVolumeByDistance(Sound.Bounce, o.y);
                     }
                 }
             }
@@ -403,7 +403,7 @@ export class Level implements Area {
 
         c.drop(t, dropPosition);
 
-        this.playWithVolumeByDistance(SFX_TELEPORT, c.y);
+        this.playWithVolumeByDistance(Sound.Teleport, c.y);
 
         if (c === this.player) {
             this.camera.follow(c);

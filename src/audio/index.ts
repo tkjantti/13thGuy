@@ -49,17 +49,19 @@ import {
     Tune,
 } from "./music";
 
-export const SFX_START = "start";
-export const SFX_RACE = "race";
-export const SFX_BOUNCE = "bounce";
-export const SFX_HIT = "hit";
-export const SFX_TELEPORT = "teleport";
-export const SFX_KB = "keyboard";
-export const SFX_FINISHED = "finished";
-export const SFX_GAMEOVER = "gameover";
-export const SFX_RESTART = "restart";
-export const SFX_COUNT = "count";
-export const SFX_GO = "go";
+export enum Sound {
+    Start = "start",
+    Race = "race",
+    Bounce = "bounce",
+    Hit = "hit",
+    Teleport = "teleport",
+    Keyboard = "keyboard",
+    Finished = "finished",
+    GameOver = "gameover",
+    Restart = "restart",
+    Count = "count",
+    Go = "go",
+}
 
 const startTune = createTune();
 const raceTune = createTune();
@@ -182,25 +184,25 @@ export const initializeAudio = () => {
     ]);
 };
 
-export const playTune = async (
-    tune: string,
+export const playSound = async (
+    tune: Sound,
     vol: number = 1,
 ): Promise<void> => {
     if (vol === 0) return;
 
     switch (tune) {
-        case SFX_RACE: {
+        case Sound.Race: {
             raceTune.currentTime = 0;
             FadeOutIn(startTune, raceTune);
             break;
         }
-        case SFX_FINISHED: {
+        case Sound.Finished: {
             zzfx(0.04, ...finishSfx);
             startTune.currentTime = 0;
             FadeOutIn(raceTune, startTune);
             break;
         }
-        case SFX_GAMEOVER: {
+        case Sound.GameOver: {
             gameoverFx.volume = 1;
             gameoverFx.play().catch((e) => {
                 console.warn("Failed to play gameoverFx:", e);
@@ -208,39 +210,39 @@ export const playTune = async (
             FadeOut(raceTune);
             break;
         }
-        case SFX_RESTART: {
+        case Sound.Restart: {
             startTune.currentTime = 0;
             FadeIn(startTune);
             break;
         }
-        case SFX_START: {
+        case Sound.Start: {
             if (startTune.paused || startTune.volume < 1) {
                 startTune.currentTime = 0;
                 FadeIn(startTune);
             }
             break;
         }
-        case SFX_BOUNCE: {
+        case Sound.Bounce: {
             zzfx(vol, ...bounceSfx);
             break;
         }
-        case SFX_HIT: {
+        case Sound.Hit: {
             zzfx(vol, ...hitSfx);
             break;
         }
-        case SFX_KB: {
+        case Sound.Keyboard: {
             zzfx(0.5, ...kbSfx);
             break;
         }
-        case SFX_TELEPORT: {
+        case Sound.Teleport: {
             zzfx(vol, ...teleportSfx);
             break;
         }
-        case SFX_COUNT: {
+        case Sound.Count: {
             zzfx(0.5, ...countSfx);
             break;
         }
-        case SFX_GO: {
+        case Sound.Go: {
             zzfx(0.5, ...goSfx);
             break;
         }
@@ -250,9 +252,9 @@ export const playTune = async (
 export const stopTune = (tune?: string): void => {
     const tunesToStop: Tune[] = [];
 
-    if (tune === SFX_RACE) {
+    if (tune === Sound.Race) {
         tunesToStop.push(raceTune);
-    } else if (tune === SFX_START) {
+    } else if (tune === Sound.Start) {
         tunesToStop.push(startTune);
     } else {
         tunesToStop.push(startTune, raceTune, gameoverFx);

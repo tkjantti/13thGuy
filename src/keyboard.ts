@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { playTune, SFX_KB } from "./audio";
+import { playSound, Sound } from "./audio";
 
 // These must match the definitions in KeyboardEvent.code
 export type Key =
@@ -76,13 +76,13 @@ export const sleep = (ms: number) => {
     return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
-export const waitForEnter = (soundToPlay?: string): Promise<void> => {
+export const waitForEnter = (soundToPlay?: Sound): Promise<void> => {
     return new Promise((resolve) => {
         const listener = (event: KeyboardEvent): void => {
             if (event.code === "Enter") {
-                playTune(SFX_KB);
+                playSound(Sound.Keyboard);
                 if (soundToPlay) {
-                    playTune(soundToPlay);
+                    playSound(soundToPlay);
                 }
                 window.removeEventListener("keydown", listener);
                 resolve();

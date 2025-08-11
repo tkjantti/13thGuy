@@ -41,18 +41,7 @@ import { sleep } from "./keyboard";
 import { Level, State } from "./Level";
 import { getFirstTrack, getSecondTrack, getThirdTrack } from "./tracks";
 
-import {
-    initializeAudio,
-    playTune,
-    stopTune,
-    SFX_START,
-    SFX_RACE,
-    SFX_FINISHED,
-    SFX_GAMEOVER,
-    SFX_RESTART,
-    SFX_COUNT,
-    SFX_GO,
-} from "./audio";
+import { initializeAudio, playSound, stopTune, Sound } from "./audio";
 import {
     CharacterAnimation,
     CharacterFacingDirection,
@@ -153,18 +142,18 @@ const setState = async (state: GameState) => {
 
     switch (state) {
         case GameState.Start:
-            // SFX_START or SFX_RESTART is playing
+            // Sound.Start or Sound.Restart is playing
             await sleep(0);
             await waitForProgressInput(); // Now wait for a genuinely new input
             setState(GameState.Wait);
             break;
         case GameState.Wait:
-            // SFX_START continues playing.
-            await waitForProgressInput(SFX_RACE);
+            // Sound.Start continues playing.
+            await waitForProgressInput(Sound.Race);
             setState(GameState.RaceStarting);
             break;
         case GameState.RaceStarting:
-            // SFX_START continues playing
+            // Sound.Start continues playing
             setState(GameState.Ready);
             break;
         case GameState.Ready:
@@ -198,11 +187,11 @@ const setState = async (state: GameState) => {
 
         case GameState.GameOver:
             radius = 1;
-            playTune(SFX_GAMEOVER); // Play game over tune
+            playSound(Sound.GameOver); // Play game over tune
             randomWidhOffset = 1 + Math.random() * 0.6;
             randomHeighOffset = 1 + Math.random() * 0.3;
 
-            await waitForProgressInput(SFX_RESTART);
+            await waitForProgressInput(Sound.Restart);
             raceNumber = 1;
             setState(GameState.Start);
             break;
@@ -212,15 +201,15 @@ const setState = async (state: GameState) => {
             resetRacePerformanceCheck();
 
             radius = 1;
-            playTune(SFX_FINISHED);
+            playSound(Sound.Finished);
             if (level && level.characters.length > 14) {
                 // Qualified
-                await waitForProgressInput(SFX_RACE);
+                await waitForProgressInput(Sound.Race);
                 raceNumber++; // Increment race number for the next round
                 setState(GameState.Ready);
             } else {
                 // Final Winner
-                await waitForProgressInput(SFX_START);
+                await waitForProgressInput(Sound.Start);
                 raceNumber = 1;
                 clearCharacterGradientCache();
                 setState(GameState.Start);
@@ -267,13 +256,13 @@ const update = (t: number, dt: number): void => {
         }
         case GameState.Ready: {
             if (counted === 2 && radius < maxRadius / 4) {
-                playTune(SFX_GO);
+                playSound(Sound.Go);
                 counted++;
             } else if (counted === 1 && radius < maxRadius / 2) {
-                playTune(SFX_COUNT);
+                playSound(Sound.Count);
                 counted++;
             } else if (counted === 0 && radius < maxRadius) {
-                playTune(SFX_COUNT);
+                playSound(Sound.Count);
                 counted++;
             }
             break;
@@ -744,7 +733,7 @@ export const init = async (): Promise<void> => {
                 startButton.style.display = "none";
 
                 // IMPORTANT: Play sound BEFORE attempting fullscreen
-                playTune(SFX_START);
+                playSound(Sound.Start);
 
                 // Wait a brief moment to let audio initialize
                 await new Promise((resolve) => setTimeout(resolve, 100));
@@ -758,7 +747,7 @@ export const init = async (): Promise<void> => {
         );
     } else {
         // Non-touch device
-        await waitForProgressInput(SFX_START);
+        await waitForProgressInput(Sound.Start);
         await postInitActions();
     }
 };
