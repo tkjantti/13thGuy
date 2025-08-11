@@ -198,7 +198,7 @@ const resizeTouchControls = (buttons: TouchButtons): void => {
 };
 
 export const waitForProgressInput = async (
-    soundToPlay?: number,
+    soundToPlay?: string,
 ): Promise<void> => {
     await (hasTouchScreen
         ? soundToPlay

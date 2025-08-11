@@ -41,15 +41,7 @@ import {
     TT,
 } from "./TrackElement";
 import { length, Vector, ZERO_VECTOR } from "./core/math/Vector.js";
-import {
-    playTune,
-    SFX_BOUNCE,
-    SFX_HIT,
-    SFX_TELEPORT,
-    // Ignore lint errors from JS import
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-} from "./sfx/sfx.js";
+import { playTune, SFX_BOUNCE, SFX_HIT, SFX_TELEPORT } from "./sfx/sfx";
 import { randomMinMax } from "./core/math/random.js";
 import { BLOCK_HEIGHT } from "./TrackElement";
 

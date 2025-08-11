@@ -22,13 +22,7 @@
  * SOFTWARE.
  */
 
-import {
-    playTune,
-    SFX_KB,
-    // Ignore lint errors from JS import
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-} from "./sfx/sfx.js";
+import { playTune, SFX_KB } from "./sfx/sfx";
 
 // These must match the definitions in KeyboardEvent.code
 export type Key =
@@ -82,7 +76,7 @@ export const sleep = (ms: number) => {
     return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
-export const waitForEnter = (soundToPlay?: number): Promise<void> => {
+export const waitForEnter = (soundToPlay?: string): Promise<void> => {
     return new Promise((resolve) => {
         const listener = (event: KeyboardEvent): void => {
             if (event.code === "Enter") {

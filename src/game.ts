@@ -52,10 +52,7 @@ import {
     SFX_RESTART,
     SFX_COUNT,
     SFX_GO,
-    // Ignore lint errors from JS import
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-} from "./sfx/sfx.js";
+} from "./sfx/sfx";
 import {
     CharacterAnimation,
     CharacterFacingDirection,

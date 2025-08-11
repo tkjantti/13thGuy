@@ -26,12 +26,7 @@ import { Area, includesPoint } from "./core/math/Area.js";
 import { canvas } from "./graphics";
 import { VectorMutable } from "./core/math/Vector.js";
 import { setCanvasPositionFromScreenPosition } from "./window";
-import {
-    SFX_KB,
-    playTune,
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-} from "./sfx/sfx.js";
+import { SFX_KB, playTune } from "./sfx/sfx";
 
 export const hasTouchScreen = "ontouchstart" in window;
 
@@ -76,7 +71,7 @@ export const listenTouch = (
 
 export const waitForTap = (
     area?: Area,
-    soundToPlay?: number,
+    soundToPlay?: string,
 ): Promise<void> => {
     return new Promise((resolve) => {
         const listener = (e: TouchEvent): void => {
@@ -117,7 +112,7 @@ export const waitForTap = (
 
 // Also add a utility function to wait for tap and play sound in one call
 export const waitForTapAndPlaySound = (
-    soundToPlay: number,
+    soundToPlay: string,
     area?: Area,
 ): Promise<void> => {
     return waitForTap(area, soundToPlay);

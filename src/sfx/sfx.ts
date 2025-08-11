@@ -33,11 +33,14 @@ import {
     teleportSfx,
     countSfx,
     goSfx,
+    // @ts-expect-error JS code exported by a tool
 } from "./sfxData.js";
 
 import { isIPad, isDesktop, isIOS } from "../core/platform/deviceDetection";
 
+// @ts-expect-error Library module
 import { zzfx, zzfxX } from "./sfxPlayer.js";
+// @ts-expect-error Library module
 import CPlayer from "./musicplayer.js";
 
 export const SFX_START = "start";
@@ -52,11 +55,15 @@ export const SFX_RESTART = "restart";
 export const SFX_COUNT = "count";
 export const SFX_GO = "go";
 
-const startTune = document.createElement("audio");
-const raceTune = document.createElement("audio");
-const gameoverFx = document.createElement("audio");
+interface Tune extends HTMLAudioElement {
+    _fadeInterval?: number;
+    _fadeOutInTimeout?: number;
+}
 
-export let audioContext;
+const startTune = document.createElement("audio") as Tune;
+const raceTune = document.createElement("audio") as Tune;
+const gameoverFx = document.createElement("audio") as Tune;
+
 export let audioUnlocked = false;
 
 // Update the unlockAudio function
@@ -164,13 +171,17 @@ export const setupAudioUnlock = () => {
     });
 };
 
-export const initMusicPlayer = (audioTrack, tune, isLooped) => {
+export const initMusicPlayer = (
+    audioTrack: Tune,
+    tune: unknown,
+    isLooped: boolean,
+): Promise<void> => {
     return new Promise((resolve) => {
-        var songplayer = new CPlayer();
+        const songplayer = new CPlayer();
         // Initialize music generation (player).
         songplayer.init(tune);
         // Generate music...
-        var done = false;
+        let done = false;
         setInterval(function () {
             if (done) {
                 return;
@@ -178,7 +189,7 @@ export const initMusicPlayer = (audioTrack, tune, isLooped) => {
             done = songplayer.generate() >= 1;
             if (done) {
                 // Put the generated song in an Audio element.
-                var wave = songplayer.createWave();
+                const wave = songplayer.createWave();
                 audioTrack.src = URL.createObjectURL(
                     new Blob([wave], { type: "audio/wav" }),
                 );
@@ -200,23 +211,26 @@ export const initialize = () => {
     ]);
 };
 
-const FadeOut = (tune, vol = 0) => {
+const roundToFractionDigits = (x: number, fractionDigits: number): number =>
+    parseFloat(x.toFixed(fractionDigits));
+
+const FadeOut = (tune: Tune, vol = 0): void => {
     if (tune._fadeInterval) {
         clearInterval(tune._fadeInterval);
-        tune._fadeInterval = null;
+        tune._fadeInterval = undefined;
     }
-    var currentVolume = tune.volume;
+    let currentVolume = tune.volume;
     if (currentVolume > vol) {
         tune._fadeInterval = setInterval(function () {
-            currentVolume = Math.max(
-                vol,
-                parseFloat(currentVolume) - 0.1,
-            ).toFixed(1);
+            currentVolume = roundToFractionDigits(
+                Math.max(vol, currentVolume - 0.1),
+                1,
+            );
             tune.volume = currentVolume;
             if (currentVolume <= vol) {
                 if (vol === 0) tune.pause();
                 clearInterval(tune._fadeInterval);
-                tune._fadeInterval = null;
+                tune._fadeInterval = undefined;
             }
         }, 100);
     } else if (vol === 0 && !tune.paused) {
@@ -225,10 +239,10 @@ const FadeOut = (tune, vol = 0) => {
     }
 };
 
-const FadeIn = (tune, vol = 1) => {
+const FadeIn = (tune: Tune, vol: number = 1) => {
     if (tune._fadeInterval) {
         clearInterval(tune._fadeInterval);
-        tune._fadeInterval = null;
+        tune._fadeInterval = undefined;
     }
 
     let playPromise = Promise.resolve();
@@ -244,22 +258,22 @@ const FadeIn = (tune, vol = 1) => {
     playPromise
         .then(() => {
             // Start from current volume
-            var currentVolume = parseFloat(tune.volume);
+            let currentVolume = tune.volume;
 
             if (currentVolume < vol) {
                 if (tune._fadeInterval) clearInterval(tune._fadeInterval);
 
                 tune._fadeInterval = setInterval(function () {
-                    currentVolume = Math.min(
-                        vol,
-                        parseFloat(currentVolume) + 0.1,
-                    ).toFixed(1);
+                    currentVolume = roundToFractionDigits(
+                        Math.min(vol, currentVolume + 0.1),
+                        1,
+                    );
                     tune.volume = currentVolume;
 
-                    if (parseFloat(currentVolume) >= vol) {
+                    if (currentVolume >= vol) {
                         tune.volume = vol;
                         clearInterval(tune._fadeInterval);
-                        tune._fadeInterval = null;
+                        tune._fadeInterval = undefined;
                     }
                 }, 100);
             } else {
@@ -278,38 +292,38 @@ const FadeIn = (tune, vol = 1) => {
 
             if (tune._fadeInterval) {
                 clearInterval(tune._fadeInterval);
-                tune._fadeInterval = null;
+                tune._fadeInterval = undefined;
             }
         });
 };
 
-const FadeOutIn = (tune1, tune2) => {
+const FadeOutIn = (tune1: Tune, tune2: Tune): void => {
     if (tune1._fadeInterval) clearInterval(tune1._fadeInterval);
     if (tune1._fadeOutInTimeout) clearTimeout(tune1._fadeOutInTimeout);
     if (tune2._fadeInterval) clearInterval(tune2._fadeInterval);
     if (tune2._fadeOutInTimeout) clearTimeout(tune2._fadeOutInTimeout);
-    tune1._fadeInterval = null;
-    tune1._fadeOutInTimeout = null;
-    tune2._fadeInterval = null;
-    tune2._fadeOutInTimeout = null;
+    tune1._fadeInterval = undefined;
+    tune1._fadeOutInTimeout = undefined;
+    tune2._fadeInterval = undefined;
+    tune2._fadeOutInTimeout = undefined;
 
-    var currentVolume = tune1.volume;
+    let currentVolume = tune1.volume;
     if (currentVolume > 0) {
         tune1._fadeInterval = setInterval(function () {
-            currentVolume = Math.max(
-                0,
-                parseFloat(currentVolume) - 0.1,
-            ).toFixed(1);
+            currentVolume = roundToFractionDigits(
+                Math.max(0, currentVolume - 0.1),
+                1,
+            );
             tune1.volume = currentVolume;
 
             if (currentVolume <= 0.1) {
                 tune1.pause();
                 clearInterval(tune1._fadeInterval);
-                tune1._fadeInterval = null;
+                tune1._fadeInterval = undefined;
 
                 tune1._fadeOutInTimeout = setTimeout(() => {
                     FadeIn(tune2, 1);
-                    tune1._fadeOutInTimeout = null;
+                    tune1._fadeOutInTimeout = undefined;
                 }, 500);
             }
         }, 100);
@@ -318,23 +332,16 @@ const FadeOutIn = (tune1, tune2) => {
         tune1.volume = 0;
         tune1._fadeOutInTimeout = setTimeout(() => {
             FadeIn(tune2, 1);
-            tune1._fadeOutInTimeout = null;
+            tune1._fadeOutInTimeout = undefined;
         }, 500);
     }
 };
 
-// Update the playTune function too
-export const playTune = async (tune, vol) => {
+export const playTune = async (
+    tune: string,
+    vol: number = 1,
+): Promise<void> => {
     if (vol === 0) return;
-
-    // Only try to unlock audio context on mobile devices
-    if (!isDesktop && audioContext && audioContext.state !== "running") {
-        try {
-            await audioContext.resume();
-        } catch (e) {
-            console.warn("AudioContext resume failed in playTune:", e);
-        }
-    }
 
     switch (tune) {
         case SFX_RACE: {
@@ -395,8 +402,8 @@ export const playTune = async (tune, vol) => {
     }
 };
 
-export const stopTune = (tune) => {
-    const tunesToStop = [];
+export const stopTune = (tune?: string) => {
+    const tunesToStop: Tune[] = [];
 
     if (tune === SFX_RACE) {
         tunesToStop.push(raceTune);
@@ -409,11 +416,11 @@ export const stopTune = (tune) => {
     tunesToStop.forEach((audioEl) => {
         if (audioEl._fadeInterval) {
             clearInterval(audioEl._fadeInterval);
-            audioEl._fadeInterval = null;
+            audioEl._fadeInterval = undefined;
         }
         if (audioEl._fadeOutInTimeout) {
             clearTimeout(audioEl._fadeOutInTimeout);
-            audioEl._fadeOutInTimeout = null;
+            audioEl._fadeOutInTimeout = undefined;
         }
 
         audioEl.pause();
