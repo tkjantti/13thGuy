@@ -22,9 +22,6 @@
  * SOFTWARE.
  */
 
-// @ts-expect-error Library module
-import { zzfxX } from "./sfxPlayer.js";
-
 import { isDesktop, isIPad } from "../platform/deviceDetection";
 import { Tune } from "./music";
 
@@ -57,16 +54,6 @@ const unlockAudio = async (tuneToTestWith: Tune): Promise<void> => {
         console.log("HTML Audio unlocked successfully");
     } catch (e) {
         console.warn("HTML Audio unlock attempt failed:", e);
-    }
-
-    // 2. Make sure zzfx audio context is created and resumed
-    try {
-        if (zzfxX && zzfxX.state !== "running") {
-            await zzfxX.resume();
-        }
-        console.log("Web Audio API context state for zzfxX:", zzfxX?.state);
-    } catch (e) {
-        console.warn("Web Audio API context resume failed for zzfxX:", e);
     }
 
     audioUnlocked = true;
