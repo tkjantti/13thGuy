@@ -34,6 +34,7 @@ import {
 } from "./touchscreen";
 import { normalize, VectorMutable, ZERO_VECTOR } from "./core/math/Vector";
 import { createButton } from "./core/UI/HtmlButton";
+import { Sound } from "./audio";
 
 export interface Controls {
     movement: VectorMutable;
@@ -198,7 +199,7 @@ const resizeTouchControls = (buttons: TouchButtons): void => {
 };
 
 export const waitForProgressInput = async (
-    soundToPlay?: number,
+    soundToPlay?: Sound,
 ): Promise<void> => {
     await (hasTouchScreen
         ? soundToPlay

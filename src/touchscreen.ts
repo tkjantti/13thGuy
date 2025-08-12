@@ -22,16 +22,11 @@
  * SOFTWARE.
  */
 
-import { Area, includesPoint } from "./core/math/Area.js";
+import { Area, includesPoint } from "./core/math/Area";
 import { canvas } from "./graphics";
-import { VectorMutable } from "./core/math/Vector.js";
+import { VectorMutable } from "./core/math/Vector";
 import { setCanvasPositionFromScreenPosition } from "./window";
-import {
-    SFX_KB,
-    playTune,
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-} from "./sfx/sfx.js";
+import { Sound, playSound } from "./audio";
 
 export const hasTouchScreen = "ontouchstart" in window;
 
@@ -74,10 +69,7 @@ export const listenTouch = (
     button.addEventListener("touchend", handleEnd);
 };
 
-export const waitForTap = (
-    area?: Area,
-    soundToPlay?: number,
-): Promise<void> => {
+export const waitForTap = (area?: Area, soundToPlay?: Sound): Promise<void> => {
     return new Promise((resolve) => {
         const listener = (e: TouchEvent): void => {
             // Prevent default behavior if the touch is on the canvas
@@ -87,7 +79,7 @@ export const waitForTap = (
             const touch = e.changedTouches[0];
             if (!touch) return; // Exit if no touch information is available
 
-            playTune(SFX_KB);
+            playSound(Sound.Keyboard);
 
             const point: VectorMutable = { x: 0, y: 0 };
 
@@ -100,7 +92,7 @@ export const waitForTap = (
                 if (soundToPlay !== undefined) {
                     try {
                         console.log(`Playing sound ID: ${soundToPlay}`);
-                        playTune(soundToPlay);
+                        playSound(soundToPlay);
                     } catch (err) {
                         console.error("Error playing sound:", err);
                     }
@@ -117,7 +109,7 @@ export const waitForTap = (
 
 // Also add a utility function to wait for tap and play sound in one call
 export const waitForTapAndPlaySound = (
-    soundToPlay: number,
+    soundToPlay: Sound,
     area?: Area,
 ): Promise<void> => {
     return waitForTap(area, soundToPlay);

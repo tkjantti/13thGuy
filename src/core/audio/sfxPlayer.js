@@ -24,7 +24,7 @@ export const zzfx = (vol, ...z)=> zzfxP(vol, zzfxG(vol,...z)); // generate and p
 const zzfxR = 44100; // sample rate
 
 const AudioContext =  new (window.AudioContext || window.webkitAudioContext)();
-export const zzfxX = AudioContext // audio context
+const zzfxX = AudioContext // audio context
 
 const zzfxP = (vol, ...samples) => {
     // create buffer and source

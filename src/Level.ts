@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-import { Area, overlap } from "./core/math/Area.js";
-import { Camera } from "./core/gameplay/Camera.js";
+import { Area, overlap } from "./core/math/Area";
+import { Camera } from "./core/gameplay/Camera";
 import { Character, CHARACTER_DIMENSIONS, FALL_TIME } from "./Character";
 import { GameObject } from "./GameObject";
 import { canvas, cx } from "./graphics";
@@ -40,17 +40,9 @@ import {
     TrackElementType,
     TT,
 } from "./TrackElement";
-import { length, Vector, ZERO_VECTOR } from "./core/math/Vector.js";
-import {
-    playTune,
-    SFX_BOUNCE,
-    SFX_HIT,
-    SFX_TELEPORT,
-    // Ignore lint errors from JS import
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-} from "./sfx/sfx.js";
-import { randomMinMax } from "./core/math/random.js";
+import { length, Vector, ZERO_VECTOR } from "./core/math/Vector";
+import { playSound, Sound } from "./audio";
+import { randomMinMax } from "./core/math/random";
 import { BLOCK_HEIGHT } from "./TrackElement";
 
 const TRACK_VISIBLE_HEIGHT = 70;
@@ -189,9 +181,9 @@ export class Level implements Area {
         this.checkGameState();
     }
 
-    private playWithVolumeByDistance(sound: string, y: number): void {
+    private playWithVolumeByDistance(sound: Sound, y: number): void {
         const yDistance = Math.abs(y - this.player.y);
-        playTune(
+        playSound(
             sound,
             Math.max(0, Math.min(1, 1 - yDistance / maxSfxDistance)),
         );
@@ -255,7 +247,7 @@ export class Level implements Area {
                 if (calculateCollisionBetweenCharacters(c, other)) {
                     // Check if character is the player or the velocity is bit larger in any direction to prevent too much sfx plays
                     if (!c.ai || length(c.velocity) > 0.3)
-                        this.playWithVolumeByDistance(SFX_HIT, c.y);
+                        this.playWithVolumeByDistance(Sound.Hit, c.y);
                 }
             }
         }
@@ -274,7 +266,7 @@ export class Level implements Area {
 
                     // Basic distance check if sound should be played
                     if (calculateCollisionToObstacle(c, o)) {
-                        this.playWithVolumeByDistance(SFX_BOUNCE, o.y);
+                        this.playWithVolumeByDistance(Sound.Bounce, o.y);
                     }
                 }
             }
@@ -411,7 +403,7 @@ export class Level implements Area {
 
         c.drop(t, dropPosition);
 
-        this.playWithVolumeByDistance(SFX_TELEPORT, c.y);
+        this.playWithVolumeByDistance(Sound.Teleport, c.y);
 
         if (c === this.player) {
             this.camera.follow(c);
